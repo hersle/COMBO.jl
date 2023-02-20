@@ -12,21 +12,7 @@ include("Constants.jl")
 using DifferentialEquations
 using Interpolations
 using Roots
-using Plots # TODO: remove
-Plots.__init__()
 using .Constants
-
-# TODO: to Utils
-function solvequad(a::Float64, b::Float64, c::Float64)
-    d = b^2 - 4*a*c
-    if d >= 0
-        x1 = (-b + sqrt(d)) / (2*a)
-        x2 = (-b - sqrt(d)) / (2*a)
-        return x1, x2
-    else
-        return NaN, NaN
-    end
-end
 
 struct ΛCDM
     h::Float64 # dimensionless Hubble parameter h = H0 / (100 TODO units)
@@ -55,43 +41,15 @@ struct ΛCDM
         ΩΛ  = 1.0 - (Ωr0 + Ωm0 + Ωk0)
 
         Ω0 = Ωr0 + Ωm0 + Ωk0 + ΩΛ
-        #println("Ω0 = $Ω0")
 
         x1, x2 = -20, +20 # integration and spline range
         Hx(x::Real) = H(h, Ωr0, Ωm0, Ωk0, ΩΛ, x)
-
-        # TODO: Does the scale/Hubble factor diverge in a big rip on our integration interval?
-        # If so, restrict the integration to that time
-        #println("anal rip at x2 = $(log(√(-Ωk0/ΩΛ)))")
-        #=
-        try 
-            a01, a02 = solvequad(2*Ωk0, 3*Ωm0, 4*Ωr0)
-            #if a01 > 
-            #x01 = log(a01)
-            x02 = log(a02)
-            println(x02)
-            x2 = find_zero(x -> Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x), (x1, x02)) - 0.1
-            #x2 = find_zero(x -> Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x), (0.0)) - 0.5
-            #x2 = find_zero(x -> Hx(x), (x1, x2))
-            println("RIP x2 = $x2")
-        catch e
-            #println("no RIP")
-        end
-        =#
-
-        #println("x1, x2 = $x1, $x2")
-
-        #gr()
-        #x = range(-10, +10, length=200)
-        #p = plot(x, Ωpoly.(Ωr0, Ωm0, Ωk0, ΩΛ, x), ylims=(-100, 100))
-        #display(p)
 
         dη_dx(η, p, x) = c / (a(x) * Hx(x)) # TODO: integrate in dimensionless units closer to 1
         η1 = c / (a(x1) * Hx(x1))
         condition(η, x, integrator) = Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x) - 1e-4
         affect!(integrator) = terminate!(integrator)
         big_rip_terminator = ContinuousCallback(condition, affect!)
-        #println("η")
         sol = solve(ODEProblem(dη_dx, η1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator) # automatically choose method
         x, η = sol.t, sol.u
         if x[end] == x[end-1]
@@ -99,15 +57,10 @@ struct ΛCDM
             x = x[1:end-1]
             η = η[1:end-1]
         end
-        #p = plot(x, η)
-        #display(p)
-        #println("x = $(log(√(-Ωk0/ΩΛ)))")
-        #exit()
         η_spline = linear_interpolation(x, η) # spline
 
         dt_dx(t, p, x) = 1 / Hx(x)
         t1 = 1 / (2*Hx(x1))
-        #println("t")
         sol = solve(ODEProblem(dt_dx, t1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator)
         x, t = sol.t, sol.u
         if x[end] == x[end-1]
