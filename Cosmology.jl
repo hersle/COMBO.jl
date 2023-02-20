@@ -12,7 +12,21 @@ include("Constants.jl")
 using DifferentialEquations
 using Interpolations
 using Roots
+using Plots # TODO: remove
+Plots.__init__()
 using .Constants
+
+# TODO: to Utils
+function solvequad(a::Float64, b::Float64, c::Float64)
+    d = b^2 - 4*a*c
+    if d >= 0
+        x1 = (-b + sqrt(d)) / (2*a)
+        x2 = (-b - sqrt(d)) / (2*a)
+        return x1, x2
+    else
+        return NaN, NaN
+    end
+end
 
 struct ΛCDM
     h::Float64 # dimensionless Hubble parameter h = H0 / (100 TODO units)
@@ -32,27 +46,79 @@ struct ΛCDM
     η_spline::Interpolations.Extrapolation # TODO: what kind of spline?
     t_spline::Interpolations.Extrapolation
 
-    function ΛCDM(h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
+    function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
         H0 = h * 100*km/Mpc
+        Ωm0 = Ωb0+Ωc0
         Ωγ0 = 2 * π^2/30 * (kB*Tγ0)^4 / (ħ^3*c^5) * 8*π*G / (3*H0^2)
         Ων0 = Neff * 7/8 * (4/11)^(4/3) * Ωγ0
-        ΩΛ  = 1 - (Ωk0 + Ωb0 + Ωc0 + Ωγ0 + Ων0)
+        Ωr0 = Ωγ0 + Ων0
+        ΩΛ  = 1.0 - (Ωr0 + Ωm0 + Ωk0)
 
-        x1, x2 = -100, +100 # integration and spline range
-        Hx(x::Real) = H(h, Ωγ0+Ων0, Ωb0+Ωc0, Ωk0, ΩΛ, x)
-        dη_dx(η, p, x) = c / (a(x) * Hx(x))
+        Ω0 = Ωr0 + Ωm0 + Ωk0 + ΩΛ
+        #println("Ω0 = $Ω0")
+
+        x1, x2 = -20, +20 # integration and spline range
+        Hx(x::Real) = H(h, Ωr0, Ωm0, Ωk0, ΩΛ, x)
+
+        # TODO: Does the scale/Hubble factor diverge in a big rip on our integration interval?
+        # If so, restrict the integration to that time
+        #println("anal rip at x2 = $(log(√(-Ωk0/ΩΛ)))")
+        #=
+        try 
+            a01, a02 = solvequad(2*Ωk0, 3*Ωm0, 4*Ωr0)
+            #if a01 > 
+            #x01 = log(a01)
+            x02 = log(a02)
+            println(x02)
+            x2 = find_zero(x -> Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x), (x1, x02)) - 0.1
+            #x2 = find_zero(x -> Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x), (0.0)) - 0.5
+            #x2 = find_zero(x -> Hx(x), (x1, x2))
+            println("RIP x2 = $x2")
+        catch e
+            #println("no RIP")
+        end
+        =#
+
+        #println("x1, x2 = $x1, $x2")
+
+        #gr()
+        #x = range(-10, +10, length=200)
+        #p = plot(x, Ωpoly.(Ωr0, Ωm0, Ωk0, ΩΛ, x), ylims=(-100, 100))
+        #display(p)
+
+        dη_dx(η, p, x) = c / (a(x) * Hx(x)) # TODO: integrate in dimensionless units closer to 1
         η1 = c / (a(x1) * Hx(x1))
-        sol = solve(ODEProblem(dη_dx, η1, (x1, x2)), Tsit5(), reltol=1e-10)
+        condition(η, x, integrator) = Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x) - 1e-4
+        affect!(integrator) = terminate!(integrator)
+        big_rip_terminator = ContinuousCallback(condition, affect!)
+        #println("η")
+        sol = solve(ODEProblem(dη_dx, η1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator) # automatically choose method
         x, η = sol.t, sol.u
+        if x[end] == x[end-1]
+            # remove last duplicate point TODO: a better way?
+            x = x[1:end-1]
+            η = η[1:end-1]
+        end
+        #p = plot(x, η)
+        #display(p)
+        #println("x = $(log(√(-Ωk0/ΩΛ)))")
+        #exit()
         η_spline = linear_interpolation(x, η) # spline
 
         dt_dx(t, p, x) = 1 / Hx(x)
         t1 = 1 / (2*Hx(x1))
-        sol = solve(ODEProblem(dt_dx, t1, (x1, x2)), Tsit5(), reltol=1e-10)
+        #println("t")
+        sol = solve(ODEProblem(dt_dx, t1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator)
         x, t = sol.t, sol.u
+        if x[end] == x[end-1]
+            # remove last duplicate point TODO: a better way?
+            x = x[1:end-1]
+            t = t[1:end-1]
+        end
         t_spline = linear_interpolation(x, t) # spline
 
-        new(h, H0, Ωb0, Ωc0, Ωb0+Ωc0, Ωk0, Ωγ0, Ων0, Ωγ0+Ων0, ΩΛ, Tγ0, Neff, x, η_spline, t_spline)
+        # TODO: don't pass x: it is different from η to t
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ, Tγ0, Neff, x, η_spline, t_spline)
     end
 end
 
@@ -70,7 +136,7 @@ z(x::Real) = 1/a(x) - 1
 Ωpoly(co::ΛCDM, x::Real; d::Integer=0) = Ωpoly(co.Ωr0, co.Ωm0, co.Ωk0, co.ΩΛ, x; d)
 #dΩevo(Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ0::Real, x::Real; n::Integer=1) = (-4)^n * Ωr0/a(x)^4 + (-3)^n * Ωm0/a(x)^3 + (-2)^n * Ωk0/a(x)^2 # n-th (n >= 1) derivative of Ωev0 wrt. x
 #dΩevo(co::ΛCDM, x::Real; n=Integer::1) = dΩevo(co.Ωr0, co.Ωm0, co.Ωk0, co.ΩΛ0, x; n)
-H(h::Real, Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ::Real, x::Real) = h * 100 * km/Mpc * √(Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x))
+H(h::Real, Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ::Real, x::Real) = h * 100 * km/Mpc * √(max(Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x), 0.0)) # in case we have a slight negative value due to floating point arithmetic, add 0im and take real part
 H(co::ΛCDM, x::Real) = H(co.h, co.Ωγ0+co.Ων0, co.Ωb0+co.Ωc0, co.Ωk0, co.ΩΛ, x) # "normal" Hubble parameter
 
 # conformal Hubble parameter (𝓗 = a*H) + 1st derivative + 2nd derivative
@@ -95,16 +161,16 @@ t(co::ΛCDM, x::Real) = co.t_spline(x)
 Ω(co::ΛCDM, x::Real) = Ωr(co, x) + Ωm(co, x) + Ωk(co, x) + ΩΛ(co, x)
 
 # equalities
-r_m_equality(co::ΛCDM) = find_zero(x -> Ωr(co, x) - Ωm(co, x), (-100, +100)) # TODO: save xmin, xmax in ΛCDM
-m_Λ_equality(co::ΛCDM) = find_zero(x -> Ωm(co, x) - ΩΛ(co, x), (-100, +100)) # TODO: save xmin, xmax in ΛCDM
+r_m_equality(co::ΛCDM) = find_zero(x -> Ωr(co, x) - Ωm(co, x), (-20, +20)) # TODO: save xmin, xmax in ΛCDM
+m_Λ_equality(co::ΛCDM) = find_zero(x -> Ωm(co, x) - ΩΛ(co, x), (-20, +20)) # TODO: save xmin, xmax in ΛCDM
 
 # distances
 function dL(co::ΛCDM, x::Real)
     χ = η(co, 0) - η(co, x)
     if co.Ωk0 < 0
-        r = χ *  sin(√(-co.Ωk0)*co.H0*χ/c) / √(-co.Ωk0)*co.H0*χ/c
+        r = χ *  sin(√(-co.Ωk0)*co.H0*χ/c) / (√(-co.Ωk0)*co.H0*χ/c)
     elseif co.Ωk0 > 0
-        r = χ * sinh(√(+co.Ωk0)*co.H0*χ/c) / √(+co.Ωk0)*co.H0*χ/c
+        r = χ * sinh(√(+co.Ωk0)*co.H0*χ/c) / (√(+co.Ωk0)*co.H0*χ/c)
     else
         r = χ
     end

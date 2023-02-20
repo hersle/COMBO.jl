@@ -1,9 +1,11 @@
 module Milestone1
 
+include("Algorithms.jl")
 include("Cosmology.jl")
 include("Constants.jl")
 
 using .Cosmology
+using .Algorithms
 using .Constants
 using Plots
 using LaTeXStrings
@@ -108,13 +110,13 @@ if !isfile("plots/density_parameters.pdf")
 end
 
 # Supernova data
-if true || !isfile("plots/supernova.pdf")
-    plot(xlabel = L"\log_{10} \Big[ z+1 \Big]", ylabel = L"\log_{10} \Big[ d_L \,/\, \mathrm{Gpc} \Big]", xlims=(0, 0.4), ylims=(-1.5, 1.5), legend_position = :topleft)
+if !isfile("plots/supernova.pdf")
+    #co = ΛCDM(h=0.7, Ωc0=0.31-0.05, Ωk0=-0.03)
+    plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"\log_{10} \Big[ d_L \,/\, \mathrm{Gpc} \Big]", xlims=(0, 0.4), ylims=(-1.5, 1.5), legend_position = :topleft)
 
     x2 = range(-1, 0, length=400)
     plot!(log10.(Cosmology.z.(x2).+1), log10.(Cosmology.dL.(co, x2) ./ Gpc); label = "prediction")
 
-    # TODO: fix yerr
     data = readdlm("data/supernovadata.txt", comments=true)
     z, dL, σdL = data[:,1], data[:,2], data[:,3]
     err_lo = log10.(dL) - log10.(dL-σdL)
@@ -122,6 +124,46 @@ if true || !isfile("plots/supernova.pdf")
     scatter!(log10.(z.+1), log10.(dL); yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
 
     savefig("plots/supernova.pdf")
+end
+
+# Supernova MCMC fits
+if true || !isfile("plots/supernova_mcmc.pdf")
+    data = readdlm("data/supernovadata.txt", comments=true)
+    z, dL, σdL = data[:,1], data[:,2], data[:,3]
+    x = @. log(1 / (z+1))
+    Ndata = length(z)
+
+    function χ2(params)
+        h, Ωm0, Ωk0 = params # unpack
+        Ωb0 = 0.05 # fix
+        Ωc0 = Ωm0 - Ωb0
+        co = ΛCDM(h=h, Ωb0=Ωb0, Ωc0=Ωc0, Ωk0=Ωk0)
+        if maximum(co.x_spline) > 0 # cosmology extends at least till today (otherwise can't compare with measurements)
+            return sum(@. (Cosmology.dL(co, x)/Gpc - dL)^2 / σdL^2)
+        else
+            return +Inf # then L = 0 and log(L) = -∞
+        end
+    end
+    logL(params) = -χ2(params) / 2 # L = exp(-χ2 / 2)
+
+    p_lo = [0.5, 0.0, -1.0]
+    p_hi = [1.5, 1.0, +1.0]
+    params, logLs = MetropolisHastings(logL, p_lo, p_hi; callback = function (step, sample, samples, params)
+        # TODO: move printing into MH function
+        accrate = sample / step
+        print("\rSample $sample/$samples (accept $(round(accrate*100, digits=1))%): p = $(round.(params, digits=2)), logL = $(round(logL(params), digits=1))")
+        flush(stdout) # display, despite stdout being newline-buffered
+    end)
+    println() # newline
+    h, Ωm0, Ωk0 = params[:,1], params[:,2], params[:,3]
+    best_index = argmax(logLs)
+    best_χ2 = -2 * logLs[best_index]
+    best_h, best_Ωm0, best_Ωk0 = params[best_index,:]
+    println("Best fit (χ²/N = $(round(best_χ2/Ndata, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
+
+    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{k0}", xlims = (0, 1), ylims = (-1, +1))
+    scatter!(Ωm0, Ωk0; label = nothing)
+    savefig("plots/supernova_mcmc.pdf")
 end
 
 end
