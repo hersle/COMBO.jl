@@ -4,61 +4,74 @@ export MetropolisHastings
 
 using Distributions
 
-# TODO: adaptive step size?
-function MetropolisHastings(logL::Function, p_lo::Vector{Float64}, p_hi::Vector{Float64}; samples::Int=1000, steps = nothing, callback = (step, sample, samples, params) -> ())
-    @assert !isnan(logL(p_lo)) && !isnan(logL(p_hi))
-    @assert all(p_hi .>= p_lo)
-    @assert length(p_lo) == length(p_hi)
-    @assert steps == nothing || length(steps) == length(p_lo)
+# TODO: burnin?
+# TODO: constant step scaling "locks" their mutual *ratios*; scale only one random step?
+function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector{Float64}}, samples::Integer; steps=nothing, verbose=true)
+    params_lo, params_hi = bounds
 
-    nparams = length(p_lo)
+    @assert !isnan(logL(params_lo)) && !isnan(logL(params_hi))
+    @assert all(params_hi .>= params_lo)
+    @assert length(params_lo) == length(params_hi)
+    @assert steps == nothing || length(steps) == length(params_lo)
+
+    # arrays to record accepted parameters and likelihoods
+    nparams = length(params_lo)
     params = Array{Float64, 2}(undef, samples, nparams)
     logLs = Vector{Float64}(undef, samples)
 
-    # TODO: seed here?
-    ndist = Normal()
-    udist = Uniform(0, 1)
+    # unless step sizes are explicitly specified, automatically set them to 5% of bounds
+    if steps == nothing
+        steps = 0.05 .* (params_hi .- params_lo)
+    end
 
-    # random initial guess within bounds
-    curr_params = p_lo .+ rand.(udist) .* (p_hi .- p_lo)
+    ndistr = Normal()
+    udistr = Uniform(0, 1)
+
+    # set first params to a random guess within the parameter bounds
+    curr_params = params_lo .+ rand.(udistr) .* (params_hi .- params_lo)
     curr_logL = logL(curr_params)
-    println("Initial guess: $curr_params, logL = $curr_logL")
-
-    # adaptive step sizes?
-    steps = steps == nothing ? 0.05 .* (p_hi .- p_lo) : steps # TODO: how to choose scale?
+    if verbose
+        print("Step sizes: $steps\n")
+        print("Initial random guess: ")
+        print("params = $curr_params, log(L) ∝ $(round(curr_logL, digits=2))\n")
+    end
 
     step = 0
     sample = 0
     while sample < samples
         step += 1
-        new_params = curr_params .+ rand.(ndist) .* steps # TODO: handle initial guess nicely?
-        new_logL = all(p_lo .<= new_params .<= p_hi) ? logL(new_params) : -Inf
+        new_params = curr_params .+ rand.(ndistr) .* steps
+        new_logL = all(params_lo .<= new_params .<= params_hi) ? logL(new_params) : -Inf
 
-        # new_L > curr_L: accept new state unconditionally (since rand(udist) < 1)
-        # new_L < curr_L: accept new state with probability new_L / curr_L
-        if new_logL - curr_logL > log(rand(udist)) # if new_L > rand(udist) * curr_L
+        # accept new state unconditionally if new likelihood is greater; otherwise with probability new_L/curr_L
+        if new_logL - curr_logL > log(rand(udistr)) # equivalent to new_L > rand(udistr) * curr_L
             sample += 1
             curr_params = new_params
             curr_logL = new_logL
 
-            callback(step, sample, samples, curr_params) # execute any user-provided callback
             params[sample,:] = curr_params # record params
             logLs[sample] = curr_logL # record likelihood
+
+            if verbose
+                accrate = sample / step
+                print("\33[2K\rSample $sample/$samples (accept $(round(accrate*100, digits=1))%): ")
+                print("params = $curr_params, log(L) ∝ $(round(curr_logL, digits=2))")
+                flush(stdout) # flush to display when line does not end with newline
+            end
         end
 
-        # After we have run for a while, check if we are accepting too many or few states
-        # and re-run with different step sizes, if so: https://colcarroll.github.io/hmc_tuning_talk/
-        # This *re-runs the whole algorithm*, so it *does not ruin the Markov chain nature*
-        # It is merely equivalent to manually fiddling with the step sizes
-        # TODO: the constant scaling "locks" the *ratio* between the parameters
-        # TODO: select one random parameter and scale it only?
-        if step == 3 * samples # have run for some time (collected 10% of samples)
+        # After running for a while, check if we are accepting too many or few states
+        # If so, tune step sizes and re-run: https://colcarroll.github.io/hmc_tuning_talk/
+        # This *re-runs the whole algorithm*, so it *does not ruin the Markov chain nature*, but is merely equivalent to fiddling with step sizes
+        if step >= samples # have run for some time
             accrate = sample / step
             if abs(accrate - 0.25) > 0.10 # aim for acceptance rate 25%: https://doi.org/10.1214/aoap/1034625254
-                scale = 2^((accrate-0.25)/(0.50-0.25))
-                steps = scale .* steps # 0.5x/2x when accrate is 0%/50% (TODO: sensible?)
-                println("Multiplying stepsize by $scale")
-                return MetropolisHastings(logL, p_lo, p_hi; samples, steps, callback)
+                scale = 2^((accrate-0.25)/(0.50-0.25)) # 0.5x/2x when accrate is 0%/50% (TODO: sensible?)
+                steps = scale .* steps
+                if verbose
+                    println("\nToo far from 25% accept rate; re-running with step sizes scaled by $scale")
+                end
+                return MetropolisHastings(logL, bounds, samples; steps, verbose)
             end
         end
     end

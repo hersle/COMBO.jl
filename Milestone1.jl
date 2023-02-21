@@ -21,7 +21,7 @@ if !isdir("plots")
     mkdir("plots")
 end
 
-# conformal Hubble parameter
+# Conformal Hubble parameter
 if !isfile("plots/conformal_Hubble.pdf")
     println("Plotting conformal Hubble parameter")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10}\Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc})\Big]", legend_position = :topright)
@@ -43,7 +43,7 @@ if !isfile("plots/conformal_Hubble_derivative1.pdf")
     savefig("plots/conformal_Hubble_derivative1.pdf")
 end
 
-# conformal Hubble parameter 2nd derivative
+# Conformal Hubble parameter 2nd derivative
 if !isfile("plots/conformal_Hubble_derivative2.pdf")
     println("Plotting conformal Hubble 2nd derivative")
     plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}^2\mathcal{H}}{\mathrm{d} x^2}", legend_positions = :topleft)
@@ -53,7 +53,7 @@ if !isfile("plots/conformal_Hubble_derivative2.pdf")
     savefig("plots/conformal_Hubble_derivative2.pdf")
 end
 
-# product of conformal time and conformal Hubble parameter
+# Product of conformal time and conformal Hubble parameter
 if !isfile("plots/eta_H.pdf")
     println("Plotting η * aH / c")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \eta \mathcal{H} / c \Big]", legend_position = :topleft)
@@ -70,7 +70,7 @@ if !isfile("plots/eta_H.pdf")
     savefig("plots/eta_H.pdf")
 end
 
-# cosmic and conformal time
+# Cosmic and conformal time
 if !isfile("plots/times.pdf")
     println("Plotting cosmic and conformal times")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta/c\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
@@ -146,14 +146,8 @@ if true || !isfile("plots/supernova_mcmc.pdf")
     end
     logL(params) = -χ2(params) / 2 # L = exp(-χ2 / 2)
 
-    p_lo = [0.5, 0.0, -1.0]
-    p_hi = [1.5, 1.0, +1.0]
-    params, logLs = MetropolisHastings(logL, p_lo, p_hi; callback = function (step, sample, samples, params)
-        # TODO: move printing into MH function
-        accrate = sample / step
-        print("\rSample $sample/$samples (accept $(round(accrate*100, digits=1))%): p = $(round.(params, digits=2)), logL = $(round(logL(params), digits=1))")
-        flush(stdout) # display, despite stdout being newline-buffered
-    end)
+    bounds = ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0])
+    params, logLs = MetropolisHastings(logL, bounds, 10000)
     println() # newline
     h, Ωm0, Ωk0 = params[:,1], params[:,2], params[:,3]
     best_index = argmax(logLs)
