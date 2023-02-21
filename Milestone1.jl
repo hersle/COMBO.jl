@@ -129,31 +129,27 @@ end
 # Supernova MCMC fits
 if true || !isfile("plots/supernova_mcmc.pdf")
     data = readdlm("data/supernovadata.txt", comments=true)
-    z, dL, σdL = data[:,1], data[:,2], data[:,3]
-    x = @. log(1 / (z+1))
-    Ndata = length(z)
+    N_obs, _ = size(data)
+    z_obs, dL_obs, σdL_obs = data[:,1], data[:,2], data[:,3]
+    x_obs = @. log(1 / (z_obs+1))
 
-    function χ2(params)
+    function logL(params::Vector{Float64})
         h, Ωm0, Ωk0 = params # unpack
-        Ωb0 = 0.05 # fix
-        Ωc0 = Ωm0 - Ωb0
-        co = ΛCDM(h=h, Ωb0=Ωb0, Ωc0=Ωc0, Ωk0=Ωk0)
+        co = ΛCDM(h=h, Ωb0=0.0, Ωc0=Ωm0, Ωk0=Ωk0) # only Ωm matters, so might as well set Ωb=0
         if maximum(co.x_spline) > 0 # cosmology extends at least till today (otherwise can't compare with measurements)
-            return sum(@. (Cosmology.dL(co, x)/Gpc - dL)^2 / σdL^2)
-        else
-            return +Inf # then L = 0 and log(L) = -∞
+            dL_mod = Cosmology.dL.(co, x_obs) / Gpc
+            return -1/2 * sum(@. (dL_mod - dL_obs)^2 / σdL_obs^2) # L = exp(-χ2/2) # TODO: optimize
+        else # model does not extend far enough so that it can fit the data
+            return -Inf # so set L = 0 (or log(L) = -∞, or χ2 = ∞)
         end
     end
-    logL(params) = -χ2(params) / 2 # L = exp(-χ2 / 2)
 
-    bounds = ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0])
-    params, logLs = MetropolisHastings(logL, bounds, 10000)
-    println() # newline
+    params, logLs = MetropolisHastings(logL, ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0]), 1000)
     h, Ωm0, Ωk0 = params[:,1], params[:,2], params[:,3]
     best_index = argmax(logLs)
     best_χ2 = -2 * logLs[best_index]
     best_h, best_Ωm0, best_Ωk0 = params[best_index,:]
-    println("Best fit (χ²/N = $(round(best_χ2/Ndata, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
+    println("Best fit (χ²/N = $(round(best_χ2/N_obs, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
 
     plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{k0}", xlims = (0, 1), ylims = (-1, +1))
     scatter!(Ωm0, Ωk0; label = nothing)

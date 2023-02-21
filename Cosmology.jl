@@ -120,6 +120,14 @@ m_Λ_equality(co::ΛCDM) = find_zero(x -> Ωm(co, x) - ΩΛ(co, x), (-20, +20)) 
 # distances
 function dL(co::ΛCDM, x::Real)
     χ = η(co, 0) - η(co, x)
+
+    # TODO: change back
+    # Ωk0 = 0: r = χ
+    # Ωk0 > 0: r = χ *  sinc(√(Ωk0)*H0*χ/c)
+    # Ωk0 < 0: r = χ * sinhc(√(Ωk0)*H0*χ/c)
+    # ... are all captured by
+    r = χ * real(sinc(√(complex(co.Ωk0)) * co.H0 * χ / c))
+    #=
     if co.Ωk0 < 0
         r = χ *  sin(√(-co.Ωk0)*co.H0*χ/c) / (√(-co.Ωk0)*co.H0*χ/c)
     elseif co.Ωk0 > 0
@@ -127,6 +135,9 @@ function dL(co::ΛCDM, x::Real)
     else
         r = χ
     end
+    =#
+
+
     return r / a(x)
 end
 
