@@ -144,12 +144,14 @@ if true || !isfile("plots/supernova_mcmc.pdf")
         end
     end
 
-    params, logLs = MetropolisHastings(logL, ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0]), 1000)
+    params, logLs = MetropolisHastings(logL, ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0]), 1000) #; steps=[0.007, 0.05, 0.05])
     h, Ωm0, Ωk0 = params[:,1], params[:,2], params[:,3]
     best_index = argmax(logLs)
     best_χ2 = -2 * logLs[best_index]
     best_h, best_Ωm0, best_Ωk0 = params[best_index,:]
     println("Best fit (χ²/N = $(round(best_χ2/N_obs, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
+
+    # TODO: get ΩΛ. must be done differently for each cosmology, since Ωr0 depends on h!!!!!!!!
 
     plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{k0}", xlims = (0, 1), ylims = (-1, +1))
     scatter!(Ωm0, Ωk0; label = nothing)

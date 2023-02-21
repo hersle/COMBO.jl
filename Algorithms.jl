@@ -32,6 +32,7 @@ function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector
     # set first params to a random guess within the parameter bounds
     curr_params = params_lo .+ rand.(udistr) .* (params_hi .- params_lo)
     curr_logL = logL(curr_params)
+
     if verbose
         println("Step sizes: ", steps)
         print("Initial random guess: ")
@@ -40,51 +41,47 @@ function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector
 
     step = 0
     sample = 0
+    new_params = Vector{Float64}(undef, nparams) # pre-allocate
     while sample < samples
         step += 1
-        #new_params .= curr_params .+ rand.(ndistr) .* steps
-        new_params = curr_params .+ rand.(ndistr) .* steps # TODO: optimize
-        #println(new_params)
+        new_params .= curr_params .+ rand.(ndistr) .* steps
         inbounds = all(i -> params_lo[i] <= new_params[i] <= params_hi[i], 1:nparams)
-        ##inbounds = all(params_lo .<= new_params .<= params_hi)
         new_logL = inbounds ? logL(new_params) : -Inf
-
-        # accept new state unconditionally if new likelihood is greater; otherwise with probability new_L/curr_L
-        if new_logL - curr_logL > log(rand(udistr)) # equivalent to new_L > rand(udistr) * curr_L (TODO: optimize: avoid rand() every loop)
+        accept = new_logL - curr_logL > log(rand()) # TODO: why on earth does this line allocate memory?
+        if accept # equivalent to new_L > rand(udistr) * curr_L (TODO: optimize: avoid rand() every loop)
             sample += 1
-            curr_params = new_params
+            curr_params .= new_params
             curr_logL = new_logL
 
-            params[sample,:] = curr_params # record params
+            params[sample,:] .= curr_params # record params
             logLs[sample] = curr_logL # record likelihood
+        end
 
-            if verbose
-                accrate = sample / step
-                print("\33[2K\r") # overwrite current line
-                print("Sample ", sample, "/", samples, " (accept ", round(accrate*100, digits=1), "%): ")
-                print("params = ", curr_params, ", log(L) ∝ ", round(curr_logL, digits=2))
-                flush(stdout) # flush to display when line does not end with newline
-            end
+        accrate = sample / step
+
+        if verbose && accept
+            print("\33[2K\r") # overwrite current line
+            print("Sample ", sample, "/", samples, " (accept ", round(accrate*100, digits=1), "%): ")
+            print("params = ", curr_params, ", log(L) ∝ ", round(curr_logL, digits=2))
+            flush(stdout) # flush to display when line does not end with newline
         end
 
         # After running for a while, check if we are accepting too many or few states
         # If so, tune step sizes and re-run: https://colcarroll.github.io/hmc_tuning_talk/
-        # This *re-runs the whole algorithm*, so it *does not ruin the Markov chain nature*, but is merely equivalent to fiddling with step sizes
-        if step >= samples # have run for some time
-            accrate = sample / step
-            if abs(accrate - 0.25) > 0.10 # aim for acceptance rate 25%: https://doi.org/10.1214/aoap/1034625254
-                scale = 2^((accrate-0.25)/(0.50-0.25)) # 0.5x/2x when accrate is 0%/50% (TODO: sensible?)
-                steps .*= scale
-                if verbose
-                    println("\nToo far from 25% accept rate; re-running with step sizes scaled by ", scale)
-                end
-                return MetropolisHastings(logL, bounds, samples; steps, verbose)
+        # This *re-runs the whole algorithm*, so it *does not ruin the Markov chain nature*
+        # Aim for acceptance rate 25%: https://doi.org/10.1214/aoap/1034625254
+        if step >= samples && abs(accrate - 0.25) > 0.10 # have run for some time and accept rate is far from target
+            scale = 2^((accrate-0.25)/(0.50-0.25)) # 0.5x/2x when accrate is 0%/50% (TODO: sensible?)
+            steps .*= scale
+            if verbose
+                println("\nToo far from 25% accept rate; re-running with step sizes scaled by ", scale)
             end
+            return MetropolisHastings(logL, bounds, samples; steps, verbose)
         end
     end
 
     if verbose
-        println() # end the one line that we are constantly overwriting
+        println() # end that line that we are constantly overwriting
     end
 
     return params, logLs
