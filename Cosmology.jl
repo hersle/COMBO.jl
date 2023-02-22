@@ -69,26 +69,31 @@ daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * Ωpoly(co, x; d=1) / Ωpoly(co,
 #d2aH(co::ΛCDM, x::Real) = daH(co, x)^2 / ah(co, x) + 1/2 * aH(co, x) * (Ωpoly(co, x; d=2) / Ωpoly(co, x) + (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
 d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + Ωpoly(co, x; d=1) / Ωpoly(co, x) + 1/2 * Ωpoly(co, x; d=2) / Ωpoly(co, x) - 1/4 * (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
 
+# TODO: make independent of cosmology?
+function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; terminator = (co, x) -> Ωpoly(co, x) - 1e-4)
+    condition(y, x, integrator) = terminator(co, x)
+    affect!(integrator) = terminate!(integrator)
+    callback = ContinuousCallback(condition, affect!)
+
+    sol = solve(ODEProblem((y, p, x) -> dy_dx(x), y1, (x1, x2)), Tsit5(); reltol=1e-10, callback = callback) # TODO: automatically choose method?
+    xs, ys = sol.t, sol.u
+    if xs[end] == xs[end-1]
+        # remove last duplicate point TODO: a better way?
+        xs = xs[1:end-1]
+        ys = ys[1:end-1]
+    end
+    x2 = min(x2, xs[end]) # shrink integration range if callback ended before (TODO: check callback in a safer way?)
+    return linear_interpolation(xs, ys), x1, x2
+end
+
 # conformal time
 function η(co::ΛCDM, x::Real)
-    x1, x2 = -20, +20 # integration and spline range
+    x1, x2 = -20, +20 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
 
     if isnothing(co.η_spline)
-        condition(η, x, integrator) = Ωpoly(co, x) - 1e-4
-        affect!(integrator) = terminate!(integrator)
-        big_rip_terminator = ContinuousCallback(condition, affect!)
-
-        dη_dx(η, p, x) = c / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
+        dη_dx(x) = c / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
         η1 = c / (a(x1) * H(co, x1))
-        sol = solve(ODEProblem(dη_dx, η1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator) # automatically choose method
-        xs, ηs = sol.t, sol.u
-        if xs[end] == xs[end-1]
-            # remove last duplicate point TODO: a better way?
-            xs = xs[1:end-1]
-            ηs = ηs[1:end-1]
-        end
-        x2 = min(x2, xs[end])
-        co.η_spline = linear_interpolation(xs, ηs) # spline
+        co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end
 
     return x1 <= x <= x2 ? co.η_spline(x) : NaN
@@ -96,24 +101,12 @@ end
 
 # cosmic time
 function t(co::ΛCDM, x::Real)
-    x1, x2 = -20, +20 # integration and spline range
+    x1, x2 = -20.0, +20.0 # integration and spline range
 
     if isnothing(co.t_spline)
-        condition(t, x, integrator) = Ωpoly(co, x) - 1e-4
-        affect!(integrator) = terminate!(integrator)
-        big_rip_terminator = ContinuousCallback(condition, affect!)
-
-        dt_dx(t, p, x) = 1 / H(co, x)
+        dt_dx(x) = 1 / H(co, x)
         t1 = 1 / (2*H(co, x1))
-        sol = solve(ODEProblem(dt_dx, t1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator)
-        xs, ts = sol.t, sol.u
-        if xs[end] == xs[end-1]
-            # remove last duplicate point TODO: a better way?
-            xs = xs[1:end-1]
-            ts = ts[1:end-1]
-        end
-        x2 = min(x2, xs[end])
-        co.t_spline = linear_interpolation(xs, ts) # spline
+        co.t_spline, x1, x2 = _spline_dy_dx(co, dt_dx, x1, x2, t1)
     end
 
     return x1 <= x <= x2 ? co.t_spline(x) : NaN
