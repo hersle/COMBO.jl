@@ -87,7 +87,7 @@ end
 function η(co::ΛCDM, x::Real)
     if isnothing(co.η_spline)
         dη_dx(x) = c / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
-        x1, x2 = -20, +20 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
+        x1, x2 = -20.0, +20.0 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
         η1 = c / (a(x1) * H(co, x1))
         co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end

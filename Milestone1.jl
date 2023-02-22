@@ -127,7 +127,7 @@ if !isfile("plots/supernova.pdf")
 end
 
 # Supernova MCMC fits
-if true || !isfile("plots/supernova_mcmc.pdf")
+if true || !isfile("plots/supernova_mcmc.pdf") || !isfile("plots/supernova_hubble.pdf")
     data = readdlm("data/supernovadata.txt", comments=true)
     N_obs, _ = size(data)
     z_obs, dL_obs, σdL_obs = data[:,1], data[:,2], data[:,3]
@@ -135,27 +135,33 @@ if true || !isfile("plots/supernova_mcmc.pdf")
 
     function logL(params::Vector{Float64})
         h, Ωm0, Ωk0 = params # unpack
-        co = ΛCDM(h=h, Ωb0=0.0, Ωc0=Ωm0, Ωk0=Ωk0) # only Ωm matters, so might as well set Ωb=0
-        if maximum(co.x_spline) > 0 # cosmology extends at least till today (otherwise can't compare with measurements)
+        co = ΛCDM(h=h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=Ωk0)
+        if isnan(Cosmology.dL.(co, maximum(x_obs))) # model does not extend far enough so that it can fit the data
+            return -Inf # so set L = 0 (or log(L) = -∞, or χ2 = ∞)
+        else
             dL_mod = Cosmology.dL.(co, x_obs) / Gpc
             return -1/2 * sum(@. (dL_mod - dL_obs)^2 / σdL_obs^2) # L = exp(-χ2/2) # TODO: optimize
-        else # model does not extend far enough so that it can fit the data
-            return -Inf # so set L = 0 (or log(L) = -∞, or χ2 = ∞)
         end
     end
 
-    params, logLs = MetropolisHastings(logL, ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0]), 1000) #; steps=[0.007, 0.05, 0.05])
+    params, logLs = MetropolisHastings(logL, ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0]), 2000; steps=[0.007, 0.05, 0.05])
+    params = params[1:end-1000, :] # remove burn-in
+    logLs  =  logLs[1:end-1000]
     h, Ωm0, Ωk0 = params[:,1], params[:,2], params[:,3]
     best_index = argmax(logLs)
     best_χ2 = -2 * logLs[best_index]
     best_h, best_Ωm0, best_Ωk0 = params[best_index,:]
     println("Best fit (χ²/N = $(round(best_χ2/N_obs, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
 
-    # TODO: get ΩΛ. must be done differently for each cosmology, since Ωr0 depends on h!!!!!!!!
-
-    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{k0}", xlims = (0, 1), ylims = (-1, +1))
-    scatter!(Ωm0, Ωk0; label = nothing)
+    # compute corresponding ΩΛ values by reconstructing the cosmologies
+    ΩΛ = [ΛCDM(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i]).ΩΛ for i in 1:length(h)]
+    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = (0, 1), ylims = (-1, +1))
+    scatter!(Ωm0, ΩΛ; label = nothing)
     savefig("plots/supernova_mcmc.pdf")
+
+    plot(xlabel = L"h = H_0 \,/\, 100\,\frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}", ylabel = L"P(h)",xlims = (0.65, 0.75))
+    histogram!(h; normalize = true, label = nothing)
+    savefig("plots/supernova_hubble.pdf")
 end
 
 end
