@@ -26,7 +26,7 @@ function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector
         steps = 0.05 .* (params_hi .- params_lo)
     end
 
-    ndistr = Normal()
+    ndistr = Normal(0, 1)
     udistr = Uniform(0, 1)
 
     # set first params to a random guess within the parameter bounds
@@ -41,10 +41,9 @@ function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector
 
     step = 0
     sample = 0
-    new_params = Vector{Float64}(undef, nparams) # pre-allocate
     while sample < samples
         step += 1
-        new_params .= curr_params .+ rand.(ndistr) .* steps
+        new_params = curr_params .+ rand.(ndistr) .* steps
         inbounds = all(i -> params_lo[i] <= new_params[i] <= params_hi[i], 1:nparams)
         new_logL = inbounds ? logL(new_params) : -Inf
         accept = new_logL - curr_logL > log(rand()) # TODO: why on earth does this line allocate memory?

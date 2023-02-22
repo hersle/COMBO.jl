@@ -67,7 +67,7 @@ daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * Ωpoly(co, x; d=1) / Ωpoly(co,
 d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + Ωpoly(co, x; d=1) / Ωpoly(co, x) + 1/2 * Ωpoly(co, x; d=2) / Ωpoly(co, x) - 1/4 * (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
 
 # TODO: make independent of cosmology?
-function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; terminator = (co, x) -> Ωpoly(co, x) - 1e-4)
+function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; terminator = (co, x) -> Ωpoly(co, x) - 1e-8)
     condition(y, x, integrator) = terminator(co, x)
     affect!(integrator) = terminate!(integrator)
     callback = ContinuousCallback(condition, affect!)
@@ -88,7 +88,7 @@ function η(co::ΛCDM, x::Real)
     if isnothing(co.η_spline)
         dη_dx(x) = c / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
         x1, x2 = -20.0, +20.0 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
-        η1 = c / (a(x1) * H(co, x1))
+        η1 = c / aH(co, x1)
         co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end
     (x1, x2), = bounds(co.η_spline.itp)
@@ -116,7 +116,7 @@ end
 ΩΛ(co::ΛCDM, x::Real) = co.ΩΛ  / (H(co, x)^2 / H(co, 0)^2)
 Ωr(co::ΛCDM, x::Real) = Ωγ(co, x) + Ων(co, x)
 Ωm(co::ΛCDM, x::Real) = Ωb(co, x) + Ωc(co, x)
-Ω(co::ΛCDM, x::Real) = Ωr(co, x) + Ωm(co, x) + Ωk(co, x) + ΩΛ(co, x)
+Ω( co::ΛCDM, x::Real) = Ωr(co, x) + Ωm(co, x) + Ωk(co, x) + ΩΛ(co, x)
 
 # equalities
 r_m_equality(co::ΛCDM) = find_zero(x -> Ωr(co, x) - Ωm(co, x), (-20, +20)) # TODO: save xmin, xmax in ΛCDM
