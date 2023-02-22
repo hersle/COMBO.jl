@@ -14,23 +14,22 @@ using Interpolations
 using Roots
 using .Constants
 
-struct ΛCDM
-    h::Float64 # dimensionless Hubble parameter h = H0 / (100 TODO units)
-    H0::Float64
-    Ωb0::Float64 # baryons
-    Ωc0::Float64 # cold dark matter
-    Ωm0::Float64 # matter = baryons + cold dark matter
-    Ωk0::Float64 # curvature
-    Ωγ0::Float64 # photons
-    Ων0::Float64 # (massless) neutrinos
-    Ωr0::Float64 # radiation = photons + neutrinos
-    ΩΛ::Float64 # dark energy (as cosmological constant)
-    Tγ0::Float64 # photon (CMB) temperature
-    Neff::Float64 # TODO: ?
+mutable struct ΛCDM
+    const h::Float64 # dimensionless Hubble parameter h = H0 / (100 TODO units)
+    const H0::Float64
+    const Ωb0::Float64 # baryons
+    const Ωc0::Float64 # cold dark matter
+    const Ωm0::Float64 # matter = baryons + cold dark matter
+    const Ωk0::Float64 # curvature
+    const Ωγ0::Float64 # photons
+    const Ων0::Float64 # (massless) neutrinos
+    const Ωr0::Float64 # radiation = photons + neutrinos
+    const ΩΛ::Float64 # dark energy (as cosmological constant)
+    const Tγ0::Float64 # photon (CMB) temperature
+    const Neff::Float64 # TODO: ?
 
-    x_spline::Vector{Float64}
-    η_spline::Interpolations.Extrapolation # TODO: what kind of spline?
-    t_spline::Interpolations.Extrapolation
+    η_spline::Union{Nothing, Interpolations.Extrapolation} # TODO: what kind of spline?
+    t_spline::Union{Nothing, Interpolations.Extrapolation}
 
     function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
         H0 = h * 100*km/Mpc
@@ -42,36 +41,8 @@ struct ΛCDM
 
         Ω0 = Ωr0 + Ωm0 + Ωk0 + ΩΛ
 
-        x1, x2 = -20, +20 # integration and spline range
-        Hx(x::Real) = H(h, Ωr0, Ωm0, Ωk0, ΩΛ, x)
-
-        dη_dx(η, p, x) = c / (a(x) * Hx(x)) # TODO: integrate in dimensionless units closer to 1
-        η1 = c / (a(x1) * Hx(x1))
-        condition(η, x, integrator) = Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x) - 1e-4
-        affect!(integrator) = terminate!(integrator)
-        big_rip_terminator = ContinuousCallback(condition, affect!)
-        sol = solve(ODEProblem(dη_dx, η1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator) # automatically choose method
-        x, η = sol.t, sol.u
-        if x[end] == x[end-1]
-            # remove last duplicate point TODO: a better way?
-            x = x[1:end-1]
-            η = η[1:end-1]
-        end
-        η_spline = linear_interpolation(x, η) # spline
-
-        dt_dx(t, p, x) = 1 / Hx(x)
-        t1 = 1 / (2*Hx(x1))
-        sol = solve(ODEProblem(dt_dx, t1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator)
-        x, t = sol.t, sol.u
-        if x[end] == x[end-1]
-            # remove last duplicate point TODO: a better way?
-            x = x[1:end-1]
-            t = t[1:end-1]
-        end
-        t_spline = linear_interpolation(x, t) # spline
-
         # TODO: don't pass x: it is different from η to t
-        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ, Tγ0, Neff, x, η_spline, t_spline)
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ, Tγ0, Neff, nothing, nothing)
     end
 end
 
@@ -98,9 +69,55 @@ daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * Ωpoly(co, x; d=1) / Ωpoly(co,
 #d2aH(co::ΛCDM, x::Real) = daH(co, x)^2 / ah(co, x) + 1/2 * aH(co, x) * (Ωpoly(co, x; d=2) / Ωpoly(co, x) + (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
 d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + Ωpoly(co, x; d=1) / Ωpoly(co, x) + 1/2 * Ωpoly(co, x; d=2) / Ωpoly(co, x) - 1/4 * (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
 
-# conformal time + cosmic time
-η(co::ΛCDM, x::Real) = co.η_spline(x)
-t(co::ΛCDM, x::Real) = co.t_spline(x)
+# conformal time
+function η(co::ΛCDM, x::Real)
+    x1, x2 = -20, +20 # integration and spline range
+
+    if isnothing(co.η_spline)
+        condition(η, x, integrator) = Ωpoly(co, x) - 1e-4
+        affect!(integrator) = terminate!(integrator)
+        big_rip_terminator = ContinuousCallback(condition, affect!)
+
+        dη_dx(η, p, x) = c / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
+        η1 = c / (a(x1) * H(co, x1))
+        sol = solve(ODEProblem(dη_dx, η1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator) # automatically choose method
+        xs, ηs = sol.t, sol.u
+        if xs[end] == xs[end-1]
+            # remove last duplicate point TODO: a better way?
+            xs = xs[1:end-1]
+            ηs = ηs[1:end-1]
+        end
+        x2 = min(x2, xs[end])
+        co.η_spline = linear_interpolation(xs, ηs) # spline
+    end
+
+    return x1 <= x <= x2 ? co.η_spline(x) : NaN
+end
+
+# cosmic time
+function t(co::ΛCDM, x::Real)
+    x1, x2 = -20, +20 # integration and spline range
+
+    if isnothing(co.t_spline)
+        condition(t, x, integrator) = Ωpoly(co, x) - 1e-4
+        affect!(integrator) = terminate!(integrator)
+        big_rip_terminator = ContinuousCallback(condition, affect!)
+
+        dt_dx(t, p, x) = 1 / H(co, x)
+        t1 = 1 / (2*H(co, x1))
+        sol = solve(ODEProblem(dt_dx, t1, (x1, x2)), Tsit5(); reltol=1e-10, callback = big_rip_terminator)
+        xs, ts = sol.t, sol.u
+        if xs[end] == xs[end-1]
+            # remove last duplicate point TODO: a better way?
+            xs = xs[1:end-1]
+            ts = ts[1:end-1]
+        end
+        x2 = min(x2, xs[end])
+        co.t_spline = linear_interpolation(xs, ts) # spline
+    end
+
+    return x1 <= x <= x2 ? co.t_spline(x) : NaN
+end
 
 # density parameters (relative to critical density *at the time*)
 Ωγ(co::ΛCDM, x::Real) = co.Ωγ0 / (a(x)^4 * H(co, x)^2 / H(co, 0)^2)
