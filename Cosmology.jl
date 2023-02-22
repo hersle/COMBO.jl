@@ -33,15 +33,12 @@ mutable struct ΛCDM
 
     function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
         H0 = h * 100*km/Mpc
-        Ωm0 = Ωb0+Ωc0
+        Ωm0 = Ωb0 + Ωc0
         Ωγ0 = 2 * π^2/30 * (kB*Tγ0)^4 / (ħ^3*c^5) * 8*π*G / (3*H0^2)
         Ων0 = Neff * 7/8 * (4/11)^(4/3) * Ωγ0
         Ωr0 = Ωγ0 + Ων0
         ΩΛ  = 1.0 - (Ωr0 + Ωm0 + Ωk0)
-
-        Ω0 = Ωr0 + Ωm0 + Ωk0 + ΩΛ
-
-        # TODO: don't pass x: it is different from η to t
+        Ω0 = Ωr0 + Ωm0 + Ωk0 + ΩΛ # ≈ 1
         new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ, Tγ0, Neff, nothing, nothing)
     end
 end
@@ -88,27 +85,25 @@ end
 
 # conformal time
 function η(co::ΛCDM, x::Real)
-    x1, x2 = -20, +20 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
-
     if isnothing(co.η_spline)
         dη_dx(x) = c / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
+        x1, x2 = -20, +20 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
         η1 = c / (a(x1) * H(co, x1))
         co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end
-
+    (x1, x2), = bounds(co.η_spline.itp)
     return x1 <= x <= x2 ? co.η_spline(x) : NaN
 end
 
 # cosmic time
 function t(co::ΛCDM, x::Real)
-    x1, x2 = -20.0, +20.0 # integration and spline range
-
     if isnothing(co.t_spline)
         dt_dx(x) = 1 / H(co, x)
+        x1, x2 = -20.0, +20.0 # integration and spline range
         t1 = 1 / (2*H(co, x1))
         co.t_spline, x1, x2 = _spline_dy_dx(co, dt_dx, x1, x2, t1)
     end
-
+    (x1, x2), = bounds(co.t_spline.itp)
     return x1 <= x <= x2 ? co.t_spline(x) : NaN
 end
 
