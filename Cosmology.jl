@@ -129,7 +129,7 @@ function dL(co::ΛCDM, x::Real)
     # Ωk0 < 0: r = χ * sinhc(√(Ωk0)*H0*χ/c)
     # ... are all captured by
     χ = η(co, 0) - η(co, x)
-    r = χ * real(sinc(√(complex(-co.Ωk0)) * co.H0 * χ / c / π)) # TODO: Julia computes sinc(x) = sin(π*x) / (π*x) !!!!!!!!!!!!
+    r = χ * real(sinc(√(complex(-co.Ωk0)) * co.H0 * χ / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x) !
     return r / a(x)
 end
 
