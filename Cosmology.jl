@@ -124,12 +124,16 @@ m_Λ_equality(co::ΛCDM) = find_zero(x -> Ωm(co, x) - ΩΛ(co, x), (-20, +20)) 
 
 # luminosity distance
 function dL(co::ΛCDM, x::Real)
-    # Ωk0 = 0: r = χ
-    # Ωk0 > 0: r = χ *  sinc(√(Ωk0)*H0*χ/c)
-    # Ωk0 < 0: r = χ * sinhc(√(Ωk0)*H0*χ/c)
-    # ... are all captured by
     χ = η(co, 0) - η(co, x)
-    r = χ * real(sinc(√(complex(-co.Ωk0)) * co.H0 * χ / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x) !
+    # 1. r(Ωk0 = 0) = χ
+    # 2. r(Ωk0 < 0) = χ *  sin(√(-Ωk0)*H0*χ/c) / (√(-Ωk0)*H0*χ/c)
+    # 3. r(Ωk0 > 0) = χ * sinh(√(+Ωk0)*H0*χ/c) / (√(+Ωk0)*H0*χ/c)
+    # can all be written as the real-valued function
+    #    r(Ωk0)     = χ * sinc(√(-Ωk0)*H0*χ/c/π)
+    # using complex numbers,
+    # because sinc(x) = sin(π*x) / (π*x) -> 1 as x -> 0,
+    # and sinh(x) = -i * sin(i*x)
+    r = χ * real(sinc(√(complex(-co.Ωk0)) * co.H0 * χ / c / π)) # sinc(x) = sin(π*x) / (π*x), so divide argument by π!
     return r / a(x)
 end
 
