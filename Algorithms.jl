@@ -21,19 +21,19 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
     nparams = length(params_lo)
 
     if chains > 1
-        # TODO: chop off burn-in
-        all_params = Array{Float64, 3}(undef, chains, (samples-burnin), nparams)
-        all_logLs = Array{Float64, 2}(undef, chains, (samples-burnin))
+        # run individual chains and concatenate their outputs
+        all_params = Array{Float64, 3}(undef, chains, samples, nparams)
+        all_logLs = Array{Float64, 2}(undef, chains, samples)
         for chain in 1:chains
             if verbose
-                println("Metropolis-Hastings chain #$chain")
+                println("Metropolis-Hastings chain $chain/$chains")
             end
-            params, logLs = MetropolisHastings(logL, bounds, samples, 1; steps, burnin, verbose)
+            params, logLs = MetropolisHastings(logL, bounds, samples, 1; steps, burnin, verbose) # run one chain
             all_params[chain,:,:] .= params
             all_logLs[chain,:] .= logLs
         end
-        all_params = reshape(all_params, (chains*(samples-burnin), nparams))
-        all_logLs = reshape(all_logLs, (chains*(samples-burnin)))
+        all_params = reshape(all_params, (chains * samples, nparams))
+        all_logLs = reshape(all_logLs, (chains * samples,))
         return all_params, all_logLs
     end
 
@@ -61,26 +61,30 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
 
     step = 0
     sample = 0
-    while sample < samples
+    while sample < samples + burnin
         step += 1
         new_params = curr_params .+ rand.(ndistr) .* steps
         inbounds = all(i -> params_lo[i] <= new_params[i] <= params_hi[i], 1:nparams)
         new_logL = inbounds ? logL(new_params) : -Inf
-        accept = new_logL - curr_logL > log(rand()) # TODO: why on earth does this line allocate memory?
-        if accept # equivalent to new_L > rand(udistr) * curr_L (TODO: optimize: avoid rand() every loop)
+        accept = new_logL - curr_logL > log(rand(udistr)) # TODO: why on earth does this line allocate memory?
+        if accept # equivalent to new_L/curr_L > rand(udistr) (TODO: optimize: avoid rand() every loop)
             sample += 1
             curr_params .= new_params
             curr_logL = new_logL
 
-            params[sample,:] .= curr_params # record params
-            logLs[sample] = curr_logL # record likelihood
+            # record sample parameters and likelihood, if past the burn-in stage
+            if sample > burnin
+                params[sample-burnin,:] .= curr_params
+                logLs[sample-burnin] = curr_logL
+            end
         end
 
         accrate = sample / step
 
         if verbose && accept
             print("\33[2K\r") # overwrite current line
-            print("Sample ", sample, "/", samples, " (accept ", round(accrate*100, digits=1), "%): ")
+            print("Sample ", sample-burnin, "/", samples) # sample-burnin < 0 indicates burn-in stage
+            print(" (accept ", round(accrate*100, digits=1), "%): ")
             print("params = ", curr_params, ", log(L) ∝ ", round(curr_logL, digits=2))
             flush(stdout) # flush to display when line does not end with newline
         end
@@ -103,7 +107,7 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
         println() # end that line that we are constantly overwriting
     end
 
-    return params[burnin+1:end, :], logLs[burnin+1:end]
+    return params, logLs
 end
 
 end
