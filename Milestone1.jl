@@ -13,7 +13,10 @@ using DelimitedFiles
 using Distributions
 Plots.__init__() # workaround with sysimage: https://github.com/JuliaLang/PackageCompiler.jl/issues/786
 pgfplotsx()
-default(legend_font_halign = :left)
+default(
+    minorticks = 10,
+    legend_font_halign = :left,
+)
 
 co = ΛCDM()
 x = range(-15, 5, length=400)
@@ -128,7 +131,10 @@ if !isfile("plots/supernova_distance.pdf")
 end
 
 # Supernova MCMC fits
-if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
+# Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
+if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
+    println("Plotting Ωm0, ΩΛ from MCMC analysis of supernova data")
+
     data = readdlm("data/supernovadata.txt", comments=true)
     N_obs, _ = size(data)
     z_obs, dL_obs, σdL_obs = data[:,1], data[:,2], data[:,3]
@@ -141,43 +147,56 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
             return -Inf # so set L = 0 (or log(L) = -∞, or χ2 = ∞)
         else
             dL_mod = Cosmology.dL.(co, x_obs) / Gpc
-            return -1/2 * sum((dL_mod .- dL_obs).^2 ./ σdL_obs.^2) # L = exp(-χ2/2) # TODO: optimize
+            return -1/2 * sum((dL_mod .- dL_obs).^2 ./ σdL_obs.^2) # L = exp(-χ2/2)
         end
     end
 
     hbounds = (0.5, 1.5)
     Ωm0bounds = (0.0, 1.0)
     Ωk0bounds = (-1.0, +1.0)
-    params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], 8000, 3; burnin=1000) # TODO: 10000, multiple chains
-    nsamples, nparams = size(params)
+    nparams = 3 # h, Ωm0, Ωk0
+    nchains = 3
+    nsamples = 8000 # per chain
+    params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], nsamples, nchains; burnin=1000)
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
     # compute corresponding ΩΛ values by reconstructing the cosmologies (this is computationally cheap)
     ΩΛ = [ΛCDM(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i], Neff=0).ΩΛ for i in 1:length(h)]
+    ΩΛbounds = (0.0, 1.2) # just for later plotting
 
     # best fit
     best_index = argmax(logL)
     best_h, best_Ωm0, best_Ωk0, best_ΩΛ, best_χ2 = h[best_index], Ωm0[best_index], Ωk0[best_index], ΩΛ[best_index], χ2[best_index]
     println("Best fit (χ²/N = $(round(best_χ2/N_obs, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
 
-    # compute 68% and 95% confidence regions
-    confidence2 = cdf(Chisq(1), 2^2)
-    confidence1 = cdf(Chisq(1), 1^2)
+    # compute 68% ("1σ") and 95% ("2σ") confidence regions (https://en.wikipedia.org/wiki/Confidence_region)
+    # (we have 3D Gaussian, but only for a 1D Gaussian does this correspond to the probability of finding values within 1σ/2σ!)
+    # (see e.g. https://www.visiondummy.com/2014/04/draw-error-ellipse-representing-covariance-matrix/
+    #  and      https://stats.stackexchange.com/questions/61273/68-confidence-level-in-multinormal-distributions
+    #  and      https://math.stackexchange.com/questions/1357071/confidence-ellipse-for-a-2d-gaussian)
+    confidence2 = cdf(Chisq(1), 2^2) # ≈ 95% (2σ away from mean of 1D Gaussian)
+    confidence1 = cdf(Chisq(1), 1^2) # ≈ 68% (1σ away from mean of 1D Gaussian)
     filter2 = χ2 .- best_χ2 .< quantile(Chisq(nparams), confidence2) # ≈ 95% ("2σ" in a 1D Gaussian) confidence region
     filter1 = χ2 .- best_χ2 .< quantile(Chisq(nparams), confidence1) # ≈ 68% ("1σ" in a 1D Gaussian) confidence region
     h2, Ωm02, Ωk02, ΩΛ2 = h[filter2], Ωm0[filter2], Ωk0[filter2], ΩΛ[filter2]
     h1, Ωm01, Ωk01, ΩΛ1 = h[filter1], Ωm0[filter1], Ωk0[filter1], ΩΛ[filter1]
 
-    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = Ωm0bounds, ylims = (0.0, 1.5), legend_position = :topright)
-    scatter!(Ωm02, ΩΛ2; markerstrokewidth = 0, label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}")
-    scatter!(Ωm01, ΩΛ1; markerstrokewidth = 0, label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
-    plot!(Ωm0 -> 1 - Ωm0; linestyle = :dash, color = :black, label = "flat universe")
+    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = Ωm0bounds, ylims = ΩΛbounds, xticks = range(Ωm0bounds..., step=0.1), yticks = range(ΩΛbounds..., step=0.1), legend_position = :topright)
+    scatter!(Ωm02, ΩΛ2; color = 1, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
+    scatter!(Ωm01, ΩΛ1; color = 3, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
+    Ωm0_range = range(Ωm0bounds..., length=20) # compute ΩΛ for this range of Ωm0 in *flat* universes (should give ΩΛ ≈ 1 - Ωm0)
+    plot!(Ωm0_range, [ΛCDM(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ for Ωm0 in Ωm0_range]; color = :black, marker = :circle, markersize = 2, label = "flat universes")
     scatter!([best_Ωm0], [best_ΩΛ]; color = :red, markerstrokecolor = :red, markershape = :cross, label = "best fit")
     savefig("plots/supernova_omegas.pdf")
 
+    # TODO: draw error ellipses?
+    # see e.g. https://www.visiondummy.com/2014/04/draw-error-ellipse-representing-covariance-matrix/
+
+    println("Plotting h from MCMC analysis of supernova data")
+
     nfit = fit(Normal, h) # fit Hubble parameters to normal distribution
-    plot(xlabel = L"h = H_0 \,/\, 100\,\frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}", ylabel = L"P(h)", xlims = (0.65, 0.75), legend_position = :topright)
-    histogram!(h; normalize = true, linewidth = 0, label = L"\textrm{%$(nsamples) samples}")
+    plot(xlabel = L"h = H_0 \,/\, 100\,\frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}", ylabel = L"P(h)", xlims = (0.65, 0.75), ylims = (0, 1.1 / √(2*π*var(nfit))), xticks = 0.65:0.01:0.75, yticks=0:10:100, legend_position = :topright)
+    histogram!(h; normalize = true, linewidth = 0, label = L"%$(nchains) \times %$(nsamples) \textrm{ samples}")
     vline!([best_h]; linestyle = :dash, color = :red, label = L"\textrm{our best fit}")
     vline!([0.674]; linestyle = :dash, label = L"\textrm{Planck 2018's best fit}")
     plot!(h -> pdf(nfit, h); color = :black, label = L"N(\mu = %$(round(mean(nfit), digits=2)), \sigma = %$(round(std(nfit), digits=2)))")

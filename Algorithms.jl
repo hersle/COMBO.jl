@@ -4,10 +4,7 @@ export MetropolisHastings
 
 using Distributions
 
-# TODO: burnin?
 # TODO: constant step scaling "locks" their mutual *ratios*; scale only one random step?
-
-# TODO: multiple chains
 function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64}}, samples::Integer, chains::Integer; steps=nothing, burnin::Integer=0, verbose=true)
     params_lo = [bound[1] for bound in bounds]
     params_hi = [bound[2] for bound in bounds]
@@ -35,9 +32,9 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
         return params, logLs
     end # otherwise, continue and just run one chain
 
-    # unless step sizes are explicitly specified, automatically set them to 5% of bounds
+    # unless step sizes are explicitly specified, automatically set them to 1% of bounds
     if steps == nothing
-        steps = 0.05 .* (params_hi .- params_lo)
+        steps = 0.01 .* (params_hi .- params_lo)
     end
 
     ndistr = Normal(0, 1)
@@ -60,8 +57,8 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
         new_params = curr_params .+ rand.(ndistr) .* steps
         inbounds = all(i -> params_lo[i] <= new_params[i] <= params_hi[i], 1:nparams)
         new_logL = inbounds ? logL(new_params) : -Inf
-        accept = new_logL - curr_logL > log(rand(udistr)) # TODO: why on earth does this line allocate memory?
-        if accept # equivalent to new_L/curr_L > rand(udistr) (TODO: optimize: avoid rand() every loop)
+        accept = new_logL - curr_logL > log(rand(udistr)) # TODO: why the fuck does this line allocate memory?
+        if accept # equivalent to new_L/curr_L > rand(udistr) (TODO: avoid individual calls to rand() every loop?)
             sample += 1
             curr_params .= new_params
             curr_logL = new_logL
