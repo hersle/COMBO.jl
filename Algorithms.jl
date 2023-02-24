@@ -7,9 +7,10 @@ using Distributions
 # TODO: burnin?
 # TODO: constant step scaling "locks" their mutual *ratios*; scale only one random step?
 
-# TODO: wtf have i done now?
-function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector{Float64}}, samples::Integer; steps=nothing, verbose=true)
-    params_lo, params_hi = bounds
+# TODO: multiple chains
+function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64}}, samples::Integer; steps=nothing, burnin::Integer=0, verbose=true)
+    params_lo = [bound[1] for bound in bounds]
+    params_hi = [bound[2] for bound in bounds]
 
     @assert !isnan(logL(params_lo)) && !isnan(logL(params_hi))
     @assert all(params_hi .>= params_lo)
@@ -75,7 +76,7 @@ function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector
             if verbose
                 println("\nToo far from 25% accept rate; re-running with step sizes scaled by ", scale)
             end
-            return MetropolisHastings(logL, bounds, samples; steps, verbose)
+            return MetropolisHastings(logL, bounds, samples; steps, burnin, verbose)
         end
     end
 
@@ -83,7 +84,7 @@ function MetropolisHastings(logL::Function, bounds::Tuple{Vector{Float64},Vector
         println() # end that line that we are constantly overwriting
     end
 
-    return params, logLs
+    return params[burnin+1:end, :], logLs[burnin+1:end]
 end
 
 end

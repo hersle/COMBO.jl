@@ -144,16 +144,14 @@ if true || !isfile("plots/supernova_mcmc.pdf") || !isfile("plots/supernova_hubbl
         end
     end
 
-    params, logLs = MetropolisHastings(logL, ([0.5, 0.0, -1.0], [1.5, 1.0, +1.0]), 2000) #; steps=[0.007, 0.05, 0.05])
-    params = params[1:end-1000, :] # remove burn-in
-    logLs  =  logLs[1:end-1000]
-    h, Ωm0, Ωk0 = params[:,1], params[:,2], params[:,3]
-    best_index = argmax(logLs)
-    best_χ2 = -2 * logLs[best_index]
-    best_h, best_Ωm0, best_Ωk0 = params[best_index,:]
-    println("Best fit (χ²/N = $(round(best_χ2/N_obs, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
+    hbounds = (0.5, 1.5)
+    Ωm0bounds = (0.0, 1.0)
+    Ωk0bounds = (-1.0, +1.0)
+    params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], 4000; burnin=1000) # TODO: 10000, multiple chains
+    nsamples = length(logL)
+    h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
-    # compute corresponding ΩΛ values by reconstructing the cosmologies
+    # compute corresponding ΩΛ values by reconstructing the cosmologies (this is computationally cheap)
     ΩΛ = [ΛCDM(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i], Neff=0).ΩΛ for i in 1:length(h)]
     plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = (0.0, 0.8), ylims = (0.0, 1.0))
     scatter!(Ωm0, ΩΛ; label = nothing)
