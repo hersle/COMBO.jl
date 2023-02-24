@@ -161,12 +161,12 @@ if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf"
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
     # compute corresponding ΩΛ values by reconstructing the cosmologies (this is computationally cheap)
-    ΩΛ = [ΛCDM(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i], Neff=0).ΩΛ for i in 1:length(h)]
-    ΩΛbounds = (0.0, 1.2) # just for later plotting
+    ΩΛ0 = [ΛCDM(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i], Neff=0).ΩΛ for i in 1:length(h)] # "ΩΛ0" to distinguish from Cosmology.ΩΛ
+    ΩΛ0bounds = (0.0, 1.2) # just for later plotting
 
     # best fit
     best_index = argmax(logL)
-    best_h, best_Ωm0, best_Ωk0, best_ΩΛ, best_χ2 = h[best_index], Ωm0[best_index], Ωk0[best_index], ΩΛ[best_index], χ2[best_index]
+    best_h, best_Ωm0, best_Ωk0, best_ΩΛ0, best_χ2 = h[best_index], Ωm0[best_index], Ωk0[best_index], ΩΛ0[best_index], χ2[best_index]
     println("Best fit (χ²/N = $(round(best_χ2/N_obs, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
 
     # compute 68% ("1σ") and 95% ("2σ") confidence regions (https://en.wikipedia.org/wiki/Confidence_region)
@@ -178,15 +178,19 @@ if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf"
     confidence1 = cdf(Chisq(1), 1^2) # ≈ 68% (1σ away from mean of 1D Gaussian)
     filter2 = χ2 .- best_χ2 .< quantile(Chisq(nparams), confidence2) # ≈ 95% ("2σ" in a 1D Gaussian) confidence region
     filter1 = χ2 .- best_χ2 .< quantile(Chisq(nparams), confidence1) # ≈ 68% ("1σ" in a 1D Gaussian) confidence region
-    h2, Ωm02, Ωk02, ΩΛ2 = h[filter2], Ωm0[filter2], Ωk0[filter2], ΩΛ[filter2]
-    h1, Ωm01, Ωk01, ΩΛ1 = h[filter1], Ωm0[filter1], Ωk0[filter1], ΩΛ[filter1]
+    h2, Ωm02, Ωk02, ΩΛ02 = h[filter2], Ωm0[filter2], Ωk0[filter2], ΩΛ0[filter2]
+    h1, Ωm01, Ωk01, ΩΛ01 = h[filter1], Ωm0[filter1], Ωk0[filter1], ΩΛ0[filter1]
 
-    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = Ωm0bounds, ylims = ΩΛbounds, xticks = range(Ωm0bounds..., step=0.1), yticks = range(ΩΛbounds..., step=0.1), legend_position = :topright)
-    scatter!(Ωm02, ΩΛ2; color = 1, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
-    scatter!(Ωm01, ΩΛ1; color = 3, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
-    Ωm0_range = range(Ωm0bounds..., length=20) # compute ΩΛ for this range of Ωm0 in *flat* universes (should give ΩΛ ≈ 1 - Ωm0)
-    plot!(Ωm0_range, [ΛCDM(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ for Ωm0 in Ωm0_range]; color = :black, marker = :circle, markersize = 2, label = "flat universes")
-    scatter!([best_Ωm0], [best_ΩΛ]; color = :red, markerstrokecolor = :red, markershape = :cross, label = "best fit")
+    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = Ωm0bounds, ylims = ΩΛ0bounds, xticks = range(Ωm0bounds..., step=0.1), yticks = range(ΩΛ0bounds..., step=0.1), legend_position = :topright)
+    scatter!(Ωm02, ΩΛ02; color = 1, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
+    scatter!(Ωm01, ΩΛ01; color = 3, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
+
+    # plot ΩΛ(Ωm0) for a few flat universes (should give ΩΛ ≈ 1 - Ωm0)
+    Ωm0_flat = range(Ωm0bounds..., length=20)
+    ΩΛ0_flat = [ΛCDM(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ for Ωm0 in Ωm0_flat]
+    plot!(Ωm0_flat, ΩΛ0_flat; color = :black, marker = :circle, markersize = 2, label = "flat universes")
+
+    scatter!([best_Ωm0], [best_ΩΛ0]; color = :red, markerstrokecolor = :red, markershape = :cross, label = "best fit")
     savefig("plots/supernova_omegas.pdf")
 
     # TODO: draw error ellipses?
