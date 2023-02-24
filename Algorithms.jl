@@ -8,7 +8,7 @@ using Distributions
 # TODO: constant step scaling "locks" their mutual *ratios*; scale only one random step?
 
 # TODO: multiple chains
-function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64}}, samples::Integer; steps=nothing, burnin::Integer=0, verbose=true)
+function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64}}, samples::Integer, chains::Integer; steps=nothing, burnin::Integer=0, verbose=true)
     params_lo = [bound[1] for bound in bounds]
     params_hi = [bound[2] for bound in bounds]
 
@@ -16,9 +16,28 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
     @assert all(params_hi .>= params_lo)
     @assert length(params_lo) == length(params_hi)
     @assert steps == nothing || length(steps) == length(params_lo)
+    @assert chains > 0
+
+    nparams = length(params_lo)
+
+    if chains > 1
+        # TODO: chop off burn-in
+        all_params = Array{Float64, 3}(undef, chains, (samples-burnin), nparams)
+        all_logLs = Array{Float64, 2}(undef, chains, (samples-burnin))
+        for chain in 1:chains
+            if verbose
+                println("Metropolis-Hastings chain #$chain")
+            end
+            params, logLs = MetropolisHastings(logL, bounds, samples, 1; steps, burnin, verbose)
+            all_params[chain,:,:] .= params
+            all_logLs[chain,:] .= logLs
+        end
+        all_params = reshape(all_params, (chains*(samples-burnin), nparams))
+        all_logLs = reshape(all_logLs, (chains*(samples-burnin)))
+        return all_params, all_logLs
+    end
 
     # pre-allocate arrays to record accepted parameters and likelihoods
-    nparams = length(params_lo)
     params = Array{Float64, 2}(undef, samples, nparams)
     logLs = Vector{Float64}(undef, samples)
 
@@ -76,7 +95,7 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
             if verbose
                 println("\nToo far from 25% accept rate; re-running with step sizes scaled by ", scale)
             end
-            return MetropolisHastings(logL, bounds, samples; steps, burnin, verbose)
+            return MetropolisHastings(logL, bounds, samples, 1; steps, burnin, verbose)
         end
     end
 
