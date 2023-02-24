@@ -10,6 +10,7 @@ using .Constants
 using Plots
 using LaTeXStrings
 using DelimitedFiles
+using Distributions
 Plots.__init__() # workaround with sysimage: https://github.com/JuliaLang/PackageCompiler.jl/issues/786
 pgfplotsx()
 default(legend_font_halign = :left)
@@ -80,11 +81,11 @@ if !isfile("plots/times.pdf")
     η_anal = @. 2*c / (co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
     t_anal = @.   2 / (3 * co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) * (a(x) - 2*aeq_anal) + 2*aeq_anal^(3/2))
 
-    plot!(x, log10.(η.(co, x) / c / Gyr); linestyle = :solid, color = 0, label = L"\eta \,\, \mathrm{(general)}")
-    plot!(x, log10.(η_anal    / c / Gyr); linestyle = :dash,  color = 0, label = L"\eta \,\, \mathrm{(radiation-matter universe)}")
+    plot!(x, log10.(η.(co, x) / c / Gyr); linestyle = :solid, color = 0, label = L"\eta \,\, \textrm{(general)}")
+    plot!(x, log10.(η_anal    / c / Gyr); linestyle = :dash,  color = 0, label = L"\eta \,\, \textrm{(radiation-matter universe)}")
 
-    plot!(x, log10.(t.(co, x) / Gyr); linestyle = :solid, color = 1, label = L"t \,\, \mathrm{(general)}")
-    plot!(x, log10.(t_anal    / Gyr); linestyle = :dash,  color = 1, label = L"t \,\, \mathrm{(radiation-matter universe)}")
+    plot!(x, log10.(t.(co, x) / Gyr); linestyle = :solid, color = 1, label = L"t \,\, \textrm{(general)}")
+    plot!(x, log10.(t_anal    / Gyr); linestyle = :dash,  color = 1, label = L"t \,\, \textrm{(radiation-matter universe)}")
     savefig("plots/times.pdf")
 end
 
@@ -110,7 +111,7 @@ if !isfile("plots/density_parameters.pdf")
 end
 
 # Supernova data
-if !isfile("plots/supernova.pdf")
+if !isfile("plots/supernova_distance.pdf")
     #co = ΛCDM(h=0.7, Ωc0=0.30-0.05, Ωk0=0.00)
     plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"\log_{10} \Big[ d_L \,/\, \mathrm{Gpc} \Big]", xlims=(0, 0.4), ylims=(-1.5, 1.5), legend_position = :topleft)
 
@@ -123,17 +124,17 @@ if !isfile("plots/supernova.pdf")
     err_hi = log10.(dL+σdL) - log10.(dL)
     scatter!(log10.(z.+1), log10.(dL); yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
 
-    savefig("plots/supernova.pdf")
+    savefig("plots/supernova_distance.pdf")
 end
 
 # Supernova MCMC fits
-if true || !isfile("plots/supernova_mcmc.pdf") || !isfile("plots/supernova_hubble.pdf")
+if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
     data = readdlm("data/supernovadata.txt", comments=true)
     N_obs, _ = size(data)
     z_obs, dL_obs, σdL_obs = data[:,1], data[:,2], data[:,3]
     x_obs = @. -log(z_obs + 1)
 
-    function logL(params::Vector{Float64})
+    function logLfunc(params::Vector{Float64})
         h, Ωm0, Ωk0 = params[1], params[2], params[3]
         co = ΛCDM(h=h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=Ωk0, Neff=0)
         if isnan(Cosmology.dL.(co, maximum(x_obs))) # model does not extend far enough so that it can fit the data
@@ -148,17 +149,38 @@ if true || !isfile("plots/supernova_mcmc.pdf") || !isfile("plots/supernova_hubbl
     Ωm0bounds = (0.0, 1.0)
     Ωk0bounds = (-1.0, +1.0)
     params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], 4000; burnin=1000) # TODO: 10000, multiple chains
-    nsamples = length(logL)
+    nsamples, nparams = size(params)
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
     # compute corresponding ΩΛ values by reconstructing the cosmologies (this is computationally cheap)
     ΩΛ = [ΛCDM(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i], Neff=0).ΩΛ for i in 1:length(h)]
-    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = (0.0, 0.8), ylims = (0.0, 1.0))
-    scatter!(Ωm0, ΩΛ; label = nothing)
-    savefig("plots/supernova_mcmc.pdf")
 
-    plot(xlabel = L"h = H_0 \,/\, 100\,\frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}", ylabel = L"P(h)", xlims = (0.65, 0.75))
-    histogram!(h; normalize = true, label = nothing)
+    # best fit
+    best_index = argmax(logL)
+    best_h, best_Ωm0, best_Ωk0, best_ΩΛ, best_χ2 = h[best_index], Ωm0[best_index], Ωk0[best_index], ΩΛ[best_index], χ2[best_index]
+    println("Best fit (χ²/N = $(round(best_χ2/N_obs, digits=1))): h = $best_h, Ωm0 = $best_Ωm0, Ωk0 = $best_Ωk0")
+
+    # compute 68% and 95% confidence regions
+    confidence2 = cdf(Chisq(1), 2^2)
+    confidence1 = cdf(Chisq(1), 1^2)
+    filter2 = χ2 .- best_χ2 .< quantile(Chisq(nparams), confidence2) # ≈ 95% ("2σ" in a 1D Gaussian) confidence region
+    filter1 = χ2 .- best_χ2 .< quantile(Chisq(nparams), confidence1) # ≈ 68% ("1σ" in a 1D Gaussian) confidence region
+    h2, Ωm02, Ωk02, ΩΛ2 = h[filter2], Ωm0[filter2], Ωk0[filter2], ΩΛ[filter2]
+    h1, Ωm01, Ωk01, ΩΛ1 = h[filter1], Ωm0[filter1], Ωk0[filter1], ΩΛ[filter1]
+
+    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = Ωm0bounds, ylims = (0.0, 1.5), legend_position = :topright)
+    scatter!(Ωm02, ΩΛ2; markerstrokewidth = 0, label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}")
+    scatter!(Ωm01, ΩΛ1; markerstrokewidth = 0, label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
+    plot!(Ωm0 -> 1 - Ωm0; linestyle = :dash, color = :black, label = "flat universe")
+    scatter!([best_Ωm0], [best_ΩΛ]; color = :red, markerstrokecolor = :red, markershape = :cross, label = "best fit")
+    savefig("plots/supernova_omegas.pdf")
+
+    nfit = fit(Normal, h) # fit Hubble parameters to normal distribution
+    plot(xlabel = L"h = H_0 \,/\, 100\,\frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}", ylabel = L"P(h)", xlims = (0.65, 0.75), legend_position = :topright)
+    histogram!(h; normalize = true, linewidth = 0, label = L"\textrm{%$(nsamples) samples}")
+    vline!([best_h]; linestyle = :dash, color = :red, label = L"\textrm{our best fit}")
+    vline!([0.674]; linestyle = :dash, label = L"\textrm{Planck 2018's best fit}")
+    plot!(h -> pdf(nfit, h); color = :black, label = L"N(\mu = %$(round(mean(nfit), digits=2)), \sigma = %$(round(std(nfit), digits=2)))")
     savefig("plots/supernova_hubble.pdf")
 end
 

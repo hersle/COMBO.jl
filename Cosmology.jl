@@ -67,7 +67,7 @@ daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * Ωpoly(co, x; d=1) / Ωpoly(co,
 d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + Ωpoly(co, x; d=1) / Ωpoly(co, x) + 1/2 * Ωpoly(co, x; d=2) / Ωpoly(co, x) - 1/4 * (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
 
 # TODO: make independent of cosmology?
-function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; terminator = (co, x) -> Ωpoly(co, x) - 1e-8)
+function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; terminator = (co, x) -> Ωpoly(co, x) - 1e-7)
     condition(y, x, integrator) = terminator(co, x)
     affect!(integrator) = terminate!(integrator)
     callback = ContinuousCallback(condition, affect!)
