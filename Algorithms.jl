@@ -18,28 +18,22 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
     @assert steps == nothing || length(steps) == length(params_lo)
     @assert chains > 0
 
+    # pre-allocate arrays to record accepted parameters and likelihoods
     nparams = length(params_lo)
+    params = Array{Float64, 2}(undef, chains * samples, nparams)
+    logLs = Vector{Float64}(undef, chains * samples)
 
-    if chains > 1
-        # run individual chains and concatenate their outputs
-        all_params = Array{Float64, 3}(undef, chains, samples, nparams)
-        all_logLs = Array{Float64, 2}(undef, chains, samples)
+    if chains > 1 # run individual chains and concatenate their outputs
         for chain in 1:chains
             if verbose
                 println("Metropolis-Hastings chain $chain/$chains")
             end
-            params, logLs = MetropolisHastings(logL, bounds, samples, 1; steps, burnin, verbose) # run one chain
-            all_params[chain,:,:] .= params
-            all_logLs[chain,:] .= logLs
+            params1, logLs1 = MetropolisHastings(logL, bounds, samples, 1; steps, burnin, verbose) # run one chain
+            params[1+(chain-1)*samples:chain*samples, :] = params1
+            logLs[1+(chain-1)*samples:chain*samples] = logLs1
         end
-        all_params = reshape(all_params, (chains * samples, nparams))
-        all_logLs = reshape(all_logLs, (chains * samples,))
-        return all_params, all_logLs
-    end
-
-    # pre-allocate arrays to record accepted parameters and likelihoods
-    params = Array{Float64, 2}(undef, samples, nparams)
-    logLs = Vector{Float64}(undef, samples)
+        return params, logLs
+    end # otherwise, continue and just run one chain
 
     # unless step sizes are explicitly specified, automatically set them to 5% of bounds
     if steps == nothing
@@ -55,7 +49,7 @@ function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64
 
     if verbose
         println("Step sizes: ", steps)
-        print("Initial random guess: ")
+        print("Initial guess: ")
         println("params = ", curr_params, ", log(L) ∝ ", round(curr_logL, digits=2))
     end
 
