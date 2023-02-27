@@ -1,0 +1,276 @@
+%\documentclass[onecolumn]{aa} % for a paper on 1 column  
+%\documentclass[longauth]{aa} % for the long lists of affiliations
+%\documentclass[bibyear]{aa} % if the references are not structured according to the author-year natbib style
+\documentclass{aa}  
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{txfonts}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{tensor}
+\usepackage{derivative}
+
+\DeclareMathOperator{\asin}{asin}
+\DeclareMathOperator{\sinc}{sinc}
+
+\begin{document}
+
+\title{AST5220 project report}
+\subtitle{Einstein-Boltzmann solver}
+\author{Herman Sletmoen}
+
+\institute{ITA Oslo}
+\date{Spring 2023}
+
+\abstract
+% context heading (optional)
+{Solve Einstein-Boltzmann equations}
+% aims heading (mandatory)
+{Solve Einstein-Boltzmann equations}
+% methods heading (mandatory)
+{Solve Einstein-Boltzmann equations}
+% results heading (mandatory)
+{Solve Einstein-Boltzmann equations}
+% conclusions heading (optional)
+{Solve Einstein-Boltzmann equations}
+
+\keywords{cosmology -- Einstein-Boltzmann equations}
+
+\maketitle
+%
+%________________________________________________________________
+
+\section{Introduction}
+
+Einstein field equations
+\begin{equation}
+	G\indices{_\mu_\nu} + \Lambda g\indices{_\mu_\nu} = \frac{8 \pi G}{c^4} T\indices{_\mu_\nu}
+\label{eq_einstein}
+\end{equation}
+energy-momentum tensor
+\begin{equation}
+	T\indices{^\mu_\nu} = ...
+\label{eq_energy_momentum}
+\end{equation}
+
+Unless otherwise stated (except with SN?),
+Planck (2018?) cosmology
+\begin{align}
+h &= 0.67, \\
+T_{\rm CMB 0} &= 2.7255\,K, \\
+N_{\rm eff} &= 3.046, \\
+\Omega_{\rm b 0} &= 0.05, \\
+\Omega_{\rm CDM 0} &= 0.267,\\
+\Omega_{k 0} &= 0, \\
+\Omega_{\nu 0} &= N_{\rm eff}\cdot \frac{7}{8}\left(\frac{4}{11}\right)^{4/3}\Omega_{\gamma 0}, \\
+\Omega_{\Lambda 0} &= 1 - (\Omega_{k 0}+\Omega_{b 0}+\Omega_{\rm CDM 0}+\Omega_{\gamma 0}+\Omega_{\nu 0}),\\
+n_s &= 0.965, \\
+A_s &= 2.1\cdot 10^{-9}, \\
+Y_p &= 0.245, \\
+z_{\rm reion} &= 8, \\
+\Delta z_{\rm reion} &= 0.5, \\
+z_{\rm He reion} &= 3.5, \\
+\Delta z_{\rm He reion} &= 0.5.
+\end{align}
+
+
+\section{Background cosmology}
+
+According to the cosmological principle, the universe is spatially homogeneous and isotropic averaged over large scales.
+Such a spacetime is described by the \textbf{Friedmann-Lemaître-Robertson-Walker (FLRW) metric}
+\begin{equation}
+\begin{split}
+	ds^2 &= -c^2 dt^2 + a^2(t) \left[\frac{dr^2}{1 - kr^2} + r^2\left(d\theta^2 + \sin^2\theta \, d\phi^2\right) \right] \\
+	     &= a^2(t) \left[-c^2 d\eta^2 + \frac{dr^2}{1 - kr^2} + r^2\left(d\theta^2 + \sin^2\theta \, d\phi^2\right) \right],
+\end{split}
+\label{eq_flrw}
+\end{equation}
+with spatial curvature $k$ and scale factor $a(t)$.
+It is here written in spherical coordinates $r$, $\theta$ and $\phi$,
+and with either cosmic time $t$ or conformal time $\eta$ defined by%
+\footnote{I prefer the convention in which conformal time is a time.}
+$d\eta = dt / a$, so the metric in flat space is conformal to the Minkowski metric.
+
+We fill the homogeneous universe with an ideal fluid with energy density $\rho$, pressure $P$ and \textbf{energy-momentum}
+\begin{equation}
+	T\indices{^\mu_\nu} = \begin{bmatrix}
+		\rho(t) & 0 & 0 & 0 \\
+		0 & -P(t) & 0 & 0 \\
+		0 & 0 & -P(t) & 0 \\
+		0 & 0 & 0 & -P(t) \\
+	\end{bmatrix}.
+\label{eq_energy_momentum_homogeneous}
+\end{equation}
+
+The dynamics is governed by the Einstein field equations \eqref{eq_energy_momentum}.
+In particular, the component with $(\mu,\nu)=(0,0)$ gives
+\begin{equation*}
+	\left( \frac{\dot{a}}{a} \right)^2 + \frac{kc^2}{a^2} - \frac{\Lambda c^2}{3} = \frac{8 \pi G}{3} \rho.
+\end{equation*}
+We define the Hubble parameter $H(t) = \dot{a} / a$,
+and suppose the universe consists of matter and radiation.
+Matter is particles with energy $E_m=mc^2 \propto a^0$ and energy density $\rho_m \propto E_m/V \propto a^{-3}$,
+while radiation refers to particles with energy $E_r=pc=hc/\lambda \propto a^{-1}$ and energy density $\rho_r \propto E_r/V \propto a^{-4}$.
+With these constituents, the above equation can be written 
+\begin{equation*}
+	H^2(t) = \frac{8 \pi G}{3} \Big[ \rho_r(t) + \rho_m(t) + \rho_k(t) + \rho_\Lambda \Big]
+\end{equation*}
+with the (effective) energy densities
+\begin{equation}
+\begin{aligned}
+	\rho_r(t) &= \rho_{r0} a^{-4}, &\quad \rho_m(t) &= \rho_{m0} a^{-3}, \\
+	\rho_k(t) &= -\frac{3kc^2}{8\pi G} a^{-2}, &\quad \rho_\Lambda &= \frac{\Lambda c^2}{8 \pi G},
+\end{aligned}
+\end{equation}
+where $\rho_{r0} = \rho_r(t_0)$ and $\rho_{m0} = \rho_m(t_0)$ denotes the energy densities of radiation and matter today.
+At any time, the densities of the four species add up to the \textbf{critical density} $\rho_\text{crit}(t) = 3 H^2(t) / 8 \pi G$.
+%In particular, if $\rho_r + \rho_m + \rho_\Lambda = \rho_\text{crit}$, then $\rho_k = 0$,
+%so it can be interpreted as the energy density of radiation, matter and the cosmological constant that makes the universe flat.
+We use it to define the dimensionless \textbf{density parameters}
+\begin{equation}
+	\Omega_s(t) = \frac{\rho_s(t)}{\rho_\text{crit}(t)}
+	\quad \text{for $s = \{r,m,k,\Lambda\}$}.
+\label{eq_density_parameters}
+\end{equation}
+In terms of the present values $\Omega_{s0} = \Omega_s(t_0)$ and $H_0 = H(t_0)$,
+we obtain the \textbf{Friedmann equation} for the \textbf{Hubble parameter}
+\begin{equation}
+	H(t) = H_0 \sqrt{\Omega_{r0} \, a^{-4} + \Omega_{m0} \, a^{-3} + \Omega_{k0} \, a^{-2} + \Omega_{\Lambda0}}.
+\label{eq_friedmann}
+\end{equation}
+\begin{equation}
+	\dot{a} = \mathcal{H} = aH
+\label{eq_conformal_hubble}
+\end{equation}
+
+To parametrize the evolution of the universe,
+we can use the scale factor $a$,
+its natural logarithm $x = \log a$,
+cosmic time $t$
+or conformal time $\eta$.
+The two former are related to the two latter through $H(t) = \frac1a \frac{da}{dt}$, giving the times
+\begin{equation}
+	t = \int_0^a \frac{da}{aH} = \int_0^x \frac{dx}{H}
+	\quad \text{and} \quad
+	\eta = \int_0^a \frac{da}{a^2 H} = \int_0^x \frac{dx}{aH}.
+\label{eq_cosmic_conformal_time}
+\end{equation}
+In general, these integrals must be calculated numerically.
+However, in a flat universe with no cosmological constant,
+they can be evaluated analytically to give
+\begin{equation}
+\begin{aligned}
+	t &= \int_0^a \frac{da}{H_0 \sqrt{\Omega_{r0}a^{-2} + \Omega_{m0}a^{-1}}} \qquad \left( \Omega_{k0} = \Omega_{\Lambda0} = 0 \right) \\
+	  %&= \frac{1}{H_0 \sqrt{\Omega_{m0}}} \int_0^a \frac{da}{\sqrt{a_\text{eq} a^{-2} + a^{-1}}} \qquad \left(a_\text{eq} = \frac{\Omega_{r0}}{\Omega_{m0}}\right)\\
+	  &=  \frac{2}{3 H_0 \sqrt{\Omega_{m0}}} \left[\sqrt{a + a_\text{eq}} \big(a - 2 a_\text{eq}\big) + 2 a_\text{eq}^{3/2} \right] \qquad \left(a_\text{eq} = \frac{\Omega_{r0}}{\Omega_{m0}}\right),
+\end{aligned}
+\label{eq_cosmic_time_anal}
+\end{equation}
+and
+\begin{equation}
+\begin{aligned}
+	\eta &= \int_0^a \frac{da}{H_0 \sqrt{\Omega_{r0} + \Omega_{m0} a}} \qquad \left( \Omega_{k0} = \Omega_{\Lambda0} = 0 \right) \\
+		 %&= \frac{1}{H_0 \sqrt{\Omega_{m0}}} \int_0^a \frac{da}{\sqrt{a_\text{eq} + a}} \qquad \left(a_\text{eq} = \frac{\Omega_{r0}}{\Omega_{m0}}\right) \\
+		 &= \frac{2}{H_0 \sqrt{\Omega_{m0}}} \left[ \sqrt{a + a_\text{eq}} - \sqrt{a_\text{eq}}\right].
+\end{aligned}
+\label{eq_conformal_time_anal}
+\end{equation}
+In a radiation-only universe where $\Omega_{m0}=0$,
+they reduce further to TODO.
+
+From the conformal time, we can also compute distances.
+Consider a photon traveling from $(\eta, r)$ towards us at $(\eta_0, 0)$ along a radial trajectory with $d\theta = d\phi = 0$.
+Since photons travel along null geodesics,
+\begin{equation*}
+	0 = ds^2 = -c^2 d\eta^2 + \frac{dr^2}{1-kr^2},
+\end{equation*}
+so on the comoving grid, we see from equation TODO it travels the \textbf{comoving distance}
+\begin{equation}
+	\chi = \int_{\eta}^{\eta_0} c d\eta = c(\eta_0 - \eta) = \int_r^0 \frac{dr}{\sqrt{1-kr^2}} = \frac{\arcsin(\sqrt{k}r)}{\sqrt{k}}.
+\label{eq_comoving_distance}
+\end{equation}
+In other words, a photon that has traveled the comoving distance $\chi$ came from the coordinates
+\begin{equation*}
+	\eta = \eta_0 - \frac{\chi}{c}
+	\quad \text{and} \quad
+	r = \frac{\sin(\sqrt{k}\chi)}{\sqrt{k}} = \chi \sinc(\sqrt{k}\chi)
+\end{equation*}
+where $\sinc(x) = \sin x / x$ and the equation holds for \emph{all} $k$ with the limit $\sinc(x=0)=1$ and the complex substitution $\sin(ix) = i \sinh x$.
+(TODO: from $z$ to $r$ instead)
+
+For a \textbf{standard ruler} spanning an angle $\theta$ seen from earth and whose size $D$ is known by other means,
+we see from the line element TODO that its size is $D = a r \theta$.
+We define its \textbf{angular diameter distance} as
+\begin{equation}
+	d_A = \frac{D}{\theta} = a r.
+\label{eq_distance_angular}
+\end{equation}
+
+For a \textbf{standard candle} whose inherent luminosity $L$ is known by other means, TODO
+\textbf{luminosity distance}
+\begin{equation}
+	d_L = \frac{r}{a} = \frac{d_A}{a^2}
+\label{eq_distance_luminosity}
+\end{equation}
+
+\subsection{Implementation details}
+
+\begin{itemize}
+	\item Internally, we use the natural logarithm $x = \log a$ as a ``time'' to parametrize the evolution of the universe.
+	\item We represent a $\Lambda$CDM cosmology with an object that takes $h$, $\Omega_{b0}$, $\Omega_{c0}$, $\Omega_{k0}$, $T_{\gamma0}$ and $N_\text{eff}$ as free parameters, and then computes the remaining dependent parameters from TODO.
+	\item We compute the density parameters \eqref{eq_density_parameters} 
+	\item We compute the density parameters TODO ...
+	\item From the Friedmann equation TODO, we implement functions that computes the conformal Hubble factor $\mathcal{H} = \dot{a} = aH$ (TODO: define as $t$-derivative!) and its first and second derivatives $\odv{\mathcal{H}}/{x}$ and $\odv[2]{\mathcal{H}}/{x}$ analytically, and variations thereof.
+	\item We compute the cosmic time and conformal time REF by inserting their derivatives $\odv{t}/{x}$ and $\odv{\eta}/{x}$ into an adaptive order 4+5 Runge Kutta integrator. We spline the results (TODO: cubic spline?), so we can compute the radial coordinate TODO efficiently. TODO: callback. TODO: start point analytically.
+	\item From ..., we compute distances
+\end{itemize}
+
+\subsection{Results}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{../plots/density_parameters.pdf}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{../plots/conformal_hubble.pdf}
+	\includegraphics[width=\linewidth]{../plots/conformal_hubble_derivative1.pdf}
+	\includegraphics[width=\linewidth]{../plots/conformal_hubble_derivative2.pdf}
+	\caption{Conformal Hubble factor}
+	\label{fig_conformal_hubble}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{../plots/eta_H.pdf}
+	\includegraphics[width=\linewidth]{../plots/times.pdf}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{../plots/supernova_distance.pdf}
+	\includegraphics[width=\linewidth]{../plots/supernova_hubble.pdf}
+	\includegraphics[width=\linewidth]{../plots/supernova_omegas.pdf}
+\end{figure}
+
+%
+%______________________________________________________________
+
+\section{Conclusions}
+
+
+% WARNING
+%-------------------------------------------------------------------
+% Please note that we have included the references to the file aa.dem in
+% order to compile it, but we ask you to:
+%
+% - use BibTeX with the regular commands:
+%   \bibliographystyle{aa} % style aa.bst
+%   \bibliography{Yourfile} % your references Yourfile.bib
+%
+% - join the .bib files when you upload your source files
+%-------------------------------------------------------------------
+
+\end{document}
