@@ -15,6 +15,11 @@ Plots.__init__() # workaround with sysimage: https://github.com/JuliaLang/Packag
 pgfplotsx()
 default(
     minorticks = 10,
+    labelfontsize = 12, # default: 11
+    legendfontsize = 11, # default: 8
+    annotationfontsize = 11, # default: 14
+    tickfontsize = 10, # default: 8
+    #titlefontsize = 14, # default: 14
     legend_font_halign = :left,
 )
 
@@ -28,11 +33,12 @@ end
 # Conformal Hubble parameter
 if !isfile("plots/conformal_Hubble.pdf")
     println("Plotting conformal Hubble parameter")
-    plot(xlabel = L"x = \log a", ylabel = L"\log_{10}\Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc})\Big]", legend_position = :topright)
+    plot(xlabel = L"x = \log a", ylabel = L"\log_{10}\Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc})\Big]", legend_position = :topleft, ylims = (-10, +10))
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωr0) * a(x)^(-1  )); linestyle = :dash,  label = "radiation-dominated")
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωm0) * a(x)^(-1/2)); linestyle = :dash,  label = "matter-dominated")
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.ΩΛ)  * a(x)^(+1  )); linestyle = :dash,  label = "cosmological constant-dominated")
     plot!(x, @. log10(aH(co, x) / (100*km/Mpc)                          ); linestyle = :solid, label = "general case", color = :black)
+    vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     savefig("plots/conformal_Hubble.pdf")
 end
 
@@ -44,16 +50,19 @@ if !isfile("plots/conformal_Hubble_derivative1.pdf")
     plot!(x, x -> -1/2;                 linestyle = :dash,  label = "matter-dominated")
     plot!(x, x -> +1;                   linestyle = :dash,  label = "cosmological constant-dominated")
     plot!(x, @. daH(co, x) / aH(co, x); linestyle = :solid, label = "general case", color = :black)
+    vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     savefig("plots/conformal_Hubble_derivative1.pdf")
 end
 
 # Conformal Hubble parameter 2nd derivative
 if !isfile("plots/conformal_Hubble_derivative2.pdf")
     println("Plotting conformal Hubble 2nd derivative")
-    plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}^2\mathcal{H}}{\mathrm{d} x^2}", legend_positions = :topleft)
-    plot!(x, x -> ( 1)^2;                linestyle = :dash,  label = "radiation and cosmological constant-dominated")
+    plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}^2\mathcal{H}}{\mathrm{d} x^2}", legend_positions = :topleft, yticks = 0:0.25:1.5, ylims = (0, 1.5))
+    plot!(x, x -> ( 1)^2;                linestyle = :dash,  label = "radiation-dominated")
     plot!(x, x -> (-1/2)^2;              linestyle = :dash,  label = "matter-dominated")
+    plot!(x, x -> (-1)^2;                linestyle = :dash,  label = "cosmological constant-dominated", color = 1) # same color as radiation
     plot!(x, @. d2aH(co, x) / aH(co, x); linestyle = :solid, label = "general case", color = :black)
+    vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     savefig("plots/conformal_Hubble_derivative2.pdf")
 end
 
@@ -70,6 +79,8 @@ if !isfile("plots/eta_H.pdf")
     aH_anal = @. a(x) * co.H0 * √(co.Ωr0/a(x)^4 + co.Ωm0/a(x)^3)
     η_aH_c_anal = @. η_anal * aH_anal / c
     plot!(x, log10.(η_aH_c_anal); linestyle = :dash, label = "radiation- and matter domination")
+
+    vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
 
     savefig("plots/eta_H.pdf")
 end
@@ -89,6 +100,9 @@ if !isfile("plots/times.pdf")
 
     plot!(x, log10.(t.(co, x) / Gyr); linestyle = :solid, color = 1, label = L"t \,\, \textrm{(general)}")
     plot!(x, log10.(t_anal    / Gyr); linestyle = :dash,  color = 1, label = L"t \,\, \textrm{(radiation-matter universe)}")
+
+    vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
+
     savefig("plots/times.pdf")
 end
 
@@ -101,15 +115,13 @@ if !isfile("plots/density_parameters.pdf")
     plot!(x, Ωk.(co, x); label = L"\Omega_k")
     plot!(x, ΩΛ.(co, x); label = L"\Omega_\Lambda")
     plot!(x, Ω.(co, x);  label = L"\sum_s \Omega_s")
-    xrm = r_m_equality(co)
-    xmΛ = m_Λ_equality(co)
-    x1, x2, x3, x4 = minimum(x), xrm, xmΛ, maximum(x)
-    plot!([xrm, xrm], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = L"\Omega_r = \Omega_m")
-    plot!([xmΛ, xmΛ], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = L"\Omega_m = \Omega_\Lambda")
-    annotate!([xrm, xmΛ], [1.25, 1.25], [L"x = %$(round(xrm; digits=1))", L"x = %$(round(xmΛ; digits=1))"])
-    annotate!([(x1+x2)/2, (x1+x2)/2], [1.15, 1.05], ["radiation", "domination"])
-    annotate!([(x2+x3)/2, (x2+x3)/2], [1.15, 1.05], ["matter", "domination"])
-    annotate!([(x3+x4)/2, (x3+x4)/2], [1.15, 1.05], ["Λ", "domination"])
+    plot!([xrm, xrm], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
+    plot!([xmΛ, xmΛ], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
+    annotate!([xrm], [1.25], [(L"x_{r=m} = %$(round(xrm; digits=2))", :gray)])
+    annotate!([xmΛ], [1.25], [(L"x_{m=\Lambda} = %$(round(xmΛ; digits=2))", :gray)])
+    annotate!([(x1+x2)/2, (x1+x2)/2], [1.14, 1.07], ["radiation", "domination"])
+    annotate!([(x2+x3)/2, (x2+x3)/2], [1.14, 1.07], ["matter", "domination"])
+    annotate!([(x3+x4)/2, (x3+x4)/2], [1.14, 1.07], ["Λ", "domination"])
     savefig("plots/density_parameters.pdf")
 end
 
