@@ -11,6 +11,7 @@ using Plots
 using LaTeXStrings
 using DelimitedFiles
 using Distributions
+using Printf
 Plots.__init__() # workaround with sysimage: https://github.com/JuliaLang/PackageCompiler.jl/issues/786
 pgfplotsx()
 default(
@@ -25,6 +26,17 @@ default(
 
 co = ΛCDM()
 x = range(-15, 5, length=400)
+xrm = r_m_equality(co)
+xmΛ = m_Λ_equality(co)
+xacc = acceleration_onset(co)
+x1, x2, x3, x4 = minimum(x), xrm, xmΛ, maximum(x)
+x0 = 0.0
+
+@printf("Ωr = Ωm:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrm,  a(xrm),  z(xrm),  η(co, xrm)  / c / Gyr, t(co, xrm)  / Gyr)
+@printf("d²a/dt² = 0: x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xacc, a(xacc), z(xacc), η(co, xacc) / c / Gyr, t(co, xacc) / Gyr)
+@printf("Ωm = ΩΛ:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xmΛ,  a(xmΛ),  z(xmΛ),  η(co, xmΛ)  / c / Gyr, t(co, xmΛ)  / Gyr)
+@printf("Today:       x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", x0,   a(x0),   z(x0),   η(co, x0)   / c / Gyr, t(co, x0)   / Gyr)
+
 
 if !isdir("plots")
     mkdir("plots")

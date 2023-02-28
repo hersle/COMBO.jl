@@ -4,7 +4,7 @@ export a, z
 export ΛCDM
 export H, aH, daH, d2aH
 export t, η, Ωγ, Ων, Ωb, Ωc, Ωk, ΩΛ, Ωr, Ωm, Ω
-export r_m_equality, m_Λ_equality
+export r_m_equality, m_Λ_equality, acceleration_onset
 export dL
 
 include("Constants.jl")
@@ -108,6 +108,7 @@ function t(co::ΛCDM, x::Real)
 end
 
 # density parameters (relative to critical density *at the time*)
+# computed using Ωs = ρs/ρcrit = ρs/ρcrit0 * ρcrit0/ρcrit = Ωs0 * H0^2/H^2
 Ωγ(co::ΛCDM, x::Real) = co.Ωγ0 / (a(x)^4 * H(co, x)^2 / H(co, 0)^2)
 Ων(co::ΛCDM, x::Real) = co.Ων0 / (a(x)^4 * H(co, x)^2 / H(co, 0)^2)
 Ωb(co::ΛCDM, x::Real) = co.Ωb0 / (a(x)^3 * H(co, x)^2 / H(co, 0)^2)
@@ -121,6 +122,7 @@ end
 # equalities
 r_m_equality(co::ΛCDM) = find_zero(x -> Ωr(co, x) - Ωm(co, x), (-20, +20)) # TODO: save xmin, xmax in ΛCDM
 m_Λ_equality(co::ΛCDM) = find_zero(x -> Ωm(co, x) - ΩΛ(co, x), (-20, +20)) # TODO: save xmin, xmax in ΛCDM
+acceleration_onset(co::ΛCDM) = find_zero(x -> daH(co, x), (-20, +20))
 
 # luminosity distance
 function dL(co::ΛCDM, x::Real)
