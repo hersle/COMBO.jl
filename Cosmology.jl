@@ -10,7 +10,7 @@ export dL
 include("Constants.jl")
 
 using DifferentialEquations
-using Interpolations
+using Dierckx # spline interpolation
 using Roots
 using .Constants
 
@@ -28,8 +28,8 @@ mutable struct ΛCDM
     const Tγ0::Float64 # photon (CMB) temperature
     const Neff::Float64 # TODO: ?
 
-    η_spline::Union{Nothing, Interpolations.Extrapolation} # TODO: what kind of spline?
-    t_spline::Union{Nothing, Interpolations.Extrapolation}
+    η_spline::Union{Nothing, Dierckx.Spline1D} # TODO: what kind of spline?
+    t_spline::Union{Nothing, Dierckx.Spline1D}
 
     function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
         H0 = h * 100*km/Mpc
@@ -80,7 +80,7 @@ function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1:
         ys = ys[1:end-1]
     end
     x2 = min(x2, xs[end]) # shrink integration range if callback ended before (TODO: check callback in a safer way?)
-    return linear_interpolation(xs, ys), x1, x2
+    return Spline1D(xs, ys; k=3, bc="error"), x1, x2
 end
 
 # conformal time
@@ -91,7 +91,7 @@ function η(co::ΛCDM, x::Real)
         η1 = 1 / aH(co, x1)
         co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end
-    (x1, x2), = bounds(co.η_spline.itp)
+    (x1, x2) = extrema(get_knots(co.η_spline))
     return x1 <= x <= x2 ? co.η_spline(x) : NaN
 end
 
@@ -103,7 +103,7 @@ function t(co::ΛCDM, x::Real)
         t1 = 1 / (2*H(co, x1))
         co.t_spline, x1, x2 = _spline_dy_dx(co, dt_dx, x1, x2, t1)
     end
-    (x1, x2), = bounds(co.t_spline.itp)
+    (x1, x2) = extrema(get_knots(co.t_spline))
     return x1 <= x <= x2 ? co.t_spline(x) : NaN
 end
 
