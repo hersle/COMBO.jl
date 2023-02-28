@@ -32,10 +32,10 @@ xacc = acceleration_onset(co)
 x1, x2, x3, x4 = minimum(x), xrm, xmΛ, maximum(x)
 x0 = 0.0
 
-@printf("Ωr = Ωm:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrm,  a(xrm),  z(xrm),  η(co, xrm)  / c / Gyr, t(co, xrm)  / Gyr)
-@printf("d²a/dt² = 0: x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xacc, a(xacc), z(xacc), η(co, xacc) / c / Gyr, t(co, xacc) / Gyr)
-@printf("Ωm = ΩΛ:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xmΛ,  a(xmΛ),  z(xmΛ),  η(co, xmΛ)  / c / Gyr, t(co, xmΛ)  / Gyr)
-@printf("Today:       x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", x0,   a(x0),   z(x0),   η(co, x0)   / c / Gyr, t(co, x0)   / Gyr)
+@printf("Ωr = Ωm:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrm,  a(xrm),  z(xrm),  η(co, xrm)  / Gyr, t(co, xrm)  / Gyr)
+@printf("d²a/dt² = 0: x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xacc, a(xacc), z(xacc), η(co, xacc) / Gyr, t(co, xacc) / Gyr)
+@printf("Ωm = ΩΛ:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xmΛ,  a(xmΛ),  z(xmΛ),  η(co, xmΛ)  / Gyr, t(co, xmΛ)  / Gyr)
+@printf("Today:       x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", x0,   a(x0),   z(x0),   η(co, x0)   / Gyr, t(co, x0)   / Gyr)
 
 
 if !isdir("plots")
@@ -80,17 +80,17 @@ end
 
 # Product of conformal time and conformal Hubble parameter
 if !isfile("plots/eta_H.pdf")
-    println("Plotting η * aH / c")
-    plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \eta \mathcal{H} / c \Big]", legend_position = :topleft)
+    println("Plotting η * aH")
+    plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \eta \mathcal{H} \Big]", legend_position = :topleft)
 
     #plot!(x, x -> log10(1);                      linestyle = :dash,  label = "radiation-dominated")
-    plot!(x, @. log10(η(co, x) * aH(co, x) / c); linestyle = :solid, label = "general case")
+    plot!(x, @. log10(η(co, x) * aH(co, x)); linestyle = :solid, label = "general case")
 
     aeq_anal = co.Ωr0 / co.Ωm0
-    η_anal = @. 2*c / (co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
+    η_anal = @. 2 / (co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
     aH_anal = @. a(x) * co.H0 * √(co.Ωr0/a(x)^4 + co.Ωm0/a(x)^3)
-    η_aH_c_anal = @. η_anal * aH_anal / c
-    plot!(x, log10.(η_aH_c_anal); linestyle = :dash, label = "radiation- and matter domination")
+    η_aH_anal = @. η_anal * aH_anal
+    plot!(x, log10.(η_aH_anal); linestyle = :dash, label = "radiation- and matter domination")
 
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
 
@@ -100,15 +100,15 @@ end
 # Cosmic and conformal time
 if !isfile("plots/times.pdf")
     println("Plotting cosmic and conformal times")
-    plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta/c\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
+    plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
 
     # in a radiation-matter-only universe
     aeq_anal = co.Ωr0 / co.Ωm0
-    η_anal = @. 2*c / (co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
-    t_anal = @.   2 / (3 * co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) * (a(x) - 2*aeq_anal) + 2*aeq_anal^(3/2))
+    η_anal = @. 2 / (    co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
+    t_anal = @. 2 / (3 * co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) * (a(x) - 2*aeq_anal) + 2*aeq_anal^(3/2))
 
-    plot!(x, log10.(η.(co, x) / c / Gyr); linestyle = :solid, color = 0, label = L"\eta \,\, \textrm{(general)}")
-    plot!(x, log10.(η_anal    / c / Gyr); linestyle = :dash,  color = 0, label = L"\eta \,\, \textrm{(radiation-matter universe)}")
+    plot!(x, log10.(η.(co, x) / Gyr); linestyle = :solid, color = 0, label = L"\eta \,\, \textrm{(general)}")
+    plot!(x, log10.(η_anal    / Gyr); linestyle = :dash,  color = 0, label = L"\eta \,\, \textrm{(radiation-matter universe)}")
 
     plot!(x, log10.(t.(co, x) / Gyr); linestyle = :solid, color = 1, label = L"t \,\, \textrm{(general)}")
     plot!(x, log10.(t_anal    / Gyr); linestyle = :dash,  color = 1, label = L"t \,\, \textrm{(radiation-matter universe)}")

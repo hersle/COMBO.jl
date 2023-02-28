@@ -86,9 +86,9 @@ end
 # conformal time
 function η(co::ΛCDM, x::Real)
     if isnothing(co.η_spline)
-        dη_dx(x) = c / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
+        dη_dx(x) = 1 / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
         x1, x2 = -20.0, +20.0 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
-        η1 = c / aH(co, x1)
+        η1 = 1 / aH(co, x1)
         co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end
     (x1, x2), = bounds(co.η_spline.itp)
@@ -126,7 +126,7 @@ acceleration_onset(co::ΛCDM) = find_zero(x -> daH(co, x), (-20, +20))
 
 # luminosity distance
 function dL(co::ΛCDM, x::Real)
-    χ = η(co, 0) - η(co, x)
+    χ = c * (η(co, 0) - η(co, x))
     # 1. r(Ωk0 = 0) = χ
     # 2. r(Ωk0 < 0) = χ *  sin(√(-Ωk0)*H0*χ/c) / (√(-Ωk0)*H0*χ/c)
     # 3. r(Ωk0 > 0) = χ * sinh(√(+Ωk0)*H0*χ/c) / (√(+Ωk0)*H0*χ/c)
