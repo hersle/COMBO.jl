@@ -24,6 +24,33 @@ default(
     legend_font_halign = :left,
 )
 
+# a hack to "rasterize" a scatter plot
+# TODO: plotting scatter points as rects lowers file size?
+function scatterheatmaps!(xss, yss, colors, labels, xlims, ylims; nbins=50, kwargs...)
+    xgrid = range(xlims...; length=nbins+1)
+    ygrid = range(ylims...; length=nbins+1)
+    dx = xgrid[2] - xgrid[1]
+    dy = ygrid[2] - ygrid[1]
+    zgrid = zeros(Int, nbins, nbins)
+    for (i, xs, ys) in zip(1:length(xss), xss, yss)
+        for (x, y) in zip(xs, ys)
+            ix = min(floor(Int, (x - xgrid[1]) / dx) + 1, nbins)
+            iy = min(floor(Int, (y - ygrid[1]) / dy) + 1, nbins)
+            zgrid[iy,ix] = i
+        end
+    end
+    xgrid = midpoints(xgrid)
+    ygrid = midpoints(ygrid)
+    #zgrid = zgrid .!= 0
+    colorgrad = cgrad([:white, colors...], alpha=1.0, categorical=false)
+    #histogram2d!(xs, ys; bins=(range(xlims...; length=nbins), range(ylims...; length=nbins)), color = colorgrad, colorbar = :none, kwargs...)
+    heatmap!(xgrid, ygrid, zgrid; alpha = 1.0, color = colorgrad, colorbar = :none, kwargs...)
+    for (color, label) in zip(colors, labels)
+        scatter!([xgrid[1]-1], [ygrid[1]-1]; color = color, markerstrokewidth=0, shape = :rect, label = label) # dummy plot with label
+    end
+    # TODO: hack a label into the legend with a ghost scatter plot?
+end
+
 co = ΛCDM()
 x = range(-15, 5, length=400)
 xrm = r_m_equality(co)
@@ -156,7 +183,7 @@ end
 
 # Supernova MCMC fits
 # Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
-if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
+if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
     println("Plotting Ωm0, ΩΛ from MCMC analysis of supernova data")
 
     data = readdlm("data/supernovadata.txt", comments=true)
@@ -179,8 +206,8 @@ if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf"
     Ωm0bounds = (0.0, 1.0)
     Ωk0bounds = (-1.0, +1.0)
     nparams = 3 # h, Ωm0, Ωk0
-    nchains = 3
-    nsamples = 8000 # per chain
+    nchains = 5
+    nsamples = 10000 # per chain
     params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], nsamples, nchains; burnin=1000)
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
@@ -205,16 +232,18 @@ if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf"
     h2, Ωm02, Ωk02, ΩΛ02 = h[filter2], Ωm0[filter2], Ωk0[filter2], ΩΛ0[filter2]
     h1, Ωm01, Ωk01, ΩΛ01 = h[filter1], Ωm0[filter1], Ωk0[filter1], ΩΛ0[filter1]
 
-    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", xlims = Ωm0bounds, ylims = ΩΛ0bounds, xticks = range(Ωm0bounds..., step=0.1), yticks = range(ΩΛ0bounds..., step=0.1), legend_position = :topright)
-    scatter!(Ωm02, ΩΛ02; color = 1, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
-    scatter!(Ωm01, ΩΛ01; color = 3, markerstrokewidth = 0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
+    plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", size = (600, 600), xlims = ΩΛ0bounds, ylims = ΩΛ0bounds, xticks = range(ΩΛ0bounds..., step=0.1), yticks = range(ΩΛ0bounds..., step=0.1), legend_position = :topright)
+    #scatter!(Ωm02, ΩΛ02; color = 1, markershape = :rect, markerstrokecolor = 1, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
+    #scatter!(Ωm01, ΩΛ01; color = 3, markershape = :rect, markerstrokecolor = 3, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
+    scatterheatmaps!([Ωm02, Ωm01], [ΩΛ02, ΩΛ01], [palette(:default)[1], palette(:default)[3]], [L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}", L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}"], ΩΛ0bounds, ΩΛ0bounds; nbins=120)
+
 
     # plot ΩΛ(Ωm0) for a few flat universes (should give ΩΛ ≈ 1 - Ωm0)
     Ωm0_flat = range(Ωm0bounds..., length=20)
     ΩΛ0_flat = [ΛCDM(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ for Ωm0 in Ωm0_flat]
     plot!(Ωm0_flat, ΩΛ0_flat; color = :black, marker = :circle, markersize = 2, label = "flat universes")
 
-    scatter!([best_Ωm0], [best_ΩΛ0]; color = :red, markerstrokecolor = :red, markershape = :cross, label = "best fit")
+    scatter!([best_Ωm0], [best_ΩΛ0]; color = :red, markerstrokecolor = :red, markershape = :cross, markersize = 10, label = "best fit")
     savefig("plots/supernova_omegas.pdf")
 
     # TODO: draw error ellipses?
