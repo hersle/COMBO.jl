@@ -57,7 +57,7 @@ z(x::Real) = 1/a(x) - 1
 Ωpoly(co::ΛCDM, x::Real; d::Integer=0) = Ωpoly(co.Ωr0, co.Ωm0, co.Ωk0, co.ΩΛ, x; d)
 #dΩevo(Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ0::Real, x::Real; n::Integer=1) = (-4)^n * Ωr0/a(x)^4 + (-3)^n * Ωm0/a(x)^3 + (-2)^n * Ωk0/a(x)^2 # n-th (n >= 1) derivative of Ωev0 wrt. x
 #dΩevo(co::ΛCDM, x::Real; n=Integer::1) = dΩevo(co.Ωr0, co.Ωm0, co.Ωk0, co.ΩΛ0, x; n)
-H(h::Real, Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ::Real, x::Real) = h * 100 * km/Mpc * √(max(Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x), 0.0)) # in case we have a slight negative value due to floating point arithmetic, add 0im and take real part
+H(h::Real, Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ::Real, x::Real) = h * 100 * km/Mpc * √(Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x))
 H(co::ΛCDM, x::Real) = H(co.h, co.Ωγ0+co.Ων0, co.Ωb0+co.Ωc0, co.Ωk0, co.ΩΛ, x) # "normal" Hubble parameter
 
 # conformal Hubble parameter (𝓗 = a*H) + 1st derivative + 2nd derivative
@@ -68,19 +68,30 @@ d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + Ωpoly(co, x; d=1) / Ωpoly(co, x) +
 
 # TODO: make independent of cosmology?
 function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; terminator = (co, x) -> Ωpoly(co, x) - 1e-7)
-    condition(y, x, integrator) = terminator(co, x)
-    affect!(integrator) = terminate!(integrator)
-    callback = ContinuousCallback(condition, affect!)
-
-    sol = solve(ODEProblem((y, p, x) -> dy_dx(x), y1, (x1, x2)), Tsit5(); reltol=1e-10, callback = callback) # TODO: automatically choose method?
+    sol = solve(ODEProblem((y, p, x) -> dy_dx(x), y1, (x1, x2)), Tsit5(); reltol=1e-10)
     xs, ys = sol.t, sol.u
-    if xs[end] == xs[end-1]
-        # remove last duplicate point TODO: a better way?
-        xs = xs[1:end-1]
-        ys = ys[1:end-1]
-    end
-    x2 = min(x2, xs[end]) # shrink integration range if callback ended before (TODO: check callback in a safer way?)
     return Spline1D(xs, ys; k=3, bc="error"), x1, x2
+end
+
+function is_fucked(co::ΛCDM; x1=-20.0, x2=+20.0)
+    if Ωpoly(co, x1) < 0 || Ωpoly(co, x2) < 0
+        return true
+    end
+
+    a = -4 * co.Ωr0
+    b = -3 * co.Ωm0
+    c = -2 * co.Ωk0
+    d = b^2 - 4*a*c
+    if d >= 0
+        ainv1 = (-b + √(d)) / (2*a)
+        ainv2 = (-b - √(d)) / (2*a)
+        a1, a2 = 1/ainv1, 1/ainv2
+        if (a1 >= 0 && Ωpoly(co, x(a1)) < 0) || (a2 >= 0 && Ωpoly(co, x(a2)) < 0)
+            return true
+        end
+    end
+
+    return false
 end
 
 # conformal time
@@ -89,7 +100,11 @@ function η(co::ΛCDM, x::Real)
         dη_dx(x) = 1 / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
         x1, x2 = -20.0, +20.0 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
         aeq = co.Ωr0 / co.Ωm0
-        η1 = 2 / (co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) - √(aeq))
+        if co.Ωm0 > 0
+            η1 = 2 / (co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) - √(aeq))
+        else
+            η1 = 1 / aH(co, x1)
+        end
         co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end
     (x1, x2) = extrema(get_knots(co.η_spline))
@@ -102,7 +117,11 @@ function t(co::ΛCDM, x::Real)
         dt_dx(x) = 1 / H(co, x)
         x1, x2 = -20.0, +20.0 # integration and spline range
         aeq = co.Ωr0 / co.Ωm0
-        t1 = 2 / (3*co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) * (a(x1)-2*aeq) + 2*aeq^(3/2))
+        if co.Ωm0 > 0
+            t1 = 2 / (3*co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) * (a(x1)-2*aeq) + 2*aeq^(3/2))
+        else
+            t1 = 1 / (2*H(co, x1))
+        end
         co.t_spline, x1, x2 = _spline_dy_dx(co, dt_dx, x1, x2, t1)
     end
     (x1, x2) = extrema(get_knots(co.t_spline))

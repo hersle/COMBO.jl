@@ -39,8 +39,8 @@ function scatterheatmaps!(xss, yss, colors, labels, xlims, ylims; nbins=50, kwar
             zgrid[iy,ix] = i
         end
     end
-    xgrid = midpoints(xgrid)
-    ygrid = midpoints(ygrid)
+    xgrid = (xgrid[1:end-1] .+ xgrid[2:end]) ./ 2
+    ygrid = (ygrid[1:end-1] .+ ygrid[2:end]) ./ 2
     #zgrid = zgrid .!= 0
     colorgrad = cgrad([:white, colors...], alpha=1.0, categorical=false)
     #histogram2d!(xs, ys; bins=(range(xlims...; length=nbins), range(ylims...; length=nbins)), color = colorgrad, colorbar = :none, kwargs...)
@@ -183,7 +183,7 @@ end
 
 # Supernova MCMC fits
 # Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
-if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
+if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
     println("Plotting Ωm0, ΩΛ from MCMC analysis of supernova data")
 
     data = readdlm("data/supernovadata.txt", comments=true)
@@ -194,7 +194,7 @@ if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf"
     function logLfunc(params::Vector{Float64})
         h, Ωm0, Ωk0 = params[1], params[2], params[3]
         co = ΛCDM(h=h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=Ωk0, Neff=0)
-        if isnan(Cosmology.dL.(co, maximum(x_obs))) # model does not extend far enough so that it can fit the data
+        if Cosmology.is_fucked(co)
             return -Inf # so set L = 0 (or log(L) = -∞, or χ2 = ∞)
         else
             dL_mod = Cosmology.dL.(co, x_obs) / Gpc
