@@ -88,7 +88,8 @@ function η(co::ΛCDM, x::Real)
     if isnothing(co.η_spline)
         dη_dx(x) = 1 / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
         x1, x2 = -20.0, +20.0 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
-        η1 = 1 / aH(co, x1)
+        aeq = co.Ωr0 / co.Ωm0
+        η1 = 2 / (co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) - √(aeq))
         co.η_spline, x1, x2 = _spline_dy_dx(co, dη_dx, x1, x2, η1)
     end
     (x1, x2) = extrema(get_knots(co.η_spline))
@@ -100,7 +101,8 @@ function t(co::ΛCDM, x::Real)
     if isnothing(co.t_spline)
         dt_dx(x) = 1 / H(co, x)
         x1, x2 = -20.0, +20.0 # integration and spline range
-        t1 = 1 / (2*H(co, x1))
+        aeq = co.Ωr0 / co.Ωm0
+        t1 = 2 / (3*co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) * (a(x1)-2*aeq) + 2*aeq^(3/2))
         co.t_spline, x1, x2 = _spline_dy_dx(co, dt_dx, x1, x2, t1)
     end
     (x1, x2) = extrema(get_knots(co.t_spline))

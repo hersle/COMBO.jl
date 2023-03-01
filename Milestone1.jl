@@ -125,7 +125,7 @@ if !isfile("plots/eta_H.pdf")
 end
 
 # Cosmic and conformal time
-if !isfile("plots/times.pdf")
+if true || !isfile("plots/times.pdf")
     println("Plotting cosmic and conformal times")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
 
@@ -183,7 +183,7 @@ end
 
 # Supernova MCMC fits
 # Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
-if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
+if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
     println("Plotting Ωm0, ΩΛ from MCMC analysis of supernova data")
 
     data = readdlm("data/supernovadata.txt", comments=true)
