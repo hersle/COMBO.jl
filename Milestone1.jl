@@ -125,7 +125,7 @@ if !isfile("plots/eta_H.pdf")
 end
 
 # Cosmic and conformal time
-if true || !isfile("plots/times.pdf")
+if !isfile("plots/times.pdf")
     println("Plotting cosmic and conformal times")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
 
@@ -151,8 +151,8 @@ if !isfile("plots/density_parameters.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\Omega_i", legend_position = (0.05, 0.6), ylims=(-0.05, +1.3))
     plot!(x, Ωr.(co, x); label = L"\Omega_r")
     plot!(x, Ωm.(co, x); label = L"\Omega_m")
-    plot!(x, Ωk.(co, x); label = L"\Omega_k")
-    plot!(x, ΩΛ.(co, x); label = L"\Omega_\Lambda = %$(round(Int, Ωk(co, 0.0)))")
+    plot!(x, Ωk.(co, x); label = L"\Omega_k = %$(round(Int, Ωk(co, 0.0)))")
+    plot!(x, ΩΛ.(co, x); label = L"\Omega_\Lambda")
     plot!(x, Ω.(co, x);  label = L"\sum_s \Omega_s = %$(round(Int, Ω(co, 0.0)))")
     plot!([xrm, xrm], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     plot!([xmΛ, xmΛ], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
