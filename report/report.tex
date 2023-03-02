@@ -131,33 +131,31 @@ and either cosmic time $t$ or conformal time $\eta$ defined by $d\eta = dt/a$\fo
 where it is conformal to the Minkowski metric in the flat case $k=0$.
 
 The homogeneous background universe is filled with an ideal fluid that has
-energy density $\rho(t)$, pressure $P(t)$ and thus energy-momentum tensor
+density $\rho(t)$, pressure $P(t)$ and thus energy-momentum tensor
 \begin{equation}
 	T\indices{^\mu_\nu} = \diag\Big[\rho(t),\, -P(t),\, -P(t),\, -P(t)\Big].
 \label{eq_energy_momentum_homogeneous}
 \end{equation}
-The dynamics and evolution of the universe is governed by the Einstein field equations \eqref{eq_einstein}.
-In particular, its $00$-component gives rise to the Friedmann equation for the Hubble parameter
+The dynamics and evolution of the universe is governed by the Einstein field equations \eqref{eq_einstein},
+with the FLRW metric \eqref{eq_flrw} and energy-momentum tensor \eqref{eq_energy_momentum_homogeneous} fed into its left and right sides.
+In particular, the $00$ and $11$-components give rise to the Friedmann equation for the Hubble parameter
 \begin{equation}
 	H(t) = \frac{1}{a} \odv{a}{t} = H_0 \sqrt{\Omega_{r0} \, a^{-4} + \Omega_{m0} \, a^{-3} + \Omega_{k0} \, a^{-2} + \Omega_{\Lambda0}},
 \label{eq_friedmann}
 \end{equation}
-\TODO{accel, derive $a$-dep of $\rho$}
-where we define the time-dependent density parameters
+where radiation, matter, curvature and the cosmological constant have the (effective) mass densities
+\begin{equation}
+	\rho_r(t) = \rho_{r0} a^{-4}, \quad
+	\rho_m(t) = \rho_{m0} a^{-3}, \quad
+	\rho_k(t) = -\frac{3kc^2}{8 \pi G} a^{-2} = \rho_{k0} a^{-2}, \quad
+	\rho_\Lambda(t) = \frac{\Lambda c^2}{8 \pi G} = \text{constant},
+\end{equation}
+and we define the time-dependent density parameters
 \begin{equation}
 	\Omega_s(t) = \frac{\rho_s(t)}{\rho_\text{crit}(t)}
 \label{eq_density_parameters}
 \end{equation}
-for radiation, matter, curvature and the cosmological constant
-with (effective) energy densities
-\begin{equation}
-	\rho_r(t) = \rho_{r0} a^{-4}, \quad
-	\rho_k(t) = -\frac{3kc^2}{8 \pi G} a^{-2} = \rho_{k0} a^{-2}, \quad
-	\rho_m(t) = \rho_{m0} a^{-3}, \quad
-	\rho_\Lambda(t) = \frac{\Lambda c^2}{8 \pi G} = \text{constant},
-\end{equation}
-relative to the critical density
-$\rho_\text{crit}(t) = 3H^2(t)/8\pi G$.
+relative to the critical density $\rho_\text{crit}(t) = 3H^2(t)/8\pi G$.
 Present-day values are denoted by $F_0=F(t_0)$.
 
 Due to the densities' differing dependencies on the scale factor,
@@ -171,10 +169,14 @@ so we define the scale factors at equality by
 \end{align}
 \label{eq_equality_times}
 \end{subequations}
-\TODO{acceleration}
 
-
-
+Moreover, the acceleration of the scale factor
+\begin{equation}
+	\ddot{a} = \odv[2]{a}{t} = -a^2 H_0^2 \Big( 2 \Omega_{r0} a^{-4} + \Omega_{m0} a^{-3} - 2 \Omega_{\Lambda0} \Big).
+\label{eq_acceleration}
+\end{equation}
+will be negative at early times while the expansion slows down,
+but when the cosmological constant becomes more important, $\ddot{a} \geq 0$ and the expansion starts to accelerate.
 
 In addition to the ``cosmic'' Hubble parameter \eqref{eq_friedmann},
 we define the \textbf{conformal Hubble parameter}
@@ -263,19 +265,19 @@ as can also be found by solving the Friedmann equation \eqref{eq_friedmann} with
 	\item We use $x = \log a$ as a common internal time variable that most functions accept.
 	\item We represent a $\Lambda$CDM cosmology with an object that takes $h$, $\Omega_{b0}$, $\Omega_{c0}$, $\Omega_{k0}$, $T_{\gamma0}$ and $N_\text{eff}$ as free parameters, and then computes the remaining dependent parameters \eqref{eq_planck2018}.
 	\item We compute $\mathcal{H}(x)$ and its derivatives $\odv{\mathcal{H}}/{x}$ and $\odv[2]{\mathcal{H}}/{x}$ analytically based on the Friedmann equation \eqref{eq_friedmann}.
-	      The derivatives are easy to write down with the observation that
+	      The derivatives can be derived without a lot of work by noting that
 		  $E(x) = \Omega_{r0} e^{-4x} + \Omega_{m0} e^{-3x} + \Omega_{k0} e^{-2x} + \Omega_{\Lambda0}$
-		  in the Hubble parameter has the derivatives
+		  in square root of the Hubble parameter has the derivatives
 		  \begin{equation*}
 			  \odv[d]{E}{x} = (-4)^d \Omega_{r0} a^{-4}(x) + (-3)^d \Omega_{m0} a^{-3}(x) + (-2)^d \Omega_{k0} a^{-2}(x) \qquad \big(d \geq 1\big).
 		  \end{equation*}
 	\item We compute the density parameters \eqref{eq_density_parameters} from today's density parameters using, for example, $\Omega_r = \rho_r / \rho_\text{crit} = (\rho_{r0} a^{-4} / \rho_{\text{crit},0}) (\rho_{\text{crit},0} / \rho_\text{crit}) = \Omega_{r0} a^{-4} (H_0 / H)^2$.
 	\item We compute the cosmic time $t(x)$ and conformal time $\eta(x)$ by inserting their derivatives $\odv{t}/{x}$ and $\odv{\eta}/{x}$ into an adaptive 4th(5th)-order Runge-Kutta integrator.
-	      As it is computationally infeasible to start at $x=-\infty$, we pick a small initial value for $x$, like $x = -20$,
-	      and compute its corresponding cosmic time \eqref{eq_cosmic_time_anal} or conformal time \eqref{eq_conformal_time_anal} in a radiation and matter-dominated universe.
-	      We use this value to start off the numerical integrator.
-	\item We compute the radiation-matter and matter-cosmological constant equalities analytically \TODO{},
-	      but the acceleration onset numerically.
+	      As it is computationally infeasible to start at $x=-\infty$, we start the integration
+	      by picking a small initial value for $x$, like $x = -20$,
+	      and computing its corresponding cosmic time \eqref{eq_cosmic_time_anal} or conformal time \eqref{eq_conformal_time_anal} in a radiation and matter-dominated universe.
+	\item We compute the radiation-matter and matter-cosmological constant equalities \eqref{eq_equality_times} analytically,
+	      but the onset of the acceleration \eqref{eq_acceleration} numerically.
 	\item We exclude crazy cosmologies where the contents of the square root in the Friedmann equation \eqref{eq_friedmann} become negative for some $a > 0$, and the scale factor develops an imaginary part.
 	      This unphysical behavior can happen in curved cosmologies, for example with $\Omega_{r0} = 0$, $\Omega_{m0} = 0.2$, $\Omega_{k0}=-0.9$ and $\Omega_{\Lambda} = 1.7$.
 		  Although we are mostly concerned with the flat Planck cosmology \eqref{eq_planck2018}, this will come in handy when studying arbitrary cosmologies in \cref{sec_supernova}.
@@ -481,6 +483,8 @@ while our Hubble parameter is somewhat larger and exemplifies the Hubble tension
 \TODO{count $\sigma$?}
 
 \section{Conclusions}
+
+\TODO{}
 
 %\bibliography{report.bib}
 \printbibliography
