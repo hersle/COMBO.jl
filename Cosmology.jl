@@ -162,4 +162,8 @@ function dL(co::ΛCDM, x::Real)
     return r / a(x)
 end
 
+function dA(co::ΛCDM, x::Real)
+    return dL(co, x) * a(x)^2
+end
+
 end
