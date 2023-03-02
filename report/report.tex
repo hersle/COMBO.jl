@@ -1,22 +1,31 @@
 %\documentclass[onecolumn]{aa} % for a paper on 1 column  
 %\documentclass[longauth]{aa} % for the long lists of affiliations
 %\documentclass[bibyear]{aa} % if the references are not structured according to the author-year natbib style
-\documentclass{aa}  
+%\documentclass{aa}  
 %\documentclass{memoir}
 %\documentclass[oldfontcommands]{memoir}
 %\documentclass[twocolumn]{revtex4-2}
+%\documentclass[12pt,a4paper,oldfontcommands]{memoir}
+\documentclass[10pt,a4paper]{article}
+%\documentclass[10pt,a4paper,onecolumn]{paper}
+\usepackage{fullpage}
 
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
-\usepackage{txfonts}
-\usepackage[colorlinks=true]{hyperref}
+%\usepackage{txfonts}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage[labelfont=bf]{caption}
+\usepackage[noabbrev]{cleveref}
 \usepackage{tensor}
 \usepackage{derivative}
-\usepackage[capitalise]{cleveref}
 \usepackage{booktabs}
 
-%\newcommand\TODO[1]{\textcolor{red}{(\textbf{TODO:} #1)}}
+\usepackage{biblatex}
+%\bibliographystyle{plainnat}
+\addbibresource{report.bib}
+
+\newcommand\TODO[1]{\textcolor{red}{(\textbf{TODO:} #1)}}
 \DeclareMathOperator{\asin}{asin}
 \DeclareMathOperator{\sinc}{sinc}
 \DeclareMathOperator{\diag}{diag}
@@ -53,52 +62,62 @@
 
 \section{Introduction}
 
-%\TODO{weave together with the test}
+\TODO{Eventually weave this together with the rest}
 
-Einstein field equations
+Einstein field equations:
 \begin{equation}
 	G\indices{_\mu_\nu} + \Lambda g\indices{_\mu_\nu} = \frac{8 \pi G}{c^4} T\indices{_\mu_\nu}
 \label{eq_einstein}
 \end{equation}
-energy-momentum tensor
+Energy-momentum tensor:
 \begin{equation}
 	T\indices{^\mu_\nu} = ...
 \label{eq_energy_momentum}
 \end{equation}
 
-Unless otherwise stated (except with SN?),
-Planck (2018?) cosmology
+Except in \cref{sec_supernova}, where we look for constraints on cosmological parameters, we use the Planck's cosmological parameters from 2018 \cite{planckcollaborationPlanck2018Results2020},
+given and related by:
 \begin{equation}
 \begin{aligned}
-h &= 0.67, \\
-T_{\rm CMB 0} &= 2.7255\,K, \\
-N_{\rm eff} &= 3.046, \\
-\Omega_{\rm b 0} &= 0.05, \\
-\Omega_{\rm CDM 0} &= 0.267,\\
-\Omega_{k 0} &= 0, \\
-\Omega_{\nu 0} &= N_{\rm eff}\cdot \frac{7}{8}\left(\frac{4}{11}\right)^{4/3}\Omega_{\gamma 0}, \\
-\Omega_{\Lambda 0} &= 1 - (\Omega_{k 0}+\Omega_{b 0}+\Omega_{\rm CDM 0}+\Omega_{\gamma 0}+\Omega_{\nu 0}),\\
-n_s &= 0.965, \\
-A_s &= 2.1\cdot 10^{-9}, \\
-Y_p &= 0.245, \\
-z_{\rm reion} &= 8, \\
-\Delta z_{\rm reion} &= 0.5, \\
-z_{\rm He reion} &= 3.5, \\
-\Delta z_{\rm He reion} &= 0.5.
+	& \text{reduced Hubble parameter} & h &= 0.67, \\
+	& \text{Hubble parameter} & H_0 &= h \cdot \frac{100\,\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}} = 67 \frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}, \\
+	& \text{photon temperature} & T_{\gamma0} &= 2.7255\,K, \\
+	& \text{neutrino \TODO{?}} & N_\text{eff} &= 3.046, \\
+	& \text{matter density parameter} & \Omega_{b0} &= 0.05, \\
+	& \text{cold dark matter density parameter} & \Omega_{c0} &= 0.267,\\
+	& \text{curvature density parameter} & \Omega_{k0} &= 0, \\
+	& \text{photon density parameter} & \Omega_{\gamma0} &= \frac{\pi^2}{15} \cdot \frac{(k_B T_{\gamma0})^4}{\hbar^3 c^5} \cdot \frac{8 \pi G}{3 H_0^2} = 0.000055, \\
+	& \text{neutrino density parameter} & \Omega_{\nu0} &= N_{\rm eff}\cdot \frac{7}{8}\left(\frac{4}{11}\right)^{4/3}\Omega_{\gamma 0} = 0.000038, \\
+	& \text{cosmological constant density parameter} & \Omega_{\Lambda 0} &= 1 - (\Omega_{k 0}+\Omega_{b 0}+\Omega_{c0}+\Omega_{\gamma 0}+\Omega_{\nu 0}) = 0.683,\\
+	& \text{power spectrum spectral index} & n_s &= 0.965, \\
+	& \text{power spectrum amplitude} & A_s &= 2.1\cdot 10^{-9}, \\
+	& \text{\TODO{}} & Y_p &= 0.245, \\
+	& \text{\TODO{}} & z_{\rm reion} &= 8, \\
+	& \text{\TODO{}} & \Delta z_{\rm reion} &= 0.5, \\
+	& \text{\TODO{}} & z_{\rm He reion} &= 3.5, \\
+	& \text{\TODO{}} & \Delta z_{\rm He reion} &= 0.5.
 \end{aligned}
 \label{eq_planck2018}
 \end{equation}
 
 
 \section{Background cosmology}
+\label{sec_background_cosmology}
 
-TODO: say some introductory stuff
+According to the cosmological principle,
+our Universe is spatially homogeneous and isotropic averaged over large distances.
+In this section, we will study the cosmology that describes such a universe
+with radiation and matter, the cosmological constant and possibly spatial curvature
+that are distributed uniformly in space and evolve only in time.
+
+Formally, this is the zeroth-order ``background'' solution of the perturbed, inhomogeneous universe with structure that we aim to describe.
+\TODO{?} 
 
 \subsection{Theory}
 
 \subsubsection{Friedmann equation}
 
-The geometry of a spatially homogeneous and isotropic universe, when averaged over large scales,
+The geometry of a \emph{spatially} homogeneous and isotropic universe
 is described by the \textbf{Friedmann-Lemaître-Robertson-Walker (FLRW) metric}
 \begin{equation}
 \begin{split}
@@ -107,22 +126,24 @@ is described by the \textbf{Friedmann-Lemaître-Robertson-Walker (FLRW) metric}
 \end{split}
 \label{eq_flrw}
 \end{equation}
-It is here written in spherical coordinates with curvature $k$, scale factor $a(t)$ and either cosmic time $t$ or conformal time $\eta$,
-defined by $d\eta = dt/a$\footnote{I prefer the convention in which conformal time is a time.}, so that it is conformal to the Minkowski metric in the flat case $k=0$.
-We model the universe to consist of an ideal fluid with energy density $\rho(t)$, pressure $P(t)$ and thus energy-momentum tensor
+It is here written in spherical coordinates $(r,\theta,\phi)$, with curvature $k$, scale factor $a(t)$,
+and either cosmic time $t$ or conformal time $\eta$ defined by $d\eta = dt/a$\footnote{I prefer the convention in which conformal time is a time.},
+where it is conformal to the Minkowski metric in the flat case $k=0$.
+
+The homogeneous background universe is filled with an ideal fluid that has
+energy density $\rho(t)$, pressure $P(t)$ and thus energy-momentum tensor
 \begin{equation}
 	T\indices{^\mu_\nu} = \diag\Big[\rho(t),\, -P(t),\, -P(t),\, -P(t)\Big].
 \label{eq_energy_momentum_homogeneous}
 \end{equation}
 The dynamics and evolution of the universe is governed by the Einstein field equations \eqref{eq_einstein}.
-In particular, its $(\mu,\nu)=(0,0)$ component gives rise to the Friedmann equation
+In particular, its $00$-component gives rise to the Friedmann equation for the Hubble parameter
 \begin{equation}
-	H(t) = H_0 \sqrt{\Omega_{r0} \, a^{-4} + \Omega_{m0} \, a^{-3} + \Omega_{k0} \, a^{-2} + \Omega_{\Lambda0}}.
+	H(t) = \frac{1}{a} \odv{a}{t} = H_0 \sqrt{\Omega_{r0} \, a^{-4} + \Omega_{m0} \, a^{-3} + \Omega_{k0} \, a^{-2} + \Omega_{\Lambda0}},
 \label{eq_friedmann}
 \end{equation}
-where $F_0 = F(t_0)$ denotes present-day values,
-and we define the Hubble parameter $H(t) = \dot{a} / a$
-and density parameters
+\TODO{accel, derive $a$-dep of $\rho$}
+where we define the time-dependent density parameters
 \begin{equation}
 	\Omega_s(t) = \frac{\rho_s(t)}{\rho_\text{crit}(t)}
 \label{eq_density_parameters}
@@ -130,25 +151,58 @@ and density parameters
 for radiation, matter, curvature and the cosmological constant
 with (effective) energy densities
 \begin{equation}
-\begin{aligned}
-	\rho_r(t) &= \rho_{r0} a^{-4}, &
-	\rho_k(t) &= - 3kc^2 / 8 \pi G a^2 = \rho_{k0} a^{-2}, \\
-	\rho_m(t) &= \rho_{m0} a^{-3}, &
-	\rho_\Lambda(t) &= \Lambda c^2 / 8 \pi G = \text{constant},
-\end{aligned}
+	\rho_r(t) = \rho_{r0} a^{-4}, \quad
+	\rho_k(t) = -\frac{3kc^2}{8 \pi G} a^{-2} = \rho_{k0} a^{-2}, \quad
+	\rho_m(t) = \rho_{m0} a^{-3}, \quad
+	\rho_\Lambda(t) = \frac{\Lambda c^2}{8 \pi G} = \text{constant},
 \end{equation}
 relative to the critical density
 $\rho_\text{crit}(t) = 3H^2(t)/8\pi G$.
+Present-day values are denoted by $F_0=F(t_0)$.
 
-In addition to the ``cosmic'' Hubble parameter $H = \frac1a \odv{a}{t}$,
-we also introduce the \textbf{conformal Hubble parameter}
+Due to the densities' differing dependencies on the scale factor,
+a universe with all four species will be dominated by radiation early on, then matter, then curvature, and finally the cosmological constant.
+We are mostly concerned with a flat universe where there is no curvature that can ever dominate,
+so we define the scale factors at equality by
+\begin{subequations}
+\begin{align}
+	\rho_r(t) &= \rho_m(t)       \quad \text{at} \quad a = a_{r=m} = \frac{\rho_{r0}}{\rho_{m0}} = \frac{\Omega_{r0}}{\Omega_{m0}}, \\
+	\rho_m(t) &= \rho_\Lambda(t) \quad \text{at} \quad a = a_{m=\Lambda} = \left(\frac{\rho_{m0}}{\rho_{\Lambda}}\right)^\frac13 = \left(\frac{\Omega_{m0}}{\Omega_{\Lambda0}}\right)^\frac13.
+\end{align}
+\label{eq_equality_times}
+\end{subequations}
+\TODO{acceleration}
+
+
+
+
+In addition to the ``cosmic'' Hubble parameter \eqref{eq_friedmann},
+we define the \textbf{conformal Hubble parameter}
 \begin{equation}
-	\mathcal{H} = \frac1a \odv{a}{\eta} = \odv{a}{t} = \dot{a} = a H.
+	\mathcal{H} = \frac1a \odv{a}{\eta} = \odv{a}{t} = a H.
 \label{eq_conformal_hubble}
 \end{equation}
-
-In particular, in universes dominated by radiation, matter and the cosmological constant,
-and denoting $' = \odv{}/{x}$, we have
+For example, in universes dominated by radiation, matter and the cosmological constant,
+we have,
+\begin{subequations}
+\begin{align}
+	\mathcal{H} &= H_0 \sqrt{\Omega_{r0}} \, a^{-1} && \Big( \Omega_r \gg \{\Omega_m,\Omega_\Lambda\} \Big), \label{eq_conformal_hubble_dominated_radiation} \\
+	\mathcal{H} &= H_0 \sqrt{\Omega_{m0}} \, a^{-1/2} && \Big( \Omega_m \gg \{\Omega_r,\Omega_\Lambda\} \Big), \\
+	\mathcal{H} &= H_0 \sqrt{\Omega_{\Lambda0}} \, a && \Big( \Omega_\Lambda \gg \{\Omega_m,\Omega_r\} \Big).
+\end{align}
+\label{eq_conformal_hubble_dominated}
+\end{subequations}
+\iffalse
+\begin{equation}
+	\mathcal{H} = \Bigg\{
+		H_0 \sqrt{\Omega_{r0}} a^{-1}, \,\,
+		H_0 \sqrt{\Omega_{m0}} a^{-1/2}, \,\,
+		H_0 \sqrt{\Omega_{\Lambda0}} a
+	\Bigg\}
+\label{eq_conformal_hubble_dominated}
+\end{equation}
+\fi
+\iffalse
 \begin{equation}
 \begin{aligned}
 	\mathcal{H} &= H_0 \sqrt{\Omega_{r0}} e^{-x}, &
@@ -163,98 +217,83 @@ and denoting $' = \odv{}/{x}$, we have
 \end{aligned}
 \label{eq_conformal_hubble_dominated}
 \end{equation}
+\fi
 
 \subsubsection{Cosmic and conformal time}
 
-The Friedmann equation \eqref{eq_friedmann} is a differential equation for the scale factor $a(t)$.
-Instead, we will use its natural logarithm $x = \log a$ to parametrize the evolution of the universe,
+In the form \eqref{eq_friedmann},
+the Friedmann equation is a differential equation for the scale factor $a(t)$
+as a function of cosmic time $t$.
+Instead, we will use its natural logarithm $x = \log a$ (so $a = e^x$) to parametrize the evolution of the universe,
 and solve $H = \frac1a \odv{a}{t}$ and $d\eta = dt / a$ for the cosmic and conformal times
 \begin{equation}
 	t = \int_0^a \frac{da}{aH} = \int_0^x \frac{dx}{H}
-	\quad \text{and} \quad
+	\qquad \text{and} \qquad
 	\eta = \int_0^a \frac{da}{a^2 H} = \int_0^x \frac{dx}{aH}.
 \label{eq_cosmic_conformal_time}
 \end{equation}
 In general, these integrals must be computed numerically.
 However, in a flat universe with no cosmological constant and radiation-matter equality at $a_\text{eq} = \Omega_{r0}/\Omega_{m0}$,
 they can be evaluated analytically to give
-\begin{equation}
-\begin{aligned}
-	t &= \int_0^a \frac{da}{H_0 \sqrt{\Omega_{r0}a^{-2} + \Omega_{m0}a^{-1}}} \\
-	  %&= \frac{1}{H_0 \sqrt{\Omega_{m0}}} \int_0^a \frac{da}{\sqrt{a_\text{eq} a^{-2} + a^{-1}}} \qquad \left(a_\text{eq} = \frac{\Omega_{r0}}{\Omega_{m0}}\right)\\
-	  &=  \frac{2}{3 H_0 \sqrt{\Omega_{m0}}} \left[\sqrt{a + a_\text{eq}} \big(a - 2 a_\text{eq}\big) + 2 a_\text{eq}^{3/2} \right]
-\end{aligned}
-\label{eq_cosmic_time_anal}
-\end{equation}
-and
-\begin{equation}
-\begin{aligned}
-	\eta &= \int_0^a \frac{da}{H_0 \sqrt{\Omega_{r0} + \Omega_{m0} a}} \\
-		 %&= \frac{1}{H_0 \sqrt{\Omega_{m0}}} \int_0^a \frac{da}{\sqrt{a_\text{eq} + a}} \qquad \left(a_\text{eq} = \frac{\Omega_{r0}}{\Omega_{m0}}\right) \\
-		 &= \frac{2}{H_0 \sqrt{\Omega_{m0}}} \left[ \sqrt{a + a_\text{eq}} - \sqrt{a_\text{eq}}\right].
-\end{aligned}
-\label{eq_conformal_time_anal}
-\end{equation}
+\begin{subequations}
+\begin{align}
+	t &= \int_0^a \frac{da}{H_0 \sqrt{\Omega_{r0}a^{-2} + \Omega_{m0}a^{-1}}}
+	   = \frac{2}{3 H_0 \sqrt{\Omega_{m0}}} \Big[\sqrt{a + a_\text{eq}} \big(a - 2 a_\text{eq}\big) + 2 a_\text{eq}^{3/2} \Big]
+	\label{eq_cosmic_time_anal}, \\
+	\eta &= \int_0^a \frac{da}{H_0 \sqrt{\Omega_{r0} + \Omega_{m0} a}}
+		 = \frac{2}{H_0 \sqrt{\Omega_{m0}}} \Big[ \sqrt{a + a_\text{eq}} - \sqrt{a_\text{eq}}\Big]
+	\label{eq_conformal_time_anal}.
+\end{align}
+\label{eq_cosmic_conformal_time_anal}
+\end{subequations}
 In a universe with only radiation, these expressions reduce further to
 \begin{equation}
 	t = \frac{a^2}{2 H_0 \sqrt{\Omega_{r0}}}
-	\quad \text{and} \quad
+	\qquad \text{and} \qquad
 	\eta = \frac{a}{H_0 \sqrt{\Omega_{r0}}},
-\label{eq_cosmic_conformal_time_anal}
+\label{eq_cosmic_conformal_time_anal_radiation}
 \end{equation}
-as can also be found by solving the Friedmann equation \eqref{eq_friedmann} with $\Omega_{m} = 0$.
-
-\subsubsection{Distances}
-
-Equipped with conformal time, we can compute distances in the universe.
-Consider a photon traveling on a radial path from $(\eta,r)$ directly towards us at $(\eta_0, 0)$ along the null geodesic defined by
-\begin{equation*}
-	0 = ds^2 = a^2(t) \Big[ -c^2 d\eta^2 + \frac{dr^2}{1-kr^2} \Big].
-\end{equation*}
-On the comoving grid, it travels the \textbf{comoving distance}
-\begin{equation}
-	\chi = \int_{\eta}^{\eta_0} c d\eta = c(\eta_0 - \eta) = \int_r^0 \frac{dr}{\sqrt{1-kr^2}} = \frac{\arcsin(\sqrt{k}r)}{\sqrt{k}},
-\label{eq_comoving_distance}
-\end{equation}
-so it came from the radial coordinate
-\begin{equation*}
-	r = \frac{\sin(\sqrt{k}\chi)}{\sqrt{k}} = \chi \sinc(\sqrt{k}\chi).
-\label{eq_radial_coordinate}
-\end{equation*}
-This equation holds for \emph{all} $k$ with the definition $\sinc(x) = \sin x / x$ with the limit $\sinc(x=0)=1$ and the complex substitution $\sin(ix) = i \sinh x$.
-Light with redshift $z$ emitted at the scale factor $a = (1+z)^{-1}$,
-define the angular diameter and luminosity distances
-\begin{equation}
-	d_A = a r
-	\quad \text{and} \quad
-	d_L = \frac{r}{a} = \frac{d_A}{a^2}.
-\label{eq_distances}
-\end{equation}
-
+as can also be found by solving the Friedmann equation \eqref{eq_friedmann} with $\Omega_{m} = \Omega_{k} = \Omega_{\Lambda} = 0$.
 
 
 \subsection{Implementation}
+\label{sec_background_cosmology_implementation}
 
 \begin{itemize}
-	\item Internally, we use $x = \log a$ as a common time input in most functions.
-	\item We represent a $\Lambda$CDM cosmology with an object that takes $h$, $\Omega_{b0}$, $\Omega_{c0}$, $\Omega_{k0}$, $T_{\gamma0}$ and $N_\text{eff}$ as free parameters, and then computes the remaining dependent parameters from TODO.
-	\item We compute $\mathcal{H}(x)$ and its derivatives $\odv{\mathcal{H}}/{x}$ and $\odv[2]{\mathcal{H}}/{x}$ analytically based on the Friedmann equation \eqref{eq_friedmann} (the derivatives exhibit a nice pattern).
+	\item We use $x = \log a$ as a common internal time variable that most functions accept.
+	\item We represent a $\Lambda$CDM cosmology with an object that takes $h$, $\Omega_{b0}$, $\Omega_{c0}$, $\Omega_{k0}$, $T_{\gamma0}$ and $N_\text{eff}$ as free parameters, and then computes the remaining dependent parameters \eqref{eq_planck2018}.
+	\item We compute $\mathcal{H}(x)$ and its derivatives $\odv{\mathcal{H}}/{x}$ and $\odv[2]{\mathcal{H}}/{x}$ analytically based on the Friedmann equation \eqref{eq_friedmann}.
+	      The derivatives are easy to write down with the observation that
+		  $E(x) = \Omega_{r0} e^{-4x} + \Omega_{m0} e^{-3x} + \Omega_{k0} e^{-2x} + \Omega_{\Lambda0}$
+		  in the Hubble parameter has the derivatives
+		  \begin{equation*}
+			  \odv[d]{E}{x} = (-4)^d \Omega_{r0} a^{-4}(x) + (-3)^d \Omega_{m0} a^{-3}(x) + (-2)^d \Omega_{k0} a^{-2}(x) \qquad \big(d \geq 1\big).
+		  \end{equation*}
 	\item We compute the density parameters \eqref{eq_density_parameters} from today's density parameters using, for example, $\Omega_r = \rho_r / \rho_\text{crit} = (\rho_{r0} a^{-4} / \rho_{\text{crit},0}) (\rho_{\text{crit},0} / \rho_\text{crit}) = \Omega_{r0} a^{-4} (H_0 / H)^2$.
-	\item We compute the cosmic time $t(x)$ and conformal time $\eta(x)$ by inserting their derivatives $\odv{t}/{x}$ and $\odv{\eta}/{x}$ into an adaptive 4th(5th)-order adaptive Runge-Kutta integrator.
-	      As it is computationally infeasible to start at $x=-\infty$, we pick a small initial value for $x$ and compute its corresponding cosmic time \eqref{eq_cosmic_time_anal} or conformal time \eqref{eq_conformal_time_anal} in a radiation and matter-dominated universe.
-	\item If we are in a crazy cosmology in which we can reach $H(x) = 0$ (TODO: elaborate!), we quit the integration early using a callback function.
+	\item We compute the cosmic time $t(x)$ and conformal time $\eta(x)$ by inserting their derivatives $\odv{t}/{x}$ and $\odv{\eta}/{x}$ into an adaptive 4th(5th)-order Runge-Kutta integrator.
+	      As it is computationally infeasible to start at $x=-\infty$, we pick a small initial value for $x$, like $x = -20$,
+	      and compute its corresponding cosmic time \eqref{eq_cosmic_time_anal} or conformal time \eqref{eq_conformal_time_anal} in a radiation and matter-dominated universe.
+	      We use this value to start off the numerical integrator.
+	\item We compute the radiation-matter and matter-cosmological constant equalities analytically \TODO{},
+	      but the acceleration onset numerically.
+	\item We exclude crazy cosmologies where the contents of the square root in the Friedmann equation \eqref{eq_friedmann} become negative for some $a > 0$, and the scale factor develops an imaginary part.
+	      This unphysical behavior can happen in curved cosmologies, for example with $\Omega_{r0} = 0$, $\Omega_{m0} = 0.2$, $\Omega_{k0}=-0.9$ and $\Omega_{\Lambda} = 1.7$.
+		  Although we are mostly concerned with the flat Planck cosmology \eqref{eq_planck2018}, this will come in handy when studying arbitrary cosmologies in \cref{sec_supernova}.
 	\item We spline the integrated $t(x)$ and $\eta(x)$ on a cubic spline, so subsequent computations are both fast and accurate.
-	\item We compute the angular diameter and luminosity distance $d_A(z)$ and $d_L(z)$ of light with redshift $z$ emitted at scale factor $a = (1+z)^{-1} = e^x$ by computing the comoving distance \eqref{eq_comoving_distance}, the radial coordinate \eqref{eq_radial_coordinate} and finally one of the distances \eqref{eq_distances}. (TODO: move)
 \end{itemize}
 
-\subsection{Results}
+\subsection{Tests and results}
 
 We now construct a background cosmology with the Planck 2018 parameters \eqref{eq_planck2018}
 and study the evolution of various quantities in this universe as a function of $x = \log a$.
 
 \begin{table*}
 \centering
-\caption{The time of occurence of four important events in the evolution of a universe with the Planck 2018 cosmology \eqref{eq_planck2018}, expressed in terms of the scale factor $a$, its natural logarithm $x = \log a$, redshift $z = \frac1a - 1$, cosmic time $t$ and conformal time $\eta$.}
+\caption{%
+	The time of occurence of four important events in the evolution of a universe with the Planck cosmology \eqref{eq_planck2018},
+	expressed in terms of the scale factor $a$, its natural logarithm $x = \log a$, redshift $z = \frac1a - 1$, cosmic time $t$ and conformal time $\eta$.
+}
+\label{table_times}
 \begin{tabular}{l c c c c c}
 	\toprule
 	Event                                                               & $x$     & $a$       & $z$    & $\eta / \mathrm{Gyr}$    & $t / \mathrm{Gyr}$ \\
@@ -269,93 +308,184 @@ and study the evolution of various quantities in this universe as a function of 
 
 \begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{../plots/density_parameters.pdf}
+	\includegraphics[scale=0.7]{../plots/density_parameters.pdf}
 \caption{Evolution of the density parameters \eqref{eq_density_parameters} in the Planck 2018 cosmology \eqref{eq_planck2018}.}
 \label{fig_density_parameters}
 \end{figure}
 
-The evolution of the density parameters in \cref{fig_density_parameters} shows how the universe
-\begin{enumerate}
-	\item begins in a radiation-dominated epoch with $\Omega_r \gg \{\Omega_m, \Omega_\Lambda\}$,
-	\item reaches radiation-matter equality with $\Omega_r = \Omega_m$ at $x = x_{r=m} = -8.13$,
-	\item transitions to a matter-dominated epoch with $\Omega_m \gg \{\Omega_r, \Omega_\Lambda\}$,
-	\item reaches matter-cosmological constant equality with $\Omega_m = \Omega_\Lambda$ at $x = x_{m=\Lambda} = -0.26$,
-	\item transitions to a cosmological constant-dominated epoch with $\Omega_\Lambda \gg \{\Omega_r,\Omega_m\}$.
-\end{enumerate}
+\Cref{fig_density_parameters} shows that the universe
+transitions from being dominated by radiation to matter to the cosmological constant,
+with the equality times \eqref{eq_equality_times} reported in \cref{table_times}.
 In this cosmology, there is no curvature $\Omega_{k} = \Omega_{k0} = 0$,
-and all density parameters sum to $\Omega_{r} + \Omega_m + \Omega_k + \Omega_\Lambda = 1$ -- as they should, by the Friedmann equation \eqref{eq_friedmann}.
+and all density parameters sum to $\Omega_{r} + \Omega_m + \Omega_k + \Omega_\Lambda = 1$ at all times -- as they should, by the Friedmann equation \eqref{eq_friedmann} and definition \eqref{eq_density_parameters}.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{../plots/conformal_hubble.pdf}
-	\includegraphics[width=\linewidth]{../plots/conformal_hubble_derivative1.pdf}
-	\includegraphics[width=\linewidth]{../plots/conformal_hubble_derivative2.pdf}
-	\caption{Evolution of the conformal Hubble parameter \eqref{eq_conformal_hubble} and its two derivatives in the Planck 2018 cosmology \eqref{eq_planck2018}, compared to their values \eqref{eq_conformal_hubble_dominated} in universes dominated by radiation, matter and the cosmological constant.}
+	\includegraphics[scale=0.7]{../plots/conformal_hubble.pdf}
+	\includegraphics[scale=0.7]{../plots/conformal_hubble_derivative1.pdf}
+	\includegraphics[scale=0.7]{../plots/conformal_hubble_derivative2.pdf}
+	\caption{%
+		Evolution of the conformal Hubble parameter \eqref{eq_conformal_hubble} and its two derivatives in the Planck 2018 cosmology \eqref{eq_planck2018},
+		compared to their values \eqref{eq_conformal_hubble_dominated} in universes dominated by one species.}
 	\label{fig_conformal_hubble}
 \end{figure}
 
-\cref{fig_conformal_hubble} shows the evolution of the conformal Hubble parameter and some of its derivatives,
-compared to what they would be in a universe with only radiation, matter or the cosmological constant.
-We see that
-\begin{itemize}
-	\item In the dominated epochs, the evolution closely resembles the dominated ones in \eqref{eq_conformal_hubble_dominated}.
-	\item The expansion rate $\dot{a} = \mathcal{H}$ decreases most quickly during radiation domination and slower during matter domination,
-	      but begins to \emph{increase} slightly before $\Omega_m = \Omega_\Lambda$.
-		  Acceleration begins when $\ddot{a}=0$, or $\odv{\mathcal{H}}/{x} = 0$, that is when $x = x_\text{acc} = -1.0$ (TODO: ?).
-\end{itemize}
+\Cref{fig_conformal_hubble} shows the evolution of the conformal Hubble parameter and its two derivatives.
+Note how the expansion rate $\dot{a}$ decreases most quickly during radiation domination,
+slower during matter domination,
+and then begins to \emph{increase} slightly before $\Omega_m = \Omega_\Lambda$ and throughout cosmological constant-domination.
+This means that the universe begins to \emph{accelerate} when $\ddot{a}=0$, or $\odv{\mathcal{H}}/{x}$, at the time reported in \cref{table_times}.
+This is caused by the negative pressure of the cosmological constant.
+Moreover, the evolution is consistent with the values \eqref{eq_conformal_hubble_dominated} in universes dominated by one species.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{../plots/times.pdf}
+	\includegraphics[scale=0.7]{../plots/times.pdf}
 	\caption{The cosmic and conformal times \eqref{eq_cosmic_conformal_time} as a function of (natural logarithm of) the scale factor $a$ in the Planck 2018 cosmology \eqref{eq_planck2018}, compared to the analytical expressions \eqref{eq_cosmic_time_anal} in a universe with no cosmological constant.}
 	\label{fig_cosmic_conformal_time}
 \end{figure}
 
-Next, we study the relation between the scale factor and cosmic and conformal time \eqref{eq_cosmic_conformal_time} in \cref{fig_cosmic_conformal_time}.
-\begin{itemize}
-	\item The numerically integrated times \eqref{eq_cosmic_conformal_times} matches the analytical times \eqref{eq_cosmic_time_anal} in a universe with no cosmological constant very well until the cosmological constant starts to dominate.
-	\item In terms of cosmic time $t$, the universe is $TODO years$ old today.
-\end{itemize}
+\Cref{fig_cosmic_conformal_time} shows the relation between the scale factor and cosmic and conformal time \eqref{eq_cosmic_conformal_time} from numerical integration.
+Before the cosmological constant becomes important, they closely match the analytical times \eqref{eq_cosmic_conformal_time_anal} from a universe with only radiation and matter.
+We can also read off the current age of the universe, as reported in \cref{table_times}.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{../plots/eta_H.pdf}
-	\caption{Evolution of the product between the conformal time \eqref{eq_cosmic_conformal_time_anal} and conformal Hubble parameter \eqref{eq_conformal_hubble}, compared to the product between \eqref{eq_conformal_time_anal} and the Hubble parameter \eqref{eq_friedmann} with $\Omega_{k0}=\Omega_{m0}=0$.}
+	\includegraphics[scale=0.7]{../plots/eta_H.pdf}
+	\caption{%
+		Evolution of the product between the conformal time \eqref{eq_cosmic_conformal_time} and conformal Hubble parameter \eqref{eq_conformal_hubble},
+		compared to the product between the analytical time \eqref{eq_conformal_time_anal} and the Hubble parameter in a universe with $\Omega_{k0}=\Omega_{\Lambda0}=0$.
+	}
 	\label{fig_eta_H}
 \end{figure}
 
-As a final test,
-instead of testing $\eta$ and $\mathcal{H}$ separately,
-we plot the \emph{combination} $\eta \mathcal{H}$ in \cref{eq_eta_H}.
-Its value in a universe with no cosmological constant is known exactly from the conformal time \eqref{eq_conformal_time_anal} and Hubble parameter \eqref{eq_friedmann} with $\Omega_{k0}=\Omega_{\Lambda0}=0$.
-In particular, back in time in the radiation-dominated era, the product between \eqref{eq_cosmic_conformal_time_anal} and \eqref{eq_conformal_hubble_dominated} should converge towards $1$.
+\Cref{fig_eta_H} shows the evolution of the combined quantity $\eta \mathcal{H}$.
+The former plots indicate that our computation of conformal time and the Hubble parameter work independently,
+and this plot shows that so does their product.
+Through radiation-domination and matter-domination, it follows the expected value from the analytical expression \eqref{eq_conformal_time_anal}.
+In particular, as far back in time as possible, the product between the radiation-dominated conformal time \eqref{eq_cosmic_conformal_time_anal_radiation}
+and \eqref{eq_conformal_hubble_dominated_radiation} converges to 1.
 
+\clearpage
 
-\section{Supernova data}
+\section{Cosmological constraints from supernovae}
+\label{sec_supernova}
+
+In this section, we forget most of the Planck 2018 cosmological parameters \eqref{eq_planck2018},
+keeping only $T_{\gamma0}=2.7255\,\mathrm{K}$ and hence $\Omega_{\gamma0}$,
+and neglecting neutrinos by fixing $N_\text{eff}=0$.
+Instead, we constrain the independent parameters $h$, $\Omega_{m0}=\Omega_{b0}+\Omega_{c0}$ and $\Omega_{k0}$,
+and hence the dependent $\Omega_{\Lambda 0}=1-\Omega_{k0}-\Omega_{m0}-\Omega_{r0}$,
+using observed supernovae luminosity distances from \cite{betouleImprovedCosmologicalConstraints2014}.
+To do so, we step through cosmologies with various parameters using the Metropolis-Hastings algorithm,
+and compare their predicted luminosity distances to the data.
+
+\subsection{Theory}
+
+\subsubsection{Cosmological distances}
+
+Equipped with the FLRW metric \eqref{eq_flrw} and conformal time \eqref{eq_cosmic_conformal_time},
+we can derive how to compute distances in the universe.
+Consider a photon traveling on a radial path with $d\theta = d\phi = 0$ from $(\eta,r)$ to us at $(\eta_0, 0)$ along the null geodesic defined by
+\begin{equation*}
+	0 = ds^2 = a^2(t) \left[ -c^2 d\eta^2 + \frac{dr^2}{1-kr^2} \right].
+\end{equation*}
+On the comoving grid (in $[\ldots]$), it travels the \textbf{comoving distance}
+\begin{equation}
+	\chi = \int_{\eta}^{\eta_0} c d\eta = c(\eta_0 - \eta) = \int_r^0 \frac{-dr}{\sqrt{1-kr^2}} = \frac{\arcsin\Big(\sqrt{k}r\Big)}{\sqrt{k}},
+\label{eq_comoving_distance}
+\end{equation}
+so it came from the radial coordinate
+\begin{equation}
+	r = \frac{\sin\Big(\sqrt{k}\chi\Big)}{\sqrt{k}} = \chi \sinc\Big(\sqrt{k}\chi\Big).
+\label{eq_radial_coordinate}
+\end{equation}
+This equation holds for $k$ of \emph{all} signs with the definition $\sinc(x) = \sin x / x$,
+its limit $\sinc(x=0)=1$ and the complex substitution $\sin(ix) = i \sinh x$.
+
+Given the redshift $z$ of light,
+we can then compute the scale factor $a = (z+1)^{-1}$ at emission and its logarithm $x = \log a$,
+the corresponding conformal time \eqref{eq_cosmic_conformal_time},
+the comoving distance \eqref{eq_comoving_distance}, the radial coordinate \eqref{eq_radial_coordinate}
+and finally the corresponding angular diameter distance and luminosity distance
+\begin{equation}
+	d_A = a r
+	\qquad \text{and} \qquad
+	d_L = \frac{r}{a} = \frac{d_A}{a^2}.
+\label{eq_distances}
+\end{equation}
+
+\subsubsection{Statistics}
+
+From \cite{betouleImprovedCosmologicalConstraints2014},
+we have measured luminosity distances $d_{L}^\text{obs}(z_i)$ and their
+corresponding measurement uncertainties $\sigma_i^\text{obs}$
+for $N=31$ different redshifts $z_i$.
+Given the three cosmological parameters $h$, $\Omega_{m0}$ and $\Omega_{k0}$,
+we can then predict corresponding theoretical distances $d_L(z_i; h, \Omega_{m0}, \Omega_{k0})$.
+Assuming the different measurements are Gaussian distributed and uncorrelated,
+the likelihood function that quantifies how good the data fits the theory has likelihood $L \propto e^{-\chi^2/2}$, where the $\chi^2$-function is
+\begin{equation}
+	\chi^2(h,\Omega_{m0},\Omega_{k0}) = \sum_{i=1}^{N} \left( \frac{d_L(z_i; h, \Omega_{m0}, \Omega_{k0}) - d_{L}^\text{obs}(z_i)}{\sigma_i^\text{obs}} \right)^2.
+\label{eq_chi2}
+\end{equation}
+
+The Metropolis-Hastings algorithm steps through various combinations of $h$, $\Omega_{m0}$ and $\Omega_{k0}$ in parameter space.
+Each iteration, it updates the parameters $p_{i+1} = p_i + n_i s_i$,
+where $n_i$ is drawn from a normal distribution $N(0,1)$ and $s_i$ are step sizes for each parameter.
+With a probability of $\min\big\{L_{i+1}/L_i$, 100\%\big\},
+it then records the parameters as a random sample of their probability distributions.
+As the probability only depends on $L_{i+1}/L_i$, only the proportionality in $L$ is required!
+
+\subsection{Implementation}
+
+\begin{itemize}
+	\item We implement a simple and generic homemade version of the Metropolis-Hastings algorithm.
+	      As input, it takes a function that computes the log-likelihood $\log L(\mathbf{p})$ for a set of parameters $\mathbf{p}$,
+	      and lower and upper bounds on the parameters.
+	      It guesses step sizes of the parameters as a fixed proportion of their bounds,
+		  and then adaptively refines them if the algorithm accepts new parameters that deviates too much from the ``optimal'' acceptance rate around $25\%$ \cite{gelmanWeakConvergenceOptimal1997}.
+		  The algorithm runs one or multiple chains with a requested number of (accepted) samples from initial parameter guesses,
+		  and removes a requested number of burn-in samples.
+	\item When we run into ``crazy cosmologies'' (as described in \cref{sec_background_cosmology_implementation}) or cosmologies whose parameters are outside the allowed bounds (for example cosmologies with $\Omega_{m0} < 0$), we assign zero likelihood $L=0$, so they are not accepted.
+\end{itemize}
+
+\subsection{Results}
 
 \begin{figure}
 	\centering
-	\includegraphics[width=\linewidth]{../plots/supernova_distance.pdf}
-	\includegraphics[width=\linewidth]{../plots/supernova_hubble.pdf}
-	\includegraphics[width=\linewidth]{../plots/supernova_omegas.pdf}
+	\includegraphics[scale=0.7]{../plots/supernova_distance.pdf}
+	\caption{Observed luminosity distances from supernovae from \cite{betouleImprovedCosmologicalConstraints2014}, compared to predictions \eqref{eq_distances} from the Planck 2018 cosmology \eqref{eq_planck2018}.}
+	\label{fig_luminosity_distances}
 \end{figure}
 
-%
-%______________________________________________________________
+Before turning to constraining the cosmological parameters,
+we compare the observed distances to those predicted with the Planck 2018 cosmology \eqref{eq_planck2018} in \cref{fig_luminosity_distances}.
+The agreement is already relatively good, so we expect that our constraints and best fit should be close to their values.
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.7]{../plots/supernova_hubble.pdf}
+	\includegraphics[scale=0.7]{../plots/supernova_omegas.pdf}
+	\caption{%
+		Posterior probability distribution of today's reduced Hubble parameter $h$,
+		and constraints on $\Omega_{m0}$ versus $\Omega_{\Lambda0}$,
+		from $5 \times 10000$ samples of the Metropolis-Hastings algorithm with $\log L = -\chi^2/2$ and the chi-squared sum \eqref{eq_chi2}.
+	}
+	\label{fig_supernova_mcmc}
+\end{figure}
+
+We now run the Metropolis-Hastings algorithm with five chains of 10000 samples each, neglecting $1000$ initial samples as burn-in.
+This gives the probability distributions for $h$ and confidence regions for $\Omega_{m0}$ and $\Omega_{\Lambda0}$ in \cref{fig_supernova_mcmc}.
+Note that the constraint in the $\Omega_{m0}$-$\Omega_{\Lambda0}$-plane is highly orthogonal to the line of flat universes,
+so supernova data can give good constraints when combined with some other constraint that argues in favor of flatness, for example.
+Our best fits for $\Omega_{m0}$ and $\Omega_{\Lambda0}$ agrees quite well with Planck's,
+while our Hubble parameter is somewhat larger and exemplifies the Hubble tension.
+\TODO{count $\sigma$?}
 
 \section{Conclusions}
 
-
-% WARNING
-%-------------------------------------------------------------------
-% Please note that we have included the references to the file aa.dem in
-% order to compile it, but we ask you to:
-%
-% - use BibTeX with the regular commands:
-%   \bibliographystyle{aa} % style aa.bst
-%   \bibliography{Yourfile} % your references Yourfile.bib
-%
-% - join the .bib files when you upload your source files
-%-------------------------------------------------------------------
+%\bibliography{report.bib}
+\printbibliography
 
 \end{document}
