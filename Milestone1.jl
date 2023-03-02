@@ -165,25 +165,25 @@ if !isfile("plots/density_parameters.pdf")
 end
 
 # Supernova data
-if !isfile("plots/supernova_distance.pdf")
+if true || !isfile("plots/supernova_distance.pdf")
     #co = ΛCDM(h=0.7, Ωc0=0.30-0.05, Ωk0=0.00)
-    plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"\log_{10} \Big[ d_L \,/\, \mathrm{Gpc} \Big]", xlims=(0, 0.4), ylims=(-1.5, 1.5), legend_position = :topleft)
+    plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"\log_{10} \Big[ d_L \,/\, \mathrm{Gpc} \Big]", xlims=(0, 0.4), ylims=(-1.5, 1.0), legend_position = :topleft)
 
     x2 = range(-1, 0, length=400)
     plot!(log10.(Cosmology.z.(x2).+1), log10.(Cosmology.dL.(co, x2) ./ Gpc); label = "prediction")
 
     data = readdlm("data/supernovadata.txt", comments=true)
-    z, dL, σdL = data[:,1], data[:,2], data[:,3]
+    zobs, dL, σdL = data[:,1], data[:,2], data[:,3]
     err_lo = log10.(dL) - log10.(dL-σdL)
     err_hi = log10.(dL+σdL) - log10.(dL)
-    scatter!(log10.(z.+1), log10.(dL); yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
+    scatter!(log10.(zobs.+1), log10.(dL); markercolor = :black, yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
 
     savefig("plots/supernova_distance.pdf")
 end
 
 # Supernova MCMC fits
 # Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
-if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
+if !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
     println("Plotting Ωm0, ΩΛ from MCMC analysis of supernova data")
 
     data = readdlm("data/supernovadata.txt", comments=true)
