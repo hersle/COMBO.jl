@@ -235,7 +235,7 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", size = (600, 600), xlims = ΩΛ0bounds, ylims = ΩΛ0bounds, xticks = range(ΩΛ0bounds..., step=0.1), yticks = range(ΩΛ0bounds..., step=0.1), legend_position = :topright)
     #scatter!(Ωm02, ΩΛ02; color = 1, markershape = :rect, markerstrokecolor = 1, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
     #scatter!(Ωm01, ΩΛ01; color = 3, markershape = :rect, markerstrokecolor = 3, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
-    scatterheatmaps!([Ωm02, Ωm01], [ΩΛ02, ΩΛ01], [palette(:default)[1], palette(:default)[3]], [L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}", L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}"], ΩΛ0bounds, ΩΛ0bounds; nbins=120)
+    scatterheatmaps!([Ωm02, Ωm01], [ΩΛ02, ΩΛ01], [palette(:default)[1], :darkblue], [L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}", L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}"], ΩΛ0bounds, ΩΛ0bounds; nbins=120)
 
 
     # plot ΩΛ(Ωm0) for a few flat universes (should give ΩΛ ≈ 1 - Ωm0)
@@ -243,7 +243,10 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     ΩΛ0_flat = [ΛCDM(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ for Ωm0 in Ωm0_flat]
     plot!(Ωm0_flat, ΩΛ0_flat; color = :black, marker = :circle, markersize = 2, label = "flat universes")
 
-    scatter!([best_Ωm0], [best_ΩΛ0]; color = :red, markerstrokecolor = :red, markershape = :cross, markersize = 10, label = "best fit")
+    scatter!([best_Ωm0], [best_ΩΛ0]; color = :red, markerstrokecolor = :red, markershape = :cross, markersize = 10, label = "our best fit")
+    scatter!([0.317], [0.683]; color = :green, markerstrokecolor = :green, markershape = :cross, markersize = 10, label = "Planck 2018's best fit")
+    #vline([best_Ωm0]; linestyle = :dash, color = :red, label = L"\textrm{our best fit}")
+    #hline([best_ΩΛ0]; linestyle = :dash, color = :red)
     savefig("plots/supernova_omegas.pdf")
 
     # TODO: draw error ellipses?
