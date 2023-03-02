@@ -43,8 +43,6 @@ mutable struct ΛCDM
     end
 end
 
-# TODO: how to not vectorize over the cosmology without passing it as a keyword argument? https://docs.julialang.org/en/v1/manual/functions/#man-vectorized
-# TODO: relevant discussion: https://discourse.julialang.org/t/recent-broadcast-changes-iterate-by-default-scalar-struct-and/11178/26
 Base.broadcastable(co::ΛCDM) = Ref(co) # never broadcast cosmology (in vectorized calls)
 
 # internal time variable: natural logarithm of scale factor
@@ -53,54 +51,28 @@ a(x::Real) = exp(x)
 z(x::Real) = 1/a(x) - 1
 
 # Friedmann equation
+# TODO: rename E
 Ωpoly(Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ::Real, x::Real; d::Integer=0) = (-4)^d * Ωr0/a(x)^4 + (-3)^d * Ωm0/a(x)^3 + (-2)^d * Ωk0/a(x)^2 + 0^d * ΩΛ # evolution of densities relative to *today's* critical density # TODO: can do derivative here (0^0 = 1 in Julia)! TODO: call it Ωpoly?
 Ωpoly(co::ΛCDM, x::Real; d::Integer=0) = Ωpoly(co.Ωr0, co.Ωm0, co.Ωk0, co.ΩΛ, x; d)
-#dΩevo(Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ0::Real, x::Real; n::Integer=1) = (-4)^n * Ωr0/a(x)^4 + (-3)^n * Ωm0/a(x)^3 + (-2)^n * Ωk0/a(x)^2 # n-th (n >= 1) derivative of Ωev0 wrt. x
-#dΩevo(co::ΛCDM, x::Real; n=Integer::1) = dΩevo(co.Ωr0, co.Ωm0, co.Ωk0, co.ΩΛ0, x; n)
 H(h::Real, Ωr0::Real, Ωm0::Real, Ωk0::Real, ΩΛ::Real, x::Real) = h * 100 * km/Mpc * √(Ωpoly(Ωr0, Ωm0, Ωk0, ΩΛ, x))
 H(co::ΛCDM, x::Real) = H(co.h, co.Ωγ0+co.Ων0, co.Ωb0+co.Ωc0, co.Ωk0, co.ΩΛ, x) # "normal" Hubble parameter
 
-# conformal Hubble parameter (𝓗 = a*H) + 1st derivative + 2nd derivative
-aH(co::ΛCDM, x::Real) = a(x) * H(co, x) # conformal Hubble parameter
-daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * Ωpoly(co, x; d=1) / Ωpoly(co, x))
-#d2aH(co::ΛCDM, x::Real) = daH(co, x)^2 / ah(co, x) + 1/2 * aH(co, x) * (Ωpoly(co, x; d=2) / Ωpoly(co, x) + (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
+# conformal Hubble parameter (𝓗 = a*H) + 1st derivative + 2nd derivative (from analytical considerations)
+  aH(co::ΛCDM, x::Real) = a(x) * H(co, x)
+ daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * Ωpoly(co, x; d=1) / Ωpoly(co, x))
 d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + Ωpoly(co, x; d=1) / Ωpoly(co, x) + 1/2 * Ωpoly(co, x; d=2) / Ωpoly(co, x) - 1/4 * (Ωpoly(co, x; d=1) / Ωpoly(co, x))^2)
 
-# TODO: make independent of cosmology?
-function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; terminator = (co, x) -> Ωpoly(co, x) - 1e-7)
+function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64)
     sol = solve(ODEProblem((y, p, x) -> dy_dx(x), y1, (x1, x2)), Tsit5(); reltol=1e-10)
     xs, ys = sol.t, sol.u
     return Spline1D(xs, ys; k=3, bc="error"), x1, x2
 end
 
-# EXAMPLES:
-# Cosmology.ΛCDM(Ωr0=0, Ωb0=0, Ωc0=0.2, Ωk0=-0.9) has Ωpoly(x ≈ -1) < 0
-function is_fucked(co::ΛCDM; x1=-20.0, x2=+20.0)
-    if Ωpoly(co, x1) < 0 || Ωpoly(co, x2) < 0
-        return true
-    end
-
-    a = -4 * co.Ωr0
-    b = -3 * co.Ωm0
-    c = -2 * co.Ωk0
-    d = b^2 - 4*a*c
-    if d >= 0
-        ainv1 = (-b + √(d)) / (2*a)
-        ainv2 = (-b - √(d)) / (2*a)
-        a1, a2 = 1/ainv1, 1/ainv2
-        if (a1 >= 0 && Ωpoly(co, x(a1)) < 0) || (a2 >= 0 && Ωpoly(co, x(a2)) < 0)
-            return true
-        end
-    end
-
-    return false
-end
-
 # conformal time
 function η(co::ΛCDM, x::Real)
     if isnothing(co.η_spline)
-        dη_dx(x) = 1 / (a(x) * H(co, x)) # TODO: integrate in dimensionless units closer to 1
-        x1, x2 = -20.0, +20.0 # integration and spline range (TODO: set age of universe once and for all efficiently in constructor?)
+        dη_dx(x) = 1 / (a(x) * H(co, x))
+        x1, x2 = -20.0, +20.0
         aeq = co.Ωr0 / co.Ωm0
         if co.Ωm0 > 0
             η1 = 2 / (co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) - √(aeq))
@@ -164,6 +136,29 @@ end
 
 function dA(co::ΛCDM, x::Real)
     return dL(co, x) * a(x)^2
+end
+
+# EXAMPLES:
+# Cosmology.ΛCDM(Ωr0=0, Ωb0=0, Ωc0=0.2, Ωk0=-0.9) has Ωpoly(x ≈ -1) < 0
+function is_fucked(co::ΛCDM; x1=-20.0, x2=+20.0)
+    if Ωpoly(co, x1) < 0 || Ωpoly(co, x2) < 0
+        return true
+    end
+
+    a = -4 * co.Ωr0
+    b = -3 * co.Ωm0
+    c = -2 * co.Ωk0
+    d = b^2 - 4*a*c
+    if d >= 0
+        ainv1 = (-b + √(d)) / (2*a)
+        ainv2 = (-b - √(d)) / (2*a)
+        a1, a2 = 1/ainv1, 1/ainv2
+        if (a1 >= 0 && Ωpoly(co, x(a1)) < 0) || (a2 >= 0 && Ωpoly(co, x(a2)) < 0)
+            return true
+        end
+    end
+
+    return false
 end
 
 end
