@@ -338,26 +338,23 @@ This means that the universe begins to \emph{accelerate} when $\ddot{a}=0$, or $
 This is caused by the negative pressure of the cosmological constant.
 Moreover, the evolution is consistent with the values \eqref{eq_conformal_hubble_dominated} in universes dominated by one species.
 
-\begin{figure}
+\begin{figure}[t]
 	\centering
 	\includegraphics[scale=0.7]{../plots/times.pdf}
-	\caption{The cosmic and conformal times \eqref{eq_cosmic_conformal_time} as a function of (natural logarithm of) the scale factor $a$ in the Planck 2018 cosmology \eqref{eq_planck2018}, compared to the analytical expressions \eqref{eq_cosmic_time_anal} in a universe with no cosmological constant.}
+	\caption{Evolution of the cosmic and conformal times \eqref{eq_cosmic_conformal_time} in the Planck 2018 cosmology \eqref{eq_planck2018}, compared to the analytical expressions \eqref{eq_cosmic_time_anal} in a universe with no cosmological constant.}
 	\label{fig_cosmic_conformal_time}
+
+	\includegraphics[scale=0.7]{../plots/eta_H.pdf}
+	\caption{%
+		Evolution of the product between the conformal time \eqref{eq_cosmic_conformal_time} and conformal Hubble parameter \eqref{eq_conformal_hubble},
+		compared to that with the analytical time \eqref{eq_conformal_time_anal} and the Hubble parameter with $\Omega_{k0}=\Omega_{\Lambda0}=0$.
+	}
+	\label{fig_eta_H}
 \end{figure}
 
 \Cref{fig_cosmic_conformal_time} shows the relation between the scale factor and cosmic and conformal time \eqref{eq_cosmic_conformal_time} from numerical integration.
 Before the cosmological constant becomes important, they closely match the analytical times \eqref{eq_cosmic_conformal_time_anal} from a universe with only radiation and matter.
 We can also read off the current age of the universe, as reported in \cref{table_times}.
-
-\begin{figure}
-	\centering
-	\includegraphics[scale=0.7]{../plots/eta_H.pdf}
-	\caption{%
-		Evolution of the product between the conformal time \eqref{eq_cosmic_conformal_time} and conformal Hubble parameter \eqref{eq_conformal_hubble},
-		compared to the product between the analytical time \eqref{eq_conformal_time_anal} and the Hubble parameter in a universe with $\Omega_{k0}=\Omega_{\Lambda0}=0$.
-	}
-	\label{fig_eta_H}
-\end{figure}
 
 \Cref{fig_eta_H} shows the evolution of the combined quantity $\eta \mathcal{H}$.
 The former plots indicate that our computation of conformal time and the Hubble parameter work independently,

@@ -106,18 +106,18 @@ if !isfile("plots/conformal_Hubble_derivative2.pdf")
 end
 
 # Product of conformal time and conformal Hubble parameter
-if !isfile("plots/eta_H.pdf")
+if true || !isfile("plots/eta_H.pdf")
     println("Plotting η * aH")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \eta \mathcal{H} \Big]", legend_position = :topleft)
 
     #plot!(x, x -> log10(1);                      linestyle = :dash,  label = "radiation-dominated")
-    plot!(x, @. log10(η(co, x) * aH(co, x)); linestyle = :solid, label = "general case")
+    plot!(x, @. log10(η(co, x) * aH(co, x)); linestyle = :solid, color = :black, label = "general case")
 
     aeq_anal = co.Ωr0 / co.Ωm0
     η_anal = @. 2 / (co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
     aH_anal = @. a(x) * co.H0 * √(co.Ωr0/a(x)^4 + co.Ωm0/a(x)^3)
     η_aH_anal = @. η_anal * aH_anal
-    plot!(x, log10.(η_aH_anal); linestyle = :dash, label = "radiation- and matter domination")
+    plot!(x, log10.(η_aH_anal); linestyle = :dash, color = 1, label = "radiation-matter universe")
 
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
 
