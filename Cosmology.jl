@@ -73,6 +73,8 @@ function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1:
     return Spline1D(xs, ys; k=3, bc="error"), x1, x2
 end
 
+# EXAMPLES:
+# Cosmology.ΛCDM(Ωr0=0, Ωb0=0, Ωc0=0.2, Ωk0=-0.9) has Ωpoly(x ≈ -1) < 0
 function is_fucked(co::ΛCDM; x1=-20.0, x2=+20.0)
     if Ωpoly(co, x1) < 0 || Ωpoly(co, x2) < 0
         return true
@@ -141,8 +143,8 @@ end
 Ω( co::ΛCDM, x::Real) = Ωr(co, x) + Ωm(co, x) + Ωk(co, x) + ΩΛ(co, x)
 
 # equalities
-r_m_equality(co::ΛCDM) = find_zero(x -> Ωr(co, x) - Ωm(co, x), (-20, +20)) # TODO: save xmin, xmax in ΛCDM
-m_Λ_equality(co::ΛCDM) = find_zero(x -> Ωm(co, x) - ΩΛ(co, x), (-20, +20)) # TODO: save xmin, xmax in ΛCDM
+r_m_equality(co::ΛCDM) = log(co.Ωr0 / co.Ωm0)
+m_Λ_equality(co::ΛCDM) = log(co.Ωm0 / co.ΩΛ) / 3
 acceleration_onset(co::ΛCDM) = find_zero(x -> daH(co, x), (-20, +20))
 
 # luminosity distance
