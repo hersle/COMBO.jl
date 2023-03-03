@@ -19,6 +19,7 @@ catch
     println("WARNING: Could not activate PGFPlotsX plotting backend")
     println("         Falling back to GR plotting backend")
     println("         The plots may not look fully as intended!")
+    ENV["GKSwstype"] = "100" # headless mode (https://discourse.julialang.org/t/plotting-from-a-server/74345/4)
     gr()
 end
 default(
