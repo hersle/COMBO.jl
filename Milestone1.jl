@@ -13,7 +13,14 @@ using DelimitedFiles
 using Distributions
 using Printf
 Plots.__init__() # workaround with sysimage: https://github.com/JuliaLang/PackageCompiler.jl/issues/786
-pgfplotsx()
+try
+    pgfplotsx()
+catch
+    println("WARNING: Could not activate PGFPlotsX plotting backend")
+    println("         Falling back to GR plotting backend")
+    println("         The plots may not look fully as intended!")
+    gr()
+end
 default(
     minorticks = 10,
     labelfontsize = 12, # default: 11
@@ -22,6 +29,7 @@ default(
     tickfontsize = 10, # default: 8
     #titlefontsize = 14, # default: 14
     legend_font_halign = :left,
+    fontfamily = "Computer Modern",
 )
 
 # a hack to "rasterize" a scatter plot
@@ -72,7 +80,7 @@ end
 # Conformal Hubble parameter
 if true || !isfile("plots/conformal_Hubble.pdf")
     println("Plotting conformal Hubble parameter")
-    plot(xlabel = L"x = \log a", ylabel = L"\log_{10}\Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc})\Big]", legend_position = :topleft, ylims = (-1, +7), yticks = -1:1:+7)
+    plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc}) \Big]", legend_position = :topleft, ylims = (-1, +7), yticks = -1:1:+7)
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωr0) * a(x)^(-1  )); linestyle = :dash,  label = "radiation-dominated")
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωm0) * a(x)^(-1/2)); linestyle = :dash,  label = "matter-dominated")
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.ΩΛ0) * a(x)^(+1  )); linestyle = :dash,  label = "cosmological constant-dominated")
@@ -206,8 +214,8 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     Ωm0bounds = (0.0, 1.0)
     Ωk0bounds = (-1.0, +1.0)
     nparams = 3 # h, Ωm0, Ωk0
-    nchains = 5
-    nsamples = 10000 # per chain
+    nchains = 2
+    nsamples = 1000 # per chain
     params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], nsamples, nchains; burnin=1000)
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
@@ -235,7 +243,7 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", size = (600, 600), xlims = ΩΛ0bounds, ylims = ΩΛ0bounds, xticks = range(ΩΛ0bounds..., step=0.1), yticks = range(ΩΛ0bounds..., step=0.1), legend_position = :topright)
     #scatter!(Ωm02, ΩΛ02; color = 1, markershape = :rect, markerstrokecolor = 1, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
     #scatter!(Ωm01, ΩΛ01; color = 3, markershape = :rect, markerstrokecolor = 3, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
-    scatterheatmaps!([Ωm02, Ωm01], [ΩΛ02, ΩΛ01], [palette(:default)[1], :darkblue], [L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}", L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}"], ΩΛ0bounds, ΩΛ0bounds; nbins=120)
+    scatterheatmaps!([Ωm02, Ωm01], [ΩΛ02, ΩΛ01], [palette(:default)[1], :darkblue], [L"%$(round(confidence2*100; digits=1)) \% \textrm{ confidence region}", L"%$(round(confidence1*100; digits=1)) \% \textrm{ confidence region}"], ΩΛ0bounds, ΩΛ0bounds; nbins=120)
 
 
     # plot ΩΛ(Ωm0) for a few flat universes (should give ΩΛ ≈ 1 - Ωm0)
