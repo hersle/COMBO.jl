@@ -4,7 +4,7 @@ export a, z
 export ΛCDM
 export H, aH, daH, d2aH
 export t, η, Ωγ, Ων, Ωb, Ωc, Ωk, ΩΛ, Ωr, Ωm, Ω
-export r_m_equality, m_Λ_equality, acceleration_onset
+export equality_rm, equality_mΛ, acceleration_onset
 export dL, dA
 
 include("Constants.jl")
@@ -117,31 +117,31 @@ end
 Ωm(co::ΛCDM, x::Real) = Ωb(co, x) + Ωc(co, x)
 Ω( co::ΛCDM, x::Real) = Ωr(co, x) + Ωm(co, x) + Ωk(co, x) + ΩΛ(co, x)
 
-# equalities
-r_m_equality(co::ΛCDM) = log(co.Ωr0 / co.Ωm0)
-m_Λ_equality(co::ΛCDM) = log(co.Ωm0 / co.ΩΛ0) / 3
+# time of equality between different species (as x = log(a))
+equality_rm(co::ΛCDM) = log(co.Ωr0 / co.Ωm0)
+equality_mΛ(co::ΛCDM) = log(co.Ωm0 / co.ΩΛ0) / 3
+
+# time of acceleration onset (as x = log(a))
 acceleration_onset(co::ΛCDM) = find_zero(x -> daH(co, x), (-20, +20))
 
-# luminosity distance
-function dL(co::ΛCDM, x::Real)
-    χ = c * (η(co, 0) - η(co, x))
+# conformal distance
+χ(co::ΛCDM, x::Real) = c * (η(co, 0) - η(co, x))
 
-    # ALL three expressions
-    # 1. r(Ωk0 = 0) = χ
-    # 2. r(Ωk0 < 0) = χ *  sin(√(-Ωk0)*H0*χ/c) / (√(-Ωk0)*H0*χ/c)
-    # 3. r(Ωk0 > 0) = χ * sinh(√(+Ωk0)*H0*χ/c) / (√(+Ωk0)*H0*χ/c)
-    # can be written as the real-valued function
-    #    r(Ωk0)     = χ * sinc(√(-Ωk0)*H0*χ/c/π)
-    # using complex numbers,
-    # because sinc(x) = sin(π*x) / (π*x) -> 1 as x -> 0,
-    # and sinh(x) = -i * sin(i*x)
-    r = χ * real(sinc(√(complex(-co.Ωk0)) * co.H0 * χ / c / π)) # sinc(x) = sin(π*x) / (π*x), so divide argument by π!
-    return r / a(x)
-end
+# radial coordinate (of light emitted at x)
+#   note: ALL three expressions
+#   1. r(Ωk0 = 0) = χ
+#   2. r(Ωk0 < 0) = χ *  sin(√(-Ωk0)*H0*χ/c) / (√(-Ωk0)*H0*χ/c)
+#   3. r(Ωk0 > 0) = χ * sinh(√(+Ωk0)*H0*χ/c) / (√(+Ωk0)*H0*χ/c)
+#   can be written as the real-valued function
+#      r(Ωk0)     = χ * sinc(√(-Ωk0)*H0*χ/c/π)
+#   using complex numbers,
+#   because sinc(x) = sin(π*x) / (π*x) -> 1 as x -> 0,
+#   and sinh(x) = -i * sin(i*x)
+r(co::ΛCDM, x::Real) = χ(co, x) * real(sinc(√(complex(-co.Ωk0)) * co.H0 * χ(co, x) / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x), so divide argument by π!
 
-function dA(co::ΛCDM, x::Real)
-    return dL(co, x) * a(x)^2
-end
+# angular diameter distance and luminosity distance (of light emitted at x)
+dA(co::ΛCDM, x::Real) = r(co, x) * a(x)
+dL(co::ΛCDM, x::Real) = r(co, x) / a(x)
 
 # checks whether the Hubble parameter becomes complex on the integration interval (x1, x2)
 # EXAMPLE: Cosmology.ΛCDM(Ωr0=0, Ωb0=0, Ωc0=0.2, Ωk0=-0.9) has E(x ≈ -1) < 0

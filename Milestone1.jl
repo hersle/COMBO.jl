@@ -62,8 +62,8 @@ end
 
 co = ΛCDM()
 x = range(-15, 5, length=400)
-xrm = r_m_equality(co)
-xmΛ = m_Λ_equality(co)
+xrm = equality_rm(co)
+xmΛ = equality_mΛ(co)
 xacc = acceleration_onset(co)
 x1, x2, x3, x4 = minimum(x), xrm, xmΛ, maximum(x)
 x0 = 0.0
@@ -215,8 +215,8 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     Ωm0bounds = (0.0, 1.0)
     Ωk0bounds = (-1.0, +1.0)
     nparams = 3 # h, Ωm0, Ωk0
-    nchains = 2
-    nsamples = 1000 # per chain
+    nchains = 10
+    nsamples = 10000 # per chain
     params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], nsamples, nchains; burnin=1000)
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
