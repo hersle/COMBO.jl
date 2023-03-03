@@ -3,8 +3,10 @@ AST5220 project: Einstein-Boltzmann solver
 
 Try to be a hipster and use Julia...
 
-If you don't already have it installed, [download and install Julia](https://julialang.org/downloads/).
-Then
+Instructions
+------------
+
+[Download and install Julia](https://julialang.org/downloads/), add `julia` to your `$PATH`, then
 ```
 git clone https://github.com/hersle/AST5220-project
 cd AST5220-project/
