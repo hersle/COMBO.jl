@@ -16,9 +16,9 @@ Plots.__init__() # workaround with sysimage: https://github.com/JuliaLang/Packag
 try
     pgfplotsx()
 catch
-    println("WARNING: Could not activate PGFPlotsX plotting backend")
-    println("         Falling back to GR plotting backend")
-    println("         The plots may not look fully as intended!")
+    println("WARNING: Since you don't have LaTeX with the PGFPlots package installed,")
+    println("         the program falls back to using the GR plotting backend.")
+    println("         Therefore, the plots may not look fully as intended!")
     ENV["GKSwstype"] = "100" # headless mode (https://discourse.julialang.org/t/plotting-from-a-server/74345/4)
     gr()
 end
@@ -80,7 +80,7 @@ end
 
 # Conformal Hubble parameter
 if true || !isfile("plots/conformal_Hubble.pdf")
-    println("Plotting conformal Hubble parameter")
+    println("Plotting plots/conformal_Hubble.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc}) \Big]", legend_position = :topleft, ylims = (-1, +7), yticks = -1:1:+7)
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωr0) * a(x)^(-1  )); linestyle = :dash,  label = "radiation-dominated")
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωm0) * a(x)^(-1/2)); linestyle = :dash,  label = "matter-dominated")
@@ -92,7 +92,7 @@ end
 
 # conformal Hubble parameter 1st derivative
 if true || !isfile("plots/conformal_Hubble_derivative1.pdf")
-    println("Plotting conformal Hubble 1st derivative")
+    println("Plotting plots/conformal_Hubble_derivative1.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}\mathcal{H}}{\mathrm{d} x}", legend_position = :topleft)
     plot!(x, x -> -1;                   linestyle = :dash,  label = "radiation-dominated")
     plot!(x, x -> -1/2;                 linestyle = :dash,  label = "matter-dominated")
@@ -104,7 +104,7 @@ end
 
 # Conformal Hubble parameter 2nd derivative
 if true || !isfile("plots/conformal_Hubble_derivative2.pdf")
-    println("Plotting conformal Hubble 2nd derivative")
+    println("Plotting plots/conformal_Hubble_derivative2.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}^2\mathcal{H}}{\mathrm{d} x^2}", legend_positions = :topleft, yticks = 0:0.25:1.5, ylims = (0, 1.5))
     plot!(x, x -> ( 1)^2;                linestyle = :dash,  label = "radiation-dominated")
     plot!(x, x -> (-1/2)^2;              linestyle = :dash,  label = "matter-dominated")
@@ -116,7 +116,7 @@ end
 
 # Product of conformal time and conformal Hubble parameter
 if true || !isfile("plots/eta_H.pdf")
-    println("Plotting η * aH")
+    println("Plotting plots/eta_H.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \eta \mathcal{H} \Big]", legend_position = :topleft)
 
     #plot!(x, x -> log10(1);                      linestyle = :dash,  label = "radiation-dominated")
@@ -135,7 +135,7 @@ end
 
 # Cosmic and conformal time
 if true || !isfile("plots/times.pdf")
-    println("Plotting cosmic and conformal times")
+    println("Plotting plots/times.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
 
     # in a radiation-matter-only universe
@@ -156,7 +156,7 @@ end
 
 # Density parameters
 if true || !isfile("plots/density_parameters.pdf")
-    println("Plotting density parameters")
+    println("Plotting plots/density_parameters.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\Omega_i", legend_position = (0.05, 0.6), ylims=(-0.05, +1.3))
     plot!(x, Ωr.(co, x); label = L"\Omega_r")
     plot!(x, Ωm.(co, x); label = L"\Omega_m")
@@ -175,7 +175,7 @@ end
 
 # Supernova data
 if true || !isfile("plots/supernova_distance.pdf")
-    #co = ΛCDM(h=0.7, Ωc0=0.30-0.05, Ωk0=0.00)
+    println("Plotting plots/supernova_distance.pdf")
     plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"\log_{10} \Big[ d_L \,/\, \mathrm{Gpc} \Big]", xlims=(0, 0.4), ylims=(-1.5, 1.0), legend_position = :topleft)
 
     x2 = range(-1, 0, length=400)
@@ -193,7 +193,7 @@ end
 # Supernova MCMC fits
 # Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
 if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
-    println("Plotting Ωm0, ΩΛ from MCMC analysis of supernova data")
+    println("Plotting plots/supernova_omegas.pdf")
 
     data = readdlm("data/supernovadata.txt", comments=true)
     N_obs, _ = size(data)
@@ -261,7 +261,7 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     # TODO: draw error ellipses?
     # see e.g. https://www.visiondummy.com/2014/04/draw-error-ellipse-representing-covariance-matrix/
 
-    println("Plotting h from MCMC analysis of supernova data")
+    println("Plotting plots/supernova_hubble.pdf")
 
     nfit = fit(Normal, h) # fit Hubble parameters to normal distribution
     plot(xlabel = L"h = H_0 \,/\, 100\,\frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}", ylabel = L"P(h)", xlims = (0.65, 0.75), ylims = (0, 1.1 / √(2*π*var(nfit))), xticks = 0.65:0.01:0.75, yticks=0:10:100, legend_position = :topright)
