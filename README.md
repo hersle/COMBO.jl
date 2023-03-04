@@ -10,10 +10,13 @@ Instructions
 ```
 git clone https://github.com/hersle/AST5220-project
 cd AST5220-project/
-julia --project=. -e 'import Pkg; Pkg.instantiate()' # install dependencies
+julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()' # install and precompile dependencies
 julia --project=. Milestone1.jl # produce output for first milestone
 ```
 
-Since Julia is a precompiled language,
-so it can take a long time to install all dependencies and run the program for the first time!
-Run `Milestone1.jl` a second time to better assess the actual runtime.
+Julia is a precompiled language,
+so dependency installation, precompilation and the first run can take long!
+
+For the plots to look as intended, PGFPlots must be installed.
+Otherwise, a different plotting backend is used,
+and the plots may not look as nice.
