@@ -4,7 +4,7 @@ export MetropolisHastings
 
 using Distributions
 
-# TODO: constant step scaling "locks" their mutual *ratios*; scale only one random step?
+# TODO: constant step scaling "locks" their mutual *ratios*; scale only one random step? use covariance matrix somehow?
 function MetropolisHastings(logL::Function, bounds::Vector{Tuple{Float64,Float64}}, samples::Integer, chains::Integer; steps=nothing, burnin::Integer=0, verbose=true)
     params_lo = [bound[1] for bound in bounds]
     params_hi = [bound[2] for bound in bounds]
