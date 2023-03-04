@@ -9,7 +9,7 @@ export dL, dA
 
 include("Constants.jl")
 
-using DifferentialEquations # ODE integration
+using OrdinaryDiffEq # ODE integration (instead of DifferentialEquations to reduce compile time)
 using Dierckx # spline interpolation
 using Roots # root finding
 using .Constants
