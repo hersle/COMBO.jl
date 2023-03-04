@@ -265,9 +265,11 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
 
     nfit = fit(Normal, h) # fit Hubble parameters to normal distribution
     plot(xlabel = L"h = H_0 \,/\, 100\,\frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}", ylabel = L"P(h)", xlims = (0.65, 0.75), ylims = (0, 1.1 / √(2*π*var(nfit))), xticks = 0.65:0.01:0.75, yticks=0:10:100, legend_position = :topright)
-    histogram!(h; normalize = true, linewidth = 0, label = L"%$(nchains) \times %$(nsamples) \textrm{ samples}")
-    vline!([best_h]; linestyle = :dash, color = :red, label = L"\textrm{our best fit}")
-    vline!([0.674]; linestyle = :dash, label = L"\textrm{Planck 2018's best fit}")
+    histogram!(h;  color = :gray,     normalize = true, linewidth = 0, label = L"%$(nchains) \times %$(nsamples) \textrm{ samples}")
+    histogram!(h2; color = 1,         normalize = true, linewidth = 0, label = L"%$(round(confidence2*100; digits=1)) \% \textrm{ confidence region}")
+    histogram!(h1; color = :darkblue, normalize = true, linewidth = 0, label = L"%$(round(confidence1*100; digits=1)) \% \textrm{ confidence region}")
+    vline!([best_h]; linestyle = :dash, color = :red,   label = L"\textrm{our best fit}")
+    vline!([0.674];  linestyle = :dash, color = :green, label = L"\textrm{Planck 2018's best fit}")
     plot!(h -> pdf(nfit, h); color = :black, label = L"N(\mu = %$(round(mean(nfit), digits=2)), \sigma = %$(round(std(nfit), digits=2)))")
     savefig("plots/supernova_hubble.pdf")
 end
