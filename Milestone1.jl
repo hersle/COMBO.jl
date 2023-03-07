@@ -87,6 +87,8 @@ if true || !isfile("plots/conformal_Hubble.pdf")
     plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.ΩΛ0) * a(x)^(+1  )); linestyle = :dash,  label = "cosmological constant-dominated")
     plot!(x, @. log10(aH(co, x) / (100*km/Mpc)                          ); linestyle = :solid, label = "general case", color = :black)
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
+    vline!([xacc], z_order = :back, color = :gray, linestyle = :dot, label = nothing)
+    annotate!([-2.5], [6.5], [(L"x_\textrm{acc} = %$(round(xacc, digits=2))", :gray)])
     savefig("plots/conformal_Hubble.pdf")
 end
 
@@ -99,6 +101,7 @@ if true || !isfile("plots/conformal_Hubble_derivative1.pdf")
     plot!(x, x -> +1;                   linestyle = :dash,  label = "cosmological constant-dominated")
     plot!(x, @. daH(co, x) / aH(co, x); linestyle = :solid, label = "general case", color = :black)
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
+    vline!([xacc], z_order = :back, color = :gray, linestyle = :dot, label = nothing)
     savefig("plots/conformal_Hubble_derivative1.pdf")
 end
 
@@ -111,6 +114,7 @@ if true || !isfile("plots/conformal_Hubble_derivative2.pdf")
     plot!(x, x -> (-1)^2;                linestyle = :dash,  label = "cosmological constant-dominated", color = 1) # same color as radiation
     plot!(x, @. d2aH(co, x) / aH(co, x); linestyle = :solid, label = "general case", color = :black)
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
+    vline!([xacc], z_order = :back, color = :gray, linestyle = :dot, label = nothing)
     savefig("plots/conformal_Hubble_derivative2.pdf")
 end
 
@@ -165,8 +169,8 @@ if true || !isfile("plots/density_parameters.pdf")
     plot!(x, Ω.(co, x);  label = L"\sum_s \Omega_s = %$(round(Int, Ω(co, 0.0)))")
     plot!([xrm, xrm], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     plot!([xmΛ, xmΛ], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
-    annotate!([xrm], [1.25], [(L"x_{r=m} = %$(round(xrm; digits=2))", :gray)])
-    annotate!([xmΛ], [1.25], [(L"x_{m=\Lambda} = %$(round(xmΛ; digits=2))", :gray)])
+    annotate!([xrm], [1.25], [(L"x_\textrm{eq}^{rm} = %$(round(xrm; digits=2))", :gray)])
+    annotate!([xmΛ], [1.25], [(L"x_\textrm{eq}^{m\Lambda} = %$(round(xmΛ; digits=2))", :gray)])
     annotate!([(x1+x2)/2, (x1+x2)/2], [1.14, 1.07], ["radiation", "domination"])
     annotate!([(x2+x3)/2, (x2+x3)/2], [1.14, 1.07], ["matter", "domination"])
     annotate!([(x3+x4)/2, (x3+x4)/2], [1.14, 1.07], ["Λ", "domination"])
