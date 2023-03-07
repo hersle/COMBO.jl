@@ -177,25 +177,9 @@ if true || !isfile("plots/density_parameters.pdf")
     savefig("plots/density_parameters.pdf")
 end
 
-# Supernova data
-if true || !isfile("plots/supernova_distance.pdf")
-    println("Plotting plots/supernova_distance.pdf")
-    plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"d_L \,/\, z \, \mathrm{Gpc}", legend_position = :topleft)
-
-    x2 = range(-1, 0, length=400)
-    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(co, x2) ./ Cosmology.z.(x2) ./ Gpc; label = "prediction")
-
-    data = readdlm("data/supernovadata.txt", comments=true)
-    zobs, dL, σdL = data[:,1], data[:,2], data[:,3]
-    err_lo, err_hi = σdL ./ zobs, σdL ./ zobs
-    scatter!(log10.(zobs.+1), dL ./ zobs; markercolor = :black, yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
-
-    savefig("plots/supernova_distance.pdf")
-end
-
-# Supernova MCMC fits
+# Supernova MCMC fits and distances
 # Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
-if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf")
+if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf") || !isfile("plots/supernova_distance.pdf")
     println("Plotting plots/supernova_omegas.pdf")
 
     data = readdlm("data/supernovadata.txt", comments=true)
@@ -249,7 +233,6 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     #scatter!(Ωm01, ΩΛ01; color = 3, markershape = :rect, markerstrokecolor = 3, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
     scatterheatmaps!([Ωm02, Ωm01], [ΩΛ02, ΩΛ01], [palette(:default)[1], :darkblue], [L"%$(round(confidence2*100; digits=1)) \% \textrm{ confidence region}", L"%$(round(confidence1*100; digits=1)) \% \textrm{ confidence region}"], ΩΛ0bounds, ΩΛ0bounds; nbins=120)
 
-
     # plot ΩΛ(Ωm0) for a few flat universes (should give ΩΛ ≈ 1 - Ωm0)
     Ωm0_flat = range(Ωm0bounds..., length=20)
     ΩΛ0_flat = [ΛCDM(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ0 for Ωm0 in Ωm0_flat]
@@ -273,6 +256,23 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     vline!([0.674]; linestyle = :dash, label = L"\textrm{Planck 2018's best fit}")
     plot!(h -> pdf(nfit, h); color = :black, label = L"N(\mu = %$(round(mean(nfit), digits=2)), \sigma = %$(round(std(nfit), digits=2)))")
     savefig("plots/supernova_hubble.pdf")
+
+
+    println("Plotting plots/supernova_distance.pdf")
+    plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"d_L \,/\, z \, \mathrm{Gpc}", legend_position = :topleft)
+
+    x2 = range(-1, 0, length=400)
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(co, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :green, label = "prediction (Planck 2018)")
+
+    snco = ΛCDM(h=best_h, Ωb0=0, Ωc0=best_Ωm0, Ωk0=best_Ωk0, Neff=0)
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(snco, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :red, label = "prediction (our best fit)")
+
+    data = readdlm("data/supernovadata.txt", comments=true)
+    zobs, dL, σdL = data[:,1], data[:,2], data[:,3]
+    err_lo, err_hi = σdL ./ zobs, σdL ./ zobs
+    scatter!(log10.(zobs.+1), dL ./ zobs; markercolor = :black, yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
+
+    savefig("plots/supernova_distance.pdf")
 end
 
 end
