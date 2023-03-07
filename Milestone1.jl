@@ -180,16 +180,15 @@ end
 # Supernova data
 if true || !isfile("plots/supernova_distance.pdf")
     println("Plotting plots/supernova_distance.pdf")
-    plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"\log_{10} \Big[ d_L \,/\, \mathrm{Gpc} \Big]", xlims=(0, 0.4), ylims=(-1.5, 1.0), legend_position = :topleft)
+    plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"d_L \,/\, z \, \mathrm{Gpc}", legend_position = :topleft)
 
     x2 = range(-1, 0, length=400)
-    plot!(log10.(Cosmology.z.(x2).+1), log10.(Cosmology.dL.(co, x2) ./ Gpc); label = "prediction")
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(co, x2) ./ Cosmology.z.(x2) ./ Gpc; label = "prediction")
 
     data = readdlm("data/supernovadata.txt", comments=true)
     zobs, dL, σdL = data[:,1], data[:,2], data[:,3]
-    err_lo = log10.(dL) - log10.(dL-σdL)
-    err_hi = log10.(dL+σdL) - log10.(dL)
-    scatter!(log10.(zobs.+1), log10.(dL); markercolor = :black, yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
+    err_lo, err_hi = σdL ./ zobs, σdL ./ zobs
+    scatter!(log10.(zobs.+1), dL ./ zobs; markercolor = :black, yerror = (err_lo, err_hi), markersize=2, label = "supernova observations")
 
     savefig("plots/supernova_distance.pdf")
 end
