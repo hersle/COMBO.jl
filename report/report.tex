@@ -245,7 +245,17 @@ In a universe with only radiation, these expressions reduce further to
 \label{eq_cosmic_conformal_time_anal_radiation}
 \end{align}
 
-\TODO{Missing some discussion on “eta”. What is this physically and why is it important to us (tied to horizons)?}
+To interpret these times physically, we glance back at the FLRW metric \eqref{eq_flrw}.
+First, we see that cosmic time $t$ is the proper time of \emph{fundamental observers} that move with the expansion,
+so a clock with zero peculiar velocity ticks at a rate corresponding to the cosmic time.
+Second, we see that photons travel infinitesimal distances $c\,d\eta$ on the comoving grid (in $[\ldots]$),
+so we can interpret the \textbf{(comoving) horizon}
+\begin{equation}
+D_\text{hor} = c \, \eta = c \int_0^\eta d\eta = c \int_0^t \frac{dt}{a(t)} = c \int_0^a \frac{da}{a^2 H} = c \int_0^x \frac{dx}{aH}
+\label{eq_horizon}
+\end{equation}
+as the maximum (comoving) distance within which there can be causal communication.
+This quantity will be relevant in \TODO{ref later milestone}.
 
 
 \subsection{Implementation}
