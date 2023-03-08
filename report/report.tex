@@ -497,19 +497,23 @@ The agreement is already relatively good, so we expect that our constraints shou
 		and confidence regions \eqref{eq_confidence_region} for $\Omega_{m0}$ and $\Omega_{\Lambda0}$,
 		from $10 \times 10000$ Metropolis-Hastings samples with $L \propto e^{-\chi^2/2}$ and the $\chi^2$ sum \eqref{eq_chi2},
 		comparing predicted luminosity distances \eqref{eq_distances} to observations from \cite{betouleImprovedCosmologicalConstraints2014}.
+		The algorithm restricts the parameters to the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$, and accordingly (with negligible radiation today) $\Omega_{\Lambda0} \in [-1, 2]$.
 	}
 	\label{fig_supernova_mcmc}
 \end{figure}
 
-\Cref{fig_supernova_mcmc} shows our MCMC constraints on $h$, $\Omega_{m0}$ and $\Omega_\Lambda$.
+\Cref{fig_supernova_mcmc} shows our MCMC constraints on $h$, $\Omega_{m0}$ and $\Omega_\Lambda$,
+from the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$
+that accommodate a wide region around the Planck values \eqref{eq_planck2018}, for example.
+In addition, curved universes with a turnaround $\dot{a} = 0$ are forbidden
+(\cite[Figure 11]{amanullahSpectraLightCurves2010} shows that such cosmologies are disconnected from the best fit regions).
+
 Note that the constraint in the $\Omega_{m0}$-$\Omega_{\Lambda0}$-plane is highly orthogonal to the line of flat universes,
 so supernova data can give good constraints when combined with some other constraint that argues in favor of flatness, for example.
 Our best fits for $\Omega_{m0}$ and $\Omega_{\Lambda0}$ agrees relatively well with both Planck's and a similar analysis in \cite[Fig. 15]{betouleImprovedCosmologicalConstraints2014}.
 On the other hand, our Hubble parameter is somewhat larger than Planck's and exemplifies the Hubble tension.
 
 \TODO{discuss bad Planck 2018 predictions}
-
-\TODO{add prior bounds (where I set $L=0$)}
 
 \TODO{maybe also quoting the constraints for all parameters in the text}
 
