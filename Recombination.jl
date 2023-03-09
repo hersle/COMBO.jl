@@ -5,7 +5,8 @@ include("Constants.jl")
 nb(co::ΛCDM, x::Real) = ρb(co, x) / mH
 Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
 
-function xe_saha(co::ΛCDM, x::Real)
+function Xe_saha(co::ΛCDM, x::Real)
+    # TODO: add He
     T = Tγ(co, x)
     a = 1
     b = (2 * π * me * kB * T / h^2)^(3/2) * exp(-EHion/(kB*T)) / nb(co,x)
@@ -15,4 +16,12 @@ function xe_saha(co::ΛCDM, x::Real)
     @assert b >= 0
 
     return (-b + √(d)) / (2*a) # - solution is always negative
+end
+
+function Xe_peebles(co::ΛCDM, x::Real)
+    # TODO:
+end
+
+function Xe(co::ΛCDM, x::Real)
+    # TODO: adaptively branch into saha/peebles
 end
