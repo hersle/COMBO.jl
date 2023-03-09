@@ -145,13 +145,8 @@ function is_fucked(co::ΛCDM; x1=-20.0, x2=+20.0)
     # negative between the endpoints?
     # check the values at the stationary points of E(x), defined by roots of 2nd degree polynomial
     # dE/dx = -a^(-2) * [ 4*Ωr0*a^(-2) + 3*Ωm0*a^(-1) + 2*Ωk0 ] = 0
-    a = 4 * co.Ωr0
-    b = 3 * co.Ωm0
-    c = 2 * co.Ωk0
-    d = b^2 - 4*a*c
-    if d >= 0
-        ainv1 = (-b + √(d)) / (2*a)
-        ainv2 = (-b - √(d)) / (2*a)
+    ainv1, ainv2 = quadroots(4*co.Ωr0, 3*co.Ωm0, 2*co.Ωk0)
+    if !isnan(ainv1)
         a1, a2 = 1/ainv1, 1/ainv2
         if (a1 >= 0 && E(co, x(a1)) < 0) || (a2 >= 0 && E(co, x(a2)) < 0)
             return true

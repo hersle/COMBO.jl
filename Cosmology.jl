@@ -11,5 +11,6 @@ export Tγ, xe_saha
 
 include("Background.jl")
 include("Recombination.jl")
+include("Utils.jl")
 
 end
