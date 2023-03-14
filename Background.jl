@@ -97,7 +97,7 @@ function t(co::ΛCDM, x::Real)
 end
 
 # density parameters (relative to critical density *at the time*)
-# computed using Ωs = ρs/ρcrit = ρs/ρcrit0 * ρcrit0/ρcrit = Ωs0 * H0^2/H^2 = Ωs0 / E^2
+# computed using Ωs = ρs/ρcrit = ρs/ρcrit0 * ρcrit0/ρcrit = Ωs0 * H0^2/H^2 = Ωs0 / E
 Ωγ(co::ΛCDM, x::Real) = co.Ωγ0 / a(x)^4 / E(co, x)
 Ων(co::ΛCDM, x::Real) = co.Ων0 / a(x)^4 / E(co, x)
 Ωb(co::ΛCDM, x::Real) = co.Ωb0 / a(x)^3 / E(co, x)
