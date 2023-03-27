@@ -5,8 +5,8 @@ using .Cosmology
 
 co = ΛCDM()
 
-println("hi")
 println(Tγ(co, 0))
 println(Xe_saha(co, -10))
+println(Xe_saha(co, 0))
 
 end

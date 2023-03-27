@@ -7,15 +7,12 @@ Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
 
 function Xe_saha(co::ΛCDM, x::Real)
     # TODO: add He
+    # TODO: are there any overflow issues? plot looks ok.
     T = Tγ(co, x)
     a = 1
     b = (2 * π * me * kB * T / h^2)^(3/2) * exp(-EHion/(kB*T)) / nb(co,x)
     c = -b
-
-    d = b^2 - 4*a*c # >= b^2, since a > 0 and c < 0!
-    @assert b >= 0
-
-    return (-b + √(d)) / (2*a) # - solution is always negative
+    return quadroots(a, b, c)[2]
 end
 
 function Xe_peebles(co::ΛCDM, x::Real)
