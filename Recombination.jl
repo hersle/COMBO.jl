@@ -32,7 +32,7 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
             C_r = (Λ_2s_1s + Λ_α) / (Λ_2s_1s + Λ_α + β2)
             return C_r / H(co,x) * (β*(1-Xe) - nH(co,x;Yp)*α2*Xe^2)
         end
-        co.Xe_Peebles_spline = _spline_integral(dXe_dx, x1, +20.0, Xe1)
+        co.Xe_Peebles_spline = _spline_integral(dXe_dx, x1, +20.0, Xe1, 1e-9)
     end
 
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
@@ -57,7 +57,7 @@ ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
 
 function τ(co::ΛCDM, x::Real; derivative::Integer=0)
     if isnothing(co.τ_spline)
-        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0)
+        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0, 1e-9)
     end
     #return co.τ_spline(x, Val{derivative}) # TODO: use DifferentialEquations' dense output?
 
