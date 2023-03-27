@@ -54,19 +54,11 @@ E(co::ΛCDM, x::Real; d::Integer=0) = (-4)^d * co.Ωr0/a(x)^4 +
  daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * E(co, x; d=1) / E(co, x)) # 1st derivative of aH
 d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + E(co, x; d=1) / E(co, x) + 1/2 * E(co, x; d=2) / E(co, x) - 1/4 * (E(co, x; d=1) / E(co, x))^2) # 2nd derivative of aH
 
-# internal function that computes y(x) on a cubic spline,
-# given dy/dx, from x=x1 with y(x1)=y1, to x=x2
-function _spline_dy_dx(co::ΛCDM, dy_dx::Function, x1::Float64, x2::Float64, y1::Float64)
-    sol = solve(ODEProblem((y, p, x) -> dy_dx(x), y1, (x1, x2)), Tsit5(); reltol=1e-10)
-    xs, ys = sol.t, sol.u
-    return Spline1D(xs, ys; k=3, bc="error") # throw error if evaluating spline outside bounds
-end
-
 # conformal time
 function η(co::ΛCDM, x::Real)
     if isnothing(co.η_spline)
         # lazy initialize spline
-        dη_dx(x) = 1 / aH(co, x)
+        dη_dx(x, η) = 1 / aH(co, x)
         x1, x2 = -20.0, +20.0
         aeq = co.Ωr0 / co.Ωm0
         if co.Ωm0 > 0
@@ -74,7 +66,7 @@ function η(co::ΛCDM, x::Real)
         else
             η1 = 1 / aH(co, x1) # anal expr with Ωm=Ωk=ΩΛ=0
         end
-        co.η_spline = _spline_dy_dx(co, dη_dx, x1, x2, η1)
+        co.η_spline = _spline_integral(dη_dx, x1, x2, η1)
     end
     return co.η_spline(x)
 end
@@ -83,7 +75,7 @@ end
 function t(co::ΛCDM, x::Real)
     if isnothing(co.t_spline)
         # lazy initialize spline
-        dt_dx(x) = 1 / H(co, x)
+        dt_dx(x, η) = 1 / H(co, x)
         x1, x2 = -20.0, +20.0
         aeq = co.Ωr0 / co.Ωm0
         if co.Ωm0 > 0
@@ -91,7 +83,7 @@ function t(co::ΛCDM, x::Real)
         else
             t1 = 1 / (2*H(co, x1)) # anal expr with Ωm=Ωk=ΩΛ=0
         end
-        co.t_spline = _spline_dy_dx(co, dt_dx, x1, x2, t1)
+        co.t_spline = _spline_integral(dt_dx, x1, x2, t1)
     end
     return co.t_spline(x)
 end
