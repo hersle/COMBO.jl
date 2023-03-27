@@ -14,8 +14,9 @@ end
 # given dy/dx, from x=x1 with y(x1)=y1, to x=x2
 # TODO: generalize to take (x0, y0), integrate in both directions, and combine splines?
 function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64)
-    # TODO: use dense output instead of custom splines?
-    sol = solve(ODEProblem((y, p, x) -> dy_dx(x, y), y1, (x1, x2)), Tsit5(); reltol=1e-10)
+    sol = solve(ODEProblem((y, p, x) -> dy_dx(x, y), y1, (x1, x2)), Tsit5(); reltol=1e-10) # TODO: specify abstol!
+    #return sol # TODO: use dense output instead of custom splines?
+
     xs, ys = sol.t, sol.u
 
     if x2 < x1

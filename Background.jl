@@ -25,6 +25,10 @@ mutable struct ΛCDM
     Xe_Peebles_spline::Union{Nothing, Dierckx.Spline1D} # free electron fraction (TODO: separate struct?)
     τ_spline::Union{Nothing, Dierckx.Spline1D} # optical depth (TODO: separate struct?)
 
+    # TODO: use DifferentialEquations' interpolation?
+    #Xe_Peebles_spline::Union{Nothing, SciMLBase.ODESolution} # free electron fraction (TODO: separate struct?) 
+    #τ_spline::Union{Nothing, SciMLBase.ODESolution} # optical depth (TODO: separate struct?)
+
     function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
         H0  = h * 100*km/Mpc # 1/s
         Ωm0 = Ωb0 + Ωc0

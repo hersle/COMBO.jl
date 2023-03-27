@@ -20,8 +20,23 @@ end
 if true || !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \tau")
+    y = d2τ.(co, x[10:end-10])
+    println(y)
+    println(minimum(y))
+    println(maximum(y))
     plot!(x, log10.(τ.(co, x)))
+    plot!(x[2:end-1], log10.(-dτ.(co, x[2:end-1])))
+    plot!(x[10:end-10], log10.(d2τ.(co, x[10:end-10])))
     savefig("plots/optical_depth.pdf")
+end
+
+if true || !isfile("plots/visibility_function.pdf")
+    println("Plotting visibility function")
+    plot(xlabel = L"x = \log a", ylabel = L"g")
+    plot!(x, g.(co, x))
+    plot!(x[2:end-1], dg.(co, x[2:end-1])) # TODO: handle endpoints
+    plot!(x[2:end-1], d2g.(co, x[2:end-1]))
+    savefig("plots/visibility_function.pdf")
 end
 
 end
