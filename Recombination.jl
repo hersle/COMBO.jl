@@ -38,9 +38,10 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
 end
 
-function Xe(co::ΛCDM, x::Real)
-    Xe1 = 0.99
-    x1  = find_zero(x -> Xe_Saha(co, x) - Xe1, (-20.0, +20.0))
+time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha(co, x) - Xe0, (-20.0, +20.0))
+
+function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99)
+    x1  = time_switch_Peebles(co; Xe0=Xe1)
 
     if x < x1
         return Xe_Saha(co, x) # regime where Saha equation is valid
@@ -54,7 +55,7 @@ ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
  dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
 #d2τ(co::ΛCDM, x::Real; Δx::Real=1e-2) = (dτ(co,x+Δx/2) - dτ(co,x-Δx/2)) / Δx
 
-function _τ(co::ΛCDM, x::Real; derivative::Integer=0)
+function τ(co::ΛCDM, x::Real; derivative::Integer=0)
     if isnothing(co.τ_spline)
         co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0)
     end
@@ -67,13 +68,9 @@ function _τ(co::ΛCDM, x::Real; derivative::Integer=0)
     end
 end
 
-  τ(co::ΛCDM, x::Real) = _τ(co, x; derivative=0)
- #dτ(co::ΛCDM, x::Real) = _τ(co, x; derivative=1)
-d2τ(co::ΛCDM, x::Real) = _τ(co, x; derivative=2)
-d3τ(co::ΛCDM, x::Real) = _τ(co, x; derivative=3)
+d2τ(co::ΛCDM, x::Real) = τ(co, x; derivative=2)
+d3τ(co::ΛCDM, x::Real) = τ(co, x; derivative=3)
 
   g(co::ΛCDM, x::Real) = -dτ(co,x) * exp(-τ(co,x))
- #dg(co::ΛCDM, x::Real) = (d2τ(co,x)/dτ(co,x) - dτ(co,x)) * g(co,x)
  dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
-d2g(co::ΛCDM, x::Real; Δx::Real=1e-5) = (dg(co,x+Δx/2) - dg(co,x-Δx/2)) / Δx
-#d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
+d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
