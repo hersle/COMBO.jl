@@ -19,8 +19,11 @@ mutable struct ΛCDM
     const Tγ0::Float64 # photon (CMB) temperature
     const Neff::Float64 # effective neutrino number
 
-    η_spline::Union{Nothing, Dierckx.Spline1D} # conformal time spline (lazily initialized)
-    t_spline::Union{Nothing, Dierckx.Spline1D} # cosmic    time spline (lazily initialized)
+    # splines (lazily initialized)
+    η_spline::Union{Nothing, Dierckx.Spline1D} # conformal time
+    t_spline::Union{Nothing, Dierckx.Spline1D} # cosmic    time
+    Xe_Peebles_spline::Union{Nothing, Dierckx.Spline1D} # free electron fraction (TODO: separate struct?)
+    τ_spline::Union{Nothing, Dierckx.Spline1D} # optical depth (TODO: separate struct?)
 
     function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
         H0  = h * 100*km/Mpc # 1/s
@@ -29,7 +32,7 @@ mutable struct ΛCDM
         Ων0 = Neff * 7/8 * (4/11)^(4/3) * Ωγ0
         Ωr0 = Ωγ0 + Ων0
         ΩΛ0 = 1.0 - (Ωr0 + Ωm0 + Ωk0)
-        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, nothing, nothing)
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, nothing, nothing, nothing, nothing)
     end
 end
 
