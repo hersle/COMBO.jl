@@ -7,7 +7,8 @@ import PhysicalConstants
 export c, ħ, h, kB, G, α
 export km, pc, Mpc, Gpc
 export yr, Gyr
-export me, mH, σT, EHion
+export me, mH, σT
+export EH1ion, EHe1ion, EHe2ion
 
 const c  = PhysicalConstants.CODATA2018.c_0 / u"m/s"
 const ħ  = PhysicalConstants.CODATA2018.ħ / u"J*s"
@@ -19,7 +20,6 @@ const α  = PhysicalConstants.CODATA2018.α # fine structure constant, ≈ 1/137
 const me = PhysicalConstants.CODATA2018.m_e / u"kg"
 const mH = PhysicalConstants.CODATA2018.m_p / u"kg"
 const σT = PhysicalConstants.CODATA2018.σ_e / u"m^2" # Thomson electron scattering cross section
-const EHion = me*c^2 * α^2 / 2 # ≈ 13.6 eV
 
 # distances
 const km = 1e3
@@ -30,5 +30,11 @@ const Gpc = 1e9 * pc
 # times
 const yr = 365.25 * 24 * 60 * 60
 const Gyr = 1e9 * yr
+
+# ionization energies (from https://en.wikipedia.org/wiki/Ionization_energies_of_the_elements_(data_page))
+const eV = PhysicalConstants.CODATA2018.e / u"C" # J
+const EH1ion  = 13.59844 * eV
+const EHe1ion = 24.58738 * eV
+const EHe2ion = 54.41776 * eV
 
 end

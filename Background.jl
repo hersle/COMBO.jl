@@ -18,6 +18,9 @@ mutable struct ΛCDM
     const Tγ0::Float64 # photon (CMB) temperature
     const Neff::Float64 # effective neutrino number
 
+    # recombination
+    const Yp::Float64 # helium mass fraction # TODO: separate struct?
+
     # splines (lazily initialized)
     # TODO: use DifferentialEquations' splines
     η_spline::Union{Nothing, SciMLBase.ODESolution} # conformal time
@@ -25,14 +28,14 @@ mutable struct ΛCDM
     Xe_Peebles_spline::Union{Nothing, SciMLBase.ODESolution} # free electron fraction (TODO: separate struct?)
     τ_spline::Union{Nothing, SciMLBase.ODESolution} # optical depth (TODO: separate struct?)
 
-    function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
+    function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046, Yp=0.24)
         H0  = h * 100*km/Mpc # 1/s
         Ωm0 = Ωb0 + Ωc0
         Ωγ0 = π^2/15 * (kB*Tγ0)^4 / (ħ^3*c^5) * 8*π*G / (3*H0^2)
         Ων0 = Neff * 7/8 * (4/11)^(4/3) * Ωγ0
         Ωr0 = Ωγ0 + Ων0
         ΩΛ0 = 1.0 - (Ωr0 + Ωm0 + Ωk0)
-        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, nothing, nothing, nothing, nothing)
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, nothing, nothing, nothing, nothing)
     end
 end
 

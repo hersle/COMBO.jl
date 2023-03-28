@@ -2,15 +2,16 @@ include("Constants.jl")
 
 ρcrit(co::ΛCDM, x::Real) = 3 * H(co, x)^2 / (8 * π * G)
 ρb(co::ΛCDM, x::Real) = Ωb(co, x) * ρcrit(co, x)
-nH(co::ΛCDM, x::Real; Yp::Real=0) = (1-Yp) * ρb(co, x) / mH # TODO: need to change when adding He?
+nb(co::ΛCDM, x::Real) = ρb(co, x) / mH
+nH(co::ΛCDM, x::Real) = (1-co.Yp) * nb(co, x)
+nHe(co::ΛCDM, x::Real) = co.Yp/4 * nb(co, x)
 Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
 
-function Xe_Saha(co::ΛCDM, x::Real)
-    # TODO: add He
+function Xe_Saha_H(co::ΛCDM, x::Real)
     T = Tγ(co, x)
     a = 1
-    nb = nH(co,x) # TODO: generalize to helium
-    b = (2 * π * me * kB * T / h^2)^(3/2) * exp(-EHion/(kB*T)) / nb
+    nb = nH(co,x)
+    b = (2 * π * me * kB * T / h^2)^(3/2) * exp(-EH1ion/(kB*T)) / nb
     c = -b
     #return Float64(quadroots(BigFloat(a), BigFloat(b), BigFloat(c))[2])
     # when b >> 1, the quadratic equation solution is
@@ -21,21 +22,54 @@ function Xe_Saha(co::ΛCDM, x::Real)
     return b < 1e10 ? quadroots(a, b, c)[2] : 1.0
 end
 
+# TODO: slow/fails for x ≲ -7
+function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-10)
+    # To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
+    # begin with an initial guess for Xe and iteratively solve the system of Saha equations
+    # (1) ne * XHe+ / (1 - XHe+ - XHe++) = 2 / λe^3 * exp(-EHe1ion / (kB*Tb))
+    # (2) ne * XHe++ / XHe+ = 4 / λe^3 * exp(-EHe2ion/(kB*Tb))
+    # (3) ne * XH+ / (1-XH+) = 1 / λe^3 * exp(-EH1ion/(kB*Tb))
+    # for {XH+, XHe+, XHe++} = {XH1, XHe1, XHe2}.
+
+    Tb = Tγ(co, x)
+    λe = h / √(2*π*me*kB*Tb)
+    RHS1 = 2 / λe^3 * exp(-EHe1ion/(kB*Tb))
+    RHS2 = 4 / λe^3 * exp(-EHe2ion/(kB*Tb))
+    RHS3 = 1 / λe^3 * exp(-EH1ion /(kB*Tb))
+
+    # 1. Guess Xe
+    Xe = 1.0
+    converged = false
+    while !converged
+        # 2. Compute corresponding XH+, XHe+, XHe++
+        ne = Xe * nH(co, x)
+        XH1  = RHS3 / (ne + RHS3)
+        XHe1 = 1 / (1 + ne/RHS1 + RHS2/ne)
+        XHe2 = RHS2 / ne * XHe1
+
+        # 3. Compute corresponding Xe ...
+        Xe_new = XH1 + co.Yp / (4*(1-co.Yp)) * (XHe1 + 2*XHe2)
+        converged = abs(Xe_new - Xe) < tol # ... until Xe becomes self consistent
+        Xe = Xe_new
+    end
+
+    return Xe
+end
+
 function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
     if isnothing(co.Xe_Peebles_spline)
         function dXe_dx(x, Xe)
-            Yp = 0.0 # TODO: add He
-            Tb = Tγ(co,x) # K # TODO: assumptions?
-            n_1s = (1-Xe) * nH(co,x;Yp) # 1/m^3
+            Tb = Tγ(co,x) # K # TODO: assumptions? separate baryon evolution?
+            n_1s = (1-Xe) * nH(co,x) # 1/m^3
             Λ_2s_1s = 8.227 # 1/s
-            Λ_α = H(co,x) * (3*EHion/(ħ*c))^3 / ((8*π)^2 * n_1s) # 1/s
-            ϕ2 = 0.448 * log(EHion/(kB*Tb)) # dimensionless
-            α2 = 64*π / √(27*π) * (α/me)^2 * √(EHion/(kB*Tb)) * ϕ2 * ħ^2/c # m^3/s
+            Λ_α = H(co,x) * (3*EH1ion/(ħ*c))^3 / ((8*π)^2 * n_1s) # 1/s
+            ϕ2 = 0.448 * log(EH1ion/(kB*Tb)) # dimensionless
+            α2 = 64*π / √(27*π) * (α/me)^2 * √(EH1ion/(kB*Tb)) * ϕ2 * ħ^2/c # m^3/s
             λe = √(h^2 / (2*π*me*kB*Tb)) # thermal de Broglie wavelength
-            β  = α2 / λe^3 * exp(-EHion/(kB*Tb))
-            β2 = α2 / λe^3 * exp(-EHion/(4*kB*Tb)) # 1/s (compute this instead of β2 = β * exp(3*EHion/(4*kB*Tb)) to avoid exp overflow)
+            β  = α2 / λe^3 * exp(-EH1ion/(kB*Tb))
+            β2 = α2 / λe^3 * exp(-EH1ion/(4*kB*Tb)) # 1/s (compute this instead of β2 = β * exp(3*EH1ion/(4*kB*Tb)) to avoid exp overflow)
             C_r = (Λ_2s_1s + Λ_α) / (Λ_2s_1s + Λ_α + β2)
-            return C_r / H(co,x) * (β*(1-Xe) - nH(co,x;Yp)*α2*Xe^2)
+            return C_r / H(co,x) * (β*(1-Xe) - nH(co,x)*α2*Xe^2)
         end
         co.Xe_Peebles_spline = _spline_integral(dXe_dx, x1, +20.0, Xe1, 1e-9)
     end
@@ -43,13 +77,18 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
 end
 
-time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha(co, x) - Xe0, (-20.0, +20.0))
+time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0))
 
+# TODO: spline whole thing?
 function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99)
-    x1  = time_switch_Peebles(co; Xe0=Xe1)
+    x1  = time_switch_Peebles(co; Xe0=Xe1) # TODO: compute only once?
 
     if x < x1
-        return Xe_Saha(co, x) # regime where Saha equation is valid
+        if co.Yp == 0
+            return Xe_Saha_H(co, x) # regime where Saha equation is valid
+        else
+            return Xe_Saha_H_He(co, x) # regime where Saha equation is valid
+        end
     else
         return Xe_Peebles(co, x, x1, Xe1) # regime where Peebles equation is valid
     end

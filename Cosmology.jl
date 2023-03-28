@@ -7,7 +7,7 @@ export t, η, Ωγ, Ων, Ωb, Ωc, Ωk, ΩΛ, Ωr, Ωm, Ω
 export equality_rm, equality_mΛ, acceleration_onset
 export dL, dA
 
-export Tγ, Xe_Saha, Xe_Peebles, Xe, τ, dτ, d2τ, g, dg, d2g, time_switch_Peebles
+export Tγ, Xe_Saha_H, Xe_Saha_H_He, Xe_Peebles, Xe, τ, dτ, d2τ, g, dg, d2g, time_switch_Peebles
 
 include("Background.jl")
 include("Recombination.jl")
