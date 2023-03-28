@@ -7,13 +7,18 @@ Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
 
 function Xe_Saha(co::ΛCDM, x::Real)
     # TODO: add He
-    # TODO: fix overflow issues!
     T = Tγ(co, x)
     a = 1
     nb = nH(co,x) # TODO: generalize to helium
     b = (2 * π * me * kB * T / h^2)^(3/2) * exp(-EHion/(kB*T)) / nb
     c = -b
-    return quadroots(a, b, c)[2]
+    #return Float64(quadroots(BigFloat(a), BigFloat(b), BigFloat(c))[2])
+    # when b >> 1, the quadratic equation solution is
+    #   (-b + √(b^2+4*b)) / 2
+    # = b/2 * (-1 + √(1+4/b))
+    # ≈ b/2 * (-1 + 1 + 2/b)  (b >> 1)
+    # = 1
+    return b < 1e10 ? quadroots(a, b, c)[2] : 1.0
 end
 
 function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
