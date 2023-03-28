@@ -7,22 +7,21 @@ using Plots # TODO: common plotting settings. include("Plot.jl") with settings, 
 using LaTeXStrings
 
 #co = ΛCDM(Ωb0=0.05, Ωc0=0.45, Neff=0, h=0.7)
-co = ΛCDM()
+co = ΛCDM(Yp=0)
 x = range(-10, 0, length=10000)
 
 if true || !isfile("plots/free_electron_fraction_log.pdf") || !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction")
     println(time_switch_Peebles(co))
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", ylims=(-4, 0.5), legend_position=:topright)
-    plot!(x, log10.(Xe.(co, x)), label="Saha and Peebles equation (H)")
-    plot!(x, log10.(Xe.(co, x)), label="Saha and Peebles equation (H+He)")
-    plot!(x, log10.(Xe_Saha_H.(co, x)), linestyle=:dash, label="Saha equation (H)")
+    plot!(x, log10.(Xe.(co, x)), label="Saha & Peebles equation")
+    plot!(x, log10.(Xe_Saha_H.(co, x)), linestyle=:dash, label="Saha equation")
     vline!([time_switch_Peebles(co)], linestyle=:dash, color=:gray, label = L"\textrm{Saha} \rightarrow \textrm{Peebles}")
     savefig("plots/free_electron_fraction_log.pdf")
 
-    plot(xlabel = L"x = \log a", ylabel = L"X_e", ylims=(-0.1, 1.5), legend_position=:topright)
-    plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]), label="Saha equation (H+He)")
-    plot!(x, Xe.(co, x), label="Saha and Peebles equation (H+He)")
+    plot(xlabel = L"x = \log a", ylabel = L"X_e", ylims=(-0.1, 1.5), legend_position=:top)
+    plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]), label="Saha equation")
+    plot!(x, Xe.(co, x), label="Saha & Peebles equation")
     hline!([1+2*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{++}"])
     hline!([1+1*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{+}"])
     hline!([1+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, label = [L"\textrm{fully ionized } \textrm{H}^{+}"])
@@ -36,7 +35,7 @@ if true || !isfile("plots/optical_depth.pdf")
     y = d2τ.(co, x[10:end-10])
     plot!(x, log10.(τ.(co, x)), label = L"\log_{10} [\tau(x)]")
     plot!(x, log10.(-dτ.(co, x)), label = L"\log_{10} [-\tau'(x)]")
-    plot!(x, log10.(d2τ.(co, x)), label = L"\log_{10} [\tau''(x)]")
+    plot!(x, log10.(d2τ.(co, x)), label = L"\log_{10} [\tau''(x)]") # TODO: fails because d2τ < 0 with reionization
     savefig("plots/optical_depth.pdf")
 end
 

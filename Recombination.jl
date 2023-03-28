@@ -6,6 +6,7 @@ nb(co::ΛCDM, x::Real) = ρb(co, x) / mH
 nH(co::ΛCDM, x::Real) = (1-co.Yp) * nb(co, x)
 nHe(co::ΛCDM, x::Real) = co.Yp/4 * nb(co, x)
 Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
+fHe(Yp::Real) = Yp / (4*(1-Yp)) # TODO: what is this? replace with my hlines?
 
 function Xe_Saha_H(co::ΛCDM, x::Real)
     T = Tγ(co, x)
@@ -48,7 +49,7 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-10)
         XHe2 = RHS2 / ne * XHe1
 
         # 3. Compute corresponding Xe ...
-        Xe_new = XH1 + co.Yp / (4*(1-co.Yp)) * (XHe1 + 2*XHe2)
+        Xe_new = XH1 + fHe(co.Yp) * (XHe1 + 2*XHe2)
         converged = abs(Xe_new - Xe) < tol # ... until Xe becomes self consistent
         Xe = Xe_new
     end
@@ -79,19 +80,29 @@ end
 
 time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0))
 
+function Xe_reionization(co::ΛCDM, x::Real)
+    y(z) = (1+z)^(3/2)
+    dy_dz(z) = 3/2 * (1+z)^(1/2)
+    Δy(z, Δz) = dy_dz(z) * Δz
+    smoothstep(y, Δy, h) = h/2 * (1 + tanh(y / Δy))
+    # TODO: replace heights with my hlines?
+    return smoothstep(y(co.z_reion_H ) - y(z(x)), Δy(co.z_reion_H,  co.Δz_reion_H),  1+fHe(co.Yp))
+         + smoothstep(y(co.z_reion_He) - y(z(x)), Δy(co.z_reion_He, co.Δz_reion_He), 0+fHe(co.Yp))
+end
+
 # TODO: spline whole thing?
 function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99)
     x1  = time_switch_Peebles(co; Xe0=Xe1) # TODO: compute only once?
 
     if x < x1
-        if co.Yp == 0
-            return Xe_Saha_H(co, x) # regime where Saha equation is valid
-        else
-            return Xe_Saha_H_He(co, x) # regime where Saha equation is valid
-        end
+        Xe_sum = co.Yp == 0 ? Xe_Saha_H(co, x) : Xe_Saha_H_He(co, x) # regime where Saha equation is valid
     else
-        return Xe_Peebles(co, x, x1, Xe1) # regime where Peebles equation is valid
+        Xe_sum = Xe_Peebles(co, x, x1, Xe1) # regime where Peebles equation is valid
     end
+
+    Xe_sum += Xe_reionization(co, x)
+
+    return Xe_sum
 end
 
 ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
