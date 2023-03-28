@@ -101,7 +101,7 @@ end
 
 ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
 
- dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
+dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
 
 function τ(co::ΛCDM, x::Real; derivative::Integer=0)
     if isnothing(co.τ_spline)
@@ -116,3 +116,16 @@ d3τ(co::ΛCDM, x::Real) = τ(co, x; derivative=3)
   g(co::ΛCDM, x::Real) = -dτ(co,x) * exp(-τ(co,x))
  dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
 d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
+
+# TODO: why are these so close to equal?
+time_last_scattering_surface(co::ΛCDM) = find_zero(x -> τ(co, x) - 1, (-20, 0))
+time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20, -3))
+
+function sound_horizon(co::ΛCDM, x::Real)
+    R(x) = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
+    cs(x) = c * √(R(x) / (3*(1+R(x))))
+    ds_dx(x, s) = cs(x) / aH(co, x)
+    x0 = -20.0
+    s0 = cs(x0) / aH(co, x0)
+    return _spline_integral(ds_dx, x0, +20.0, s0, 1e-10)(x)
+end

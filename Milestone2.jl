@@ -1,18 +1,31 @@
 module Milestone2
 
 include("Cosmology.jl")
+include("Constants.jl")
 
 using .Cosmology
+using .Constants
 using Plots # TODO: common plotting settings. include("Plot.jl") with settings, or something?
 using LaTeXStrings
+using Printf
 
 #co = ΛCDM(Ωb0=0.05, Ωc0=0.45, Neff=0, h=0.7)
 co = ΛCDM()
 x = range(-10, 0, length=10000)
 
+# TODO: gather into one common function?
+xswi = time_switch_Peebles(co)
+xlss = time_last_scattering_surface(co)
+xrec = time_recombination(co)
+xdec = (xlss + xrec) / 2
+@printf("Saha -> Peebles switch (Xe ) 0.99): x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xswi,  a(xswi),  z(xswi),  η(co, xswi)  / Gyr, t(co, xswi)  / Gyr)
+@printf("Last scattering surface (τ = 1):    x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xlss,  a(xlss),  z(xlss),  η(co, xlss)  / Gyr, t(co, xlss)  / Gyr)
+@printf("Recombination (Xe = 0.1):           x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrec,  a(xrec),  z(xrec),  η(co, xrec)  / Gyr, t(co, xrec)  / Gyr)
+@printf("Decoupling (average(LSS, rec)):     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xdec,  a(xdec),  z(xdec),  η(co, xdec)  / Gyr, t(co, xdec)  / Gyr)
+println("Corresponding sound horizon:        $(sound_horizon(co, xdec) / Gpc) Gpc")
+
 if true || !isfile("plots/free_electron_fraction_log.pdf") || !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction")
-    println(time_switch_Peebles(co))
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", ylims=(-4, 0.5), legend_position=:topright)
     plot!(x, log10.(Xe.(co, x)), label="Saha & Peebles equation")
     plot!(x, log10.(Xe_Saha_H.(co, x)), linestyle=:dash, label="Saha equation")

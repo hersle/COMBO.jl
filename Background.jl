@@ -110,6 +110,7 @@ end
 Ω( co::ΛCDM, x::Real) = Ωr(co, x) + Ωm(co, x) + Ωk(co, x) + ΩΛ(co, x)
 
 # time of equality between different species (as x = log(a))
+# TODO: rename time_...
 equality_rm(co::ΛCDM) = log(co.Ωr0 / co.Ωm0)
 equality_mΛ(co::ΛCDM) = log(co.Ωm0 / co.ΩΛ0) / 3
 
