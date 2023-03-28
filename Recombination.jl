@@ -59,13 +59,7 @@ function τ(co::ΛCDM, x::Real; derivative::Integer=0)
     if isnothing(co.τ_spline)
         co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0, 1e-9)
     end
-    #return co.τ_spline(x, Val{derivative}) # TODO: use DifferentialEquations' dense output?
-
-    if derivative == 0
-        return co.τ_spline(x)
-    else
-        return Dierckx.derivative(co.τ_spline, x; nu=derivative)
-    end
+    return co.τ_spline(x, Val{derivative})
 end
 
 d2τ(co::ΛCDM, x::Real) = τ(co, x; derivative=2)

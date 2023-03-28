@@ -1,7 +1,6 @@
 include("Constants.jl")
 
 using OrdinaryDiffEq # ODE integration (instead of DifferentialEquations to reduce compile time)
-using Dierckx # spline interpolation
 using Roots # root finding
 using .Constants
 
@@ -20,14 +19,11 @@ mutable struct ΛCDM
     const Neff::Float64 # effective neutrino number
 
     # splines (lazily initialized)
-    η_spline::Union{Nothing, Dierckx.Spline1D} # conformal time
-    t_spline::Union{Nothing, Dierckx.Spline1D} # cosmic    time
-    Xe_Peebles_spline::Union{Nothing, Dierckx.Spline1D} # free electron fraction (TODO: separate struct?)
-    τ_spline::Union{Nothing, Dierckx.Spline1D} # optical depth (TODO: separate struct?)
-
-    # TODO: use DifferentialEquations' interpolation?
-    #Xe_Peebles_spline::Union{Nothing, SciMLBase.ODESolution} # free electron fraction (TODO: separate struct?) 
-    #τ_spline::Union{Nothing, SciMLBase.ODESolution} # optical depth (TODO: separate struct?)
+    # TODO: use DifferentialEquations' splines
+    η_spline::Union{Nothing, SciMLBase.ODESolution} # conformal time
+    t_spline::Union{Nothing, SciMLBase.ODESolution} # cosmic    time
+    Xe_Peebles_spline::Union{Nothing, SciMLBase.ODESolution} # free electron fraction (TODO: separate struct?)
+    τ_spline::Union{Nothing, SciMLBase.ODESolution} # optical depth (TODO: separate struct?)
 
     function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046)
         H0  = h * 100*km/Mpc # 1/s
