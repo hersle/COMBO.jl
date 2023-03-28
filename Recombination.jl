@@ -86,29 +86,22 @@ function Xe_reionization(co::ΛCDM, x::Real)
     Δy(z, Δz) = dy_dz(z) * Δz
     smoothstep(y, Δy, h) = h/2 * (1 + tanh(y / Δy))
     # TODO: replace heights with my hlines?
-    return smoothstep(y(co.z_reion_H ) - y(z(x)), Δy(co.z_reion_H,  co.Δz_reion_H),  1+fHe(co.Yp))
-         + smoothstep(y(co.z_reion_He) - y(z(x)), Δy(co.z_reion_He, co.Δz_reion_He), 0+fHe(co.Yp))
+    Xe_reionization_total  = smoothstep(y(co.z_reion_H ) - y(z(x)), Δy(co.z_reion_H,  co.Δz_reion_H),  1+fHe(co.Yp))
+    Xe_reionization_total += smoothstep(y(co.z_reion_He) - y(z(x)), Δy(co.z_reion_He, co.Δz_reion_He), 0+fHe(co.Yp))
+    return Xe_reionization_total
 end
 
 # TODO: spline whole thing?
 function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99)
-    x1  = time_switch_Peebles(co; Xe0=Xe1) # TODO: compute only once?
-
-    if x < x1
-        Xe_sum = co.Yp == 0 ? Xe_Saha_H(co, x) : Xe_Saha_H_He(co, x) # regime where Saha equation is valid
-    else
-        Xe_sum = Xe_Peebles(co, x, x1, Xe1) # regime where Peebles equation is valid
-    end
-
-    Xe_sum += Xe_reionization(co, x)
-
-    return Xe_sum
+    x1 = time_switch_Peebles(co; Xe0=Xe1) # TODO: compute only once?
+    Xe_total  = x < x1 ? Xe_Saha_H_He(co, x) : Xe_Peebles(co, x, x1, Xe1)
+    Xe_total += Xe_reionization(co, x)
+    return Xe_total
 end
 
 ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
 
  dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
-#d2τ(co::ΛCDM, x::Real; Δx::Real=1e-2) = (dτ(co,x+Δx/2) - dτ(co,x-Δx/2)) / Δx
 
 function τ(co::ΛCDM, x::Real; derivative::Integer=0)
     if isnothing(co.τ_spline)

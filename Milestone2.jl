@@ -7,7 +7,7 @@ using Plots # TODO: common plotting settings. include("Plot.jl") with settings, 
 using LaTeXStrings
 
 #co = ΛCDM(Ωb0=0.05, Ωc0=0.45, Neff=0, h=0.7)
-co = ΛCDM(Yp=0)
+co = ΛCDM()
 x = range(-10, 0, length=10000)
 
 if true || !isfile("plots/free_electron_fraction_log.pdf") || !isfile("plots/free_electron_fraction_linear.pdf")
