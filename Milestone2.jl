@@ -32,10 +32,10 @@ end
 if true || !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
     plot(xlabel = L"x = \log a", legend_position=:topright)
-    y = d2τ.(co, x[10:end-10])
     plot!(x, log10.(τ.(co, x)), label = L"\log_{10} [\tau(x)]")
     plot!(x, log10.(-dτ.(co, x)), label = L"\log_{10} [-\tau'(x)]")
-    plot!(x, log10.(d2τ.(co, x)), label = L"\log_{10} [\tau''(x)]") # TODO: fails because d2τ < 0 with reionization
+    y(x) = d2τ(co, x) > 0 ? log10(d2τ(co, x)) : NaN # skip values where d2τ < 0. increase resolution here?
+    plot!(x, y.(x), label = L"\log_{10} [\tau''(x) > 0]") # TODO: is the little kink wrong?
     savefig("plots/optical_depth.pdf")
 end
 
@@ -48,4 +48,4 @@ if true || !isfile("plots/visibility_function.pdf")
     savefig("plots/visibility_function.pdf")
 end
 
-end
+end 
