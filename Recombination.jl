@@ -92,10 +92,18 @@ function Xe_reionization(co::ΛCDM, x::Real)
 end
 
 # TODO: spline whole thing?
-function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99)
+function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99, reionization::Bool=true)
     x1 = time_switch_Peebles(co; Xe0=Xe1) # TODO: compute only once?
-    Xe_total  = x < x1 ? Xe_Saha_H_He(co, x) : Xe_Peebles(co, x, x1, Xe1)
-    Xe_total += Xe_reionization(co, x)
+    if x < x1
+        Xe_total = Xe_Saha_H_He(co, x)
+    else
+        Xe_total = Xe_Peebles(co, x, x1, Xe1)
+    end
+
+    if reionization
+        Xe_total += Xe_reionization(co, x)
+    end
+
     return Xe_total
 end
 

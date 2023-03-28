@@ -23,6 +23,7 @@ xdec = (xlss + xrec) / 2
 @printf("Recombination (Xe = 0.1):           x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrec,  a(xrec),  z(xrec),  η(co, xrec)  / Gyr, t(co, xrec)  / Gyr)
 @printf("Decoupling (average(LSS, rec)):     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xdec,  a(xdec),  z(xdec),  η(co, xdec)  / Gyr, t(co, xdec)  / Gyr)
 println("Corresponding sound horizon:        $(sound_horizon(co, xdec) / Gpc) Gpc")
+println("Freeze-out free electron fraction:  $(Xe(co, 0; reionization=false))")
 
 if true || !isfile("plots/free_electron_fraction_log.pdf") || !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction")
