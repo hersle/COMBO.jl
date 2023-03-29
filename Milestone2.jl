@@ -33,7 +33,7 @@ xre2 = time_reionization_He(co)
 println("Corresponding sound horizon:         $(sound_horizon(co, xdec) / Gpc) Gpc")
 println("Freeze-out free electron fraction:   $(Xe(co, 0))")
 
-if true || !isfile("plots/free_electron_fraction_log.pdf")
+if !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(x[1], x[end]), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
@@ -62,7 +62,7 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     savefig("plots/free_electron_fraction_log.pdf")
 end
 
-if true || !isfile("plots/free_electron_fraction_linear.pdf")
+if !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction (linear)")
 
     plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(x[1], x[end]), ylims=(-0.1, 1.3), yticks=-0.2:0.2:1.6, legend_position=:top, framestyle=:box)
@@ -93,7 +93,7 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
     savefig("plots/free_electron_fraction_linear.pdf")
 end
 
-if true || !isfile("plots/optical_depth.pdf")
+if !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
     plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-7.5, 3.5), legend_position=:topright)
 
@@ -117,14 +117,23 @@ end
 if true || !isfile("plots/visibility_function.pdf")
     # TODO: inset reionization plot (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
     println("Plotting visibility function")
-    plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), legend_position=:topright)
+    plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-10, +10), legend_position=:topright)
 
-    plot!(x, g.(co, x), label = L"g\phantom{''}(x)")
-    plot!(x, dg.(co, x) / 10, label = L"g'\phantom{'}(x) / 10") # TODO: handle endpoints
-    plot!(x, d2g.(co, x) / 100, label = L"g''(x) / 10^2")
+    ys = [g.(co_H_He_reioff, x) / 1, dg.(co_H_He_reioff, x) / 10, d2g.(co_H_He_reioff, x) / 100,
+          g.(co_H_He_reion,  x) / 1, dg.(co_H_He_reion,  x) / 10, d2g.(co_H_He_reion,  x) / 100]
+    cs = [1  2  3  1  2  3]
+    ls = [:solid  :solid  :solid  :solid  :solid  :solid]
+    as = [0.3  0.3  0.3  1.0  1.0  1.0]
+    Ls = [nothing  nothing  nothing  L"g\phantom{''}(x) \,/\, 1"  L"g'\phantom{'}(x) \,/\, 10"  L"g''(x) \,/\, 100"]
 
-    #lens!([-2.4], [0], inset=(1, bbox(0.5, 0.0, 0.4, 0.4)))
-    plot!(x, [g.(co, x), dg.(co, x) / 10, d2g.(co, x) / 100], xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2], subplot=2, inset = (1, bbox(0.09, 0.4, 0.3, 0.5, :right)), label=nothing)
+    plot!(x, ys, color=cs, linestyle=ls, alpha=as, label=Ls)
+
+    # Dummy plots to manually create legend
+    hline!([-20], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{$Y_p=0.24$ (H+He), reionization on}")
+    hline!([-20], color=:black, linestyle=:solid, alpha=0.3, label=L"\textrm{$Y_p=0.00$ (H),\phantom{+He} reionization off}")
+
+    #plot!(x, [], xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.5, 0.3, 0.5, :right)), label=nothing)
+    plot!(x, ys, color=cs, linestyle=ls, alpha=as, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.43, 0.3, 0.5, :right)))
 
     savefig("plots/visibility_function.pdf")
 end
