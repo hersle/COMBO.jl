@@ -2,10 +2,10 @@ module Milestone2
 
 include("Cosmology.jl")
 include("Constants.jl")
+include("Plotting.jl")
 
 using .Cosmology
 using .Constants
-using Plots # TODO: common plotting settings. include("Plot.jl") with settings, or something?
 using LaTeXStrings
 using Printf
 
