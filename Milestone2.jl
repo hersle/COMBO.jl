@@ -32,7 +32,7 @@ xre2 = time_reionization_He(co)
 println("Corresponding sound horizon:        $(sound_horizon(co, xdec) / Gpc) Gpc")
 println("Freeze-out free electron fraction:  $(Xe(co, 0; reionization=false))")
 
-if true || !isfile("plots/free_electron_fraction_log.pdf")
+if !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(x[1], x[end]), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
@@ -54,16 +54,17 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     annotate!([time_switch_Peebles(co)+0.15], [log10(0.99)+0.50], [(L"\textrm{Saha $\rightarrow$ Peebles}")])
     annotate!([time_switch_Peebles(co)+0.1], [log10(0.99)+0.25], [(L"\textrm{($X_e = 0.99$)}")])
 
-    # Annotate reionization on/off
+    # Annotate reionization on/off and recombination
     annotate!([-1, -1], [-0.2, -3.3], [("reionization on"), ("reionization off")])
+    annotate!([-8.5],   [-0.2], [("recombination(s)")])
 
     savefig("plots/free_electron_fraction_log.pdf")
 end
 
-if true || !isfile("plots/free_electron_fraction_linear.pdf")
+if !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction (linear)")
 
-    plot(xlabel = L"x = \log a", ylabel = L"X_e", ylims=(-0.1, 1.5), legend_position=:top)
+    plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(x[1], x[end]), ylims=(-0.1, 1.3), yticks=-0.2:0.2:1.6, legend_position=:top, framestyle=:box)
     #plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]), label="Saha equation")
     #plot!(x, Xe.(co, x), label="Saha & Peebles equation")
 
@@ -74,10 +75,20 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
     plot!(x,        Xe_Saha_H.(co_H, x),                linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
     plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]),        linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
 
-    hline!([1+2*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{++}"])
-    hline!([1+1*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{+}"])
-    hline!([1+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}"])
-    hline!([0+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, label=nothing) # label = [L"\textrm{fully ionized } \textrm{nothing}"])
+    # Annotate stages
+    annotate!([-9.2], [1+2*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{++}$}}")])
+    annotate!([-8.1], [1+1*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{+ }$}}")])
+    annotate!([-7.4], [1+0*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}     $}}")])
+    annotate!([-4.6], [0+0*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}  $, $\textrm{He}     $}}")])
+
+    # Annotate reionization on/off
+    annotate!([-1, -1], [0.95, 0.05], [("reionization on"), ("reionization off")])
+    annotate!([-8.5],   [0.95],       [("recombination(s)")])
+
+    hline!([1+2*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{++}"])
+    hline!([1+1*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{+}"])
+    hline!([1+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}"])
+    hline!([0+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{nothing}"])
     savefig("plots/free_electron_fraction_linear.pdf")
 end
 

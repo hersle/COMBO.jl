@@ -31,6 +31,7 @@ default(
     #titlefontsize = 14, # default: 14
     legend_font_halign = :left,
     fontfamily = "Computer Modern",
+    framestyle = :box,
 )
 
 # a hack to "rasterize" a scatter plot
