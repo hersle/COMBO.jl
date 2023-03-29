@@ -122,18 +122,18 @@ if true || !isfile("plots/visibility_function.pdf")
     ys = [g.(co_H_He_reioff, x) / 1, dg.(co_H_He_reioff, x) / 10, d2g.(co_H_He_reioff, x) / 100,
           g.(co_H_He_reion,  x) / 1, dg.(co_H_He_reion,  x) / 10, d2g.(co_H_He_reion,  x) / 100]
     cs = [1  2  3  1  2  3]
-    ls = [:solid  :solid  :solid  :solid  :solid  :solid]
     as = [0.3  0.3  0.3  1.0  1.0  1.0]
     Ls = [nothing  nothing  nothing  L"g\phantom{''}(x) \,/\, 1"  L"g'\phantom{'}(x) \,/\, 10"  L"g''(x) \,/\, 100"]
+    zs = [:back  :back  :back  :back  :back  :back]
 
-    plot!(x, ys, color=cs, linestyle=ls, alpha=as, label=Ls)
+    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=Ls)
 
     # Dummy plots to manually create legend
     hline!([-20], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
     hline!([-20], color=:black, linestyle=:solid, alpha=0.3, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
 
     #plot!(x, [], xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.5, 0.3, 0.5, :right)), label=nothing)
-    plot!(x, ys, color=cs, linestyle=ls, alpha=as, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.43, 0.3, 0.5, :right)))
+    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.43, 0.3, 0.5, :right)))
 
     savefig("plots/visibility_function.pdf")
 end
