@@ -26,7 +26,7 @@ function Xe_Saha_H(co::ΛCDM, x::Real)
 end
 
 # TODO: slow/fails for x ≲ -7
-function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15)
+function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=10000)
     # To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
     # begin with an initial guess for Xe and iteratively solve the system of Saha equations
     # (1) ne * XHe+ / (1 - XHe+ - XHe++) = 2 / λe^3 * exp(-EHe1ion / (kB*Tb))
@@ -43,7 +43,8 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15)
     # 1. Guess Xe
     Xe = 1.0
     converged = false
-    while !converged
+    iterations = 0
+    while !converged && iterations < maxiters
         # 2. Compute corresponding XH+, XHe+, XHe++
         ne = Xe * nH(co, x)
         XH1  = RHS3 / (ne + RHS3)
@@ -54,9 +55,11 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15)
         Xe_new = XH1 + fHe(co.Yp) * (XHe1 + 2*XHe2)
         converged = abs(Xe_new - Xe) < tol # ... until Xe becomes self consistent
         Xe = Xe_new
+        iterations += 1
     end
 
-    return Xe
+    # println("$iterations iterations")
+    return iterations < maxiters ? Xe : NaN
 end
 
 function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)

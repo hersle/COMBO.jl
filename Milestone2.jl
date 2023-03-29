@@ -37,12 +37,12 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(x[1], x[end]), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
-    plot!(x, log10.(Xe.(co_H_reion,     x)), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
-    plot!(x, log10.(Xe.(co_H_reioff,    x)), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
-    plot!(x, log10.(Xe.(co_H_He_reion,  x)), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
-    plot!(x, log10.(Xe.(co_H_He_reioff, x)), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
-    plot!(x, log10.(Xe_Saha_H.(co_H_reioff, x)),                linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
-    plot!(x[x.<-7], log10.(Xe_Saha_H_He.(co_H_He_reioff, x[x.<-7])), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
+    plot!(x, log10.(Xe.(co_H_reion,     x)),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
+    plot!(x, log10.(Xe.(co_H_reioff,    x)),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
+    plot!(x, log10.(Xe.(co_H_He_reion,  x)),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
+    plot!(x, log10.(Xe.(co_H_He_reioff, x)),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
+    plot!(x, log10.(Xe_Saha_H.(co_H_reioff, x)),       linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
+    plot!(x, log10.(Xe_Saha_H_He.(co_H_He_reioff, x)), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
 
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, label=L"\textrm{Saha+Peebles}")
@@ -69,12 +69,12 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
     #plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]), label="Saha equation")
     #plot!(x, Xe.(co, x), label="Saha & Peebles equation")
 
-    plot!(x,        Xe.(co_H_reion,     x), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
-    plot!(x,        Xe.(co_H_reioff,    x), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
-    plot!(x,        Xe.(co_H_He_reion,  x), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
-    plot!(x,        Xe.(co_H_He_reioff, x), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
-    plot!(x,        Xe_Saha_H.(co_H_reioff, x),                linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
-    plot!(x[x.<-7], Xe_Saha_H_He.(co_H_He_reioff, x[x.<-7]),        linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
+    plot!(x, Xe.(co_H_reion,     x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
+    plot!(x, Xe.(co_H_reioff,    x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
+    plot!(x, Xe.(co_H_He_reion,  x),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
+    plot!(x, Xe.(co_H_He_reioff, x),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
+    plot!(x, Xe_Saha_H.(co_H_reioff, x),       linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
+    plot!(x, Xe_Saha_H_He.(co_H_He_reioff, x), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
 
     # Annotate stages
     annotate!([-9.2], [1+2*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{++}$}}")])
