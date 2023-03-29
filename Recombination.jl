@@ -9,23 +9,20 @@ Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
 fHe(Yp::Real) = Yp / (4*(1-Yp)) # TODO: what is this? replace with my hlines?
 
 function Xe_Saha_H(co::ΛCDM, x::Real)
-    @assert co.Yp == 0
-
-    T = Tγ(co, x)
+    Tb = Tγ(co, x)
+    λe = h / √(2*π*me*kB*Tb)
     a = 1
-    nb = nH(co,x)
-    b = (2 * π * me * kB * T / h^2)^(3/2) * exp(-EH1ion/(kB*T)) / nb
+    b = 1 / λe^3 * exp(-EH1ion/(kB*Tb)) / nH(co,x)
     c = -b
-    #return Float64(quadroots(BigFloat(a), BigFloat(b), BigFloat(c))[2])
+
     # when b >> 1, the quadratic equation solution is
     #   (-b + √(b^2+4*b)) / 2
     # = b/2 * (-1 + √(1+4/b))
-    # ≈ b/2 * (-1 + 1 + 2/b)  (b >> 1)
-    # = 1
-    return b < 1e10 ? quadroots(a, b, c)[2] : 1.0
+    # ≈ b/2 * (-1 + 1 + 2/b - 2/b^2)  (b >> 1)
+    # = 1 - 1/b
+    return b < 1e10 ? quadroots(a, b, c)[2] : 1 - 1/b # choose Taylor expansion for large b
 end
 
-# TODO: slow/fails for x ≲ -7
 function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=10000)
     # To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
     # begin with an initial guess for Xe and iteratively solve the system of Saha equations
@@ -41,25 +38,33 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=1000
     RHS3 = 1 / λe^3 * exp(-EH1ion /(kB*Tb))
 
     # 1. Guess Xe
-    Xe = 1.0
+    Xe = Xe_Saha_H(co, x) # use fast H-only Saha equation for guess
+    if Xe < 0.5
+        # for small Xe, the fixed-point iteration below converges extremely slowly,
+        # but here there is almsot no He anyway, so just take the fast H-only solution
+        return Xe
+    end
+
     converged = false
-    iterations = 0
-    while !converged && iterations < maxiters
+    iters = 0
+    while !converged && iters < maxiters
         # 2. Compute corresponding XH+, XHe+, XHe++
         ne = Xe * nH(co, x)
-        XH1  = RHS3 / (ne + RHS3)
-        XHe1 = 1 / (1 + ne/RHS1 + RHS2/ne)
-        XHe2 = RHS2 / ne * XHe1
+        F1 = ne / RHS1
+        F2 = ne / RHS2
+        F3 = ne / RHS3
+        XH1  = 1 / (1 + F3)
+        XHe1 = 1 / (1 + F1 + 1/F2)
+        XHe2 = 1 / (1 + F2 + F1*F2)
 
         # 3. Compute corresponding Xe ...
         Xe_new = XH1 + fHe(co.Yp) * (XHe1 + 2*XHe2)
         converged = abs(Xe_new - Xe) < tol # ... until Xe becomes self consistent
         Xe = Xe_new
-        iterations += 1
+        iters += 1
     end
 
-    # println("$iterations iterations")
-    return iterations < maxiters ? Xe : NaN
+    return iters < maxiters ? Xe : NaN
 end
 
 function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
@@ -83,7 +88,12 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
 end
 
-time_switch_Peebles(co::ΛCDM; Xe0::Real=0.999) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0), rtol=1e-20, atol=1e-20)
+function time_switch_Peebles(co::ΛCDM)
+    if isnan(co.x_switch_Peebles)
+        co.x_switch_Peebles = find_zero(x -> Xe_Saha_H_He(co, x) - 0.999, (-8.0, -7.0), rtol=1e-20, atol=1e-20)
+    end
+    return co.x_switch_Peebles
+end
 
 time_reionization_H(co::ΛCDM)  = co.reionization ? -log(1 + co.z_reion_H)  : NaN
 time_reionization_He(co::ΛCDM) = co.reionization ? -log(1 + co.z_reion_He) : NaN
@@ -105,15 +115,12 @@ end
 
 # TODO: spline whole thing?
 function Xe(co::ΛCDM, x::Real)
-    if isnan(co.x_switch_Peebles)
-        co.x_switch_Peebles = time_switch_Peebles(co)
-    end
-    Xe0 = Xe_Saha_H_He(co, co.x_switch_Peebles) # ≈ start from corresponding value from Saha
-
-    if x < co.x_switch_Peebles
+    if x < time_switch_Peebles(co)
         Xe_total = Xe_Saha_H_He(co, x)
     else
-        Xe_total = Xe_Peebles(co, x, co.x_switch_Peebles, Xe0)
+        x1 = time_switch_Peebles(co)
+        Xe1 = Xe_Saha_H_He(co, x1)
+        Xe_total = Xe_Peebles(co, x, x1, Xe1) # start Peebles from last value of Saha
     end
 
     Xe_total += Xe_reionization(co, x)
@@ -148,5 +155,5 @@ function sound_horizon(co::ΛCDM, x::Real)
     ds_dx(x, s) = cs(x) / aH(co, x)
     x0 = -20.0
     s0 = cs(x0) / aH(co, x0)
-    return _spline_integral(ds_dx, x0, +20.0, s0, 1e-10)(x)
+    return _spline_integral(ds_dx, x0, +20.0, s0, 1e-10)(x) # TODO: save spline?
 end
