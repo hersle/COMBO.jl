@@ -17,3 +17,7 @@ function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64
     sol = solve(ODEProblem((y, p, x) -> dy_dx(x, y), y1, (x1, x2)), Tsit5(); reltol=1e-10, abstol=abstol)
     return sol # use dense output to interpolate
 end
+
+function multirange(posts, lengths)
+    return vcat((range(posts[i], posts[i+1], length=lengths[i])[1:end-1] for i in range(1, length(lengths)))..., posts[end])
+end
