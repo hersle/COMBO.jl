@@ -98,12 +98,15 @@ end
 
 # TODO: spline whole thing?
 function Xe(co::ΛCDM, x::Real; reionization::Bool=true)
-    x1 = time_switch_Peebles(co) # TODO: compute only once?
-    Xe1 = Xe_Saha_H_He(co, x1) # ≈ start from corresponding value from Saha
-    if x < x1
+    if isnan(co.x_switch_Peebles)
+        co.x_switch_Peebles = time_switch_Peebles(co) # TODO: compute only once!
+    end
+    Xe0 = Xe_Saha_H_He(co, co.x_switch_Peebles) # ≈ start from corresponding value from Saha
+
+    if x < co.x_switch_Peebles
         Xe_total = Xe_Saha_H_He(co, x)
     else
-        Xe_total = Xe_Peebles(co, x, x1, Xe1)
+        Xe_total = Xe_Peebles(co, x, co.x_switch_Peebles, Xe0)
     end
 
     if reionization

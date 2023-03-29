@@ -24,6 +24,7 @@ mutable struct ΛCDM
     const Δz_reion_H::Float64  # Hydrogen reionization redshift duration
     const  z_reion_He::Float64 # Helium   reionization redshift time
     const Δz_reion_He::Float64 # Helium   reionization redshift duration
+          x_switch_Peebles::Float64
 
     # splines (lazily initialized)
     η_spline::Union{Nothing, SciMLBase.ODESolution} # conformal time
@@ -38,7 +39,7 @@ mutable struct ΛCDM
         Ων0 = Neff * 7/8 * (4/11)^(4/3) * Ωγ0
         Ωr0 = Ωγ0 + Ων0
         ΩΛ0 = 1.0 - (Ωr0 + Ωm0 + Ωk0)
-        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, nothing, nothing, nothing, nothing)
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, NaN, nothing, nothing, nothing, nothing)
     end
 end
 
