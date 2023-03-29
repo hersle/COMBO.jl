@@ -92,7 +92,7 @@ if !isfile("plots/free_electron_fraction_linear.pdf")
     savefig("plots/free_electron_fraction_linear.pdf")
 end
 
-if true || !isfile("plots/optical_depth.pdf")
+if !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
     plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-7.5, 3.5), legend_position=:topright)
 
@@ -116,10 +116,15 @@ end
 if true || !isfile("plots/visibility_function.pdf")
     # TODO: inset reionization plot (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
     println("Plotting visibility function")
-    plot(xlabel = L"x = \log a", ylabel = L"g", legend_position=:topright)
-    plot!(x, g.(co, x), label = L"g(x)")
-    plot!(x, dg.(co, x) / 10, label = L"g'(x) / 10") # TODO: handle endpoints
+    plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), legend_position=:topright)
+
+    plot!(x, g.(co, x), label = L"g\phantom{''}(x)")
+    plot!(x, dg.(co, x) / 10, label = L"g'\phantom{'}(x) / 10") # TODO: handle endpoints
     plot!(x, d2g.(co, x) / 100, label = L"g''(x) / 10^2")
+
+    #lens!([-2.4], [0], inset=(1, bbox(0.5, 0.0, 0.4, 0.4)))
+    plot!(x, [g.(co, x), dg.(co, x) / 10, d2g.(co, x) / 100], xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2], subplot=2, inset = (1, bbox(0.09, 0.4, 0.3, 0.5, :right)), label=nothing)
+
     savefig("plots/visibility_function.pdf")
 end
 
