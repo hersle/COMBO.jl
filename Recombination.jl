@@ -9,6 +9,8 @@ Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
 fHe(Yp::Real) = Yp / (4*(1-Yp)) # TODO: what is this? replace with my hlines?
 
 function Xe_Saha_H(co::ΛCDM, x::Real)
+    @assert co.Yp == 0
+
     T = Tγ(co, x)
     a = 1
     nb = nH(co,x)
@@ -79,6 +81,9 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
 end
 
 time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0))
+
+time_reionization_H(co::ΛCDM)  = -log(1 + co.z_reion_H)
+time_reionization_He(co::ΛCDM) = -log(1 + co.z_reion_He)
 
 function Xe_reionization(co::ΛCDM, x::Real)
     y(z) = (1+z)^(3/2)
