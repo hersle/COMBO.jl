@@ -78,7 +78,7 @@ function η(co::ΛCDM, x::Real)
         else
             η1 = 1 / aH(co, x1) # anal expr with Ωm=Ωk=ΩΛ=0
         end
-        co.η_spline = _spline_integral(dη_dx, x1, x2, η1, 1e-10)
+        co.η_spline = _spline_integral(dη_dx, x1, x2, η1)
     end
     return co.η_spline(x)
 end
@@ -95,7 +95,7 @@ function t(co::ΛCDM, x::Real)
         else
             t1 = 1 / (2*H(co, x1)) # anal expr with Ωm=Ωk=ΩΛ=0
         end
-        co.t_spline = _spline_integral(dt_dx, x1, x2, t1, 1e-10)
+        co.t_spline = _spline_integral(dt_dx, x1, x2, t1)
     end
     return co.t_spline(x)
 end

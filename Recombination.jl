@@ -82,7 +82,7 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
             C_r = (Λ_2s_1s + Λ_α) / (Λ_2s_1s + Λ_α + β2)
             return C_r / H(co,x) * (β*(1-Xe) - nH(co,x)*α2*Xe^2)
         end
-        co.Xe_Peebles_spline = _spline_integral(dXe_dx, x1, +20.0, Xe1, 1e-15)
+        co.Xe_Peebles_spline = _spline_integral(dXe_dx, x1, +20.0, Xe1, abstol=1e-15)
     end
 
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
@@ -90,7 +90,7 @@ end
 
 function time_switch_Peebles(co::ΛCDM)
     if isnan(co.x_switch_Peebles)
-        co.x_switch_Peebles = find_zero(x -> Xe_Saha_H_He(co, x) - 0.999, (-8.0, -7.0), rtol=1e-20, atol=1e-20)
+        co.x_switch_Peebles = find_zero(x -> Xe_Saha_H_He(co, x) - 0.999, (-20, +20), rtol=1e-20, atol=1e-20)
     end
     return co.x_switch_Peebles
 end
@@ -134,7 +134,7 @@ dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
 
 function τ(co::ΛCDM, x::Real; derivative::Integer=0)
     if isnothing(co.τ_spline)
-        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0, 1e-15)
+        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0, reltol=1e-15, abstol=1e-15)
     end
     return co.τ_spline(x, Val{derivative})
 end
@@ -155,5 +155,5 @@ function sound_horizon(co::ΛCDM, x::Real)
     ds_dx(x, s) = cs(x) / aH(co, x)
     x0 = -20.0
     s0 = cs(x0) / aH(co, x0)
-    return _spline_integral(ds_dx, x0, +20.0, s0, 1e-10)(x) # TODO: save spline?
+    return _spline_integral(ds_dx, x0, +20.0, s0)(x) # TODO: save spline?
 end
