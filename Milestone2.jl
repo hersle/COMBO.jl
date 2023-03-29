@@ -33,7 +33,7 @@ xre2 = time_reionization_He(co)
 println("Corresponding sound horizon:         $(sound_horizon(co, xdec) / Gpc) Gpc")
 println("Freeze-out free electron fraction:   $(Xe(co, 0))")
 
-if !isfile("plots/free_electron_fraction_log.pdf")
+if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(x[1], x[end]), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
@@ -46,9 +46,9 @@ if !isfile("plots/free_electron_fraction_log.pdf")
 
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, label=L"\textrm{Saha+Peebles}")
-    hline!([-10], color=1,      linestyle=:solid, label=L"\textrm{$Y_p=0.24$ (H+He)}")
+    hline!([-10], color=1,      linestyle=:solid, label=L"\textrm{H+He ($Y_p=0.24$)}")
     hline!([-10], color=:black, linestyle=:dash,  label=L"\textrm{Saha}")
-    hline!([-10], color=2,      linestyle=:solid, label=L"\textrm{$Y_p=0.00$ (H)}")
+    hline!([-10], color=2,      linestyle=:solid, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$)}")
 
     # Mark and annotate Saha -> Peebles transition point
     scatter!([time_switch_Peebles(co)], [log10(0.999)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
@@ -56,13 +56,13 @@ if !isfile("plots/free_electron_fraction_log.pdf")
     annotate!([time_switch_Peebles(co)+0.1], [log10(0.999)+0.25], [(L"\textrm{($X_e = 0.999$)}")])
 
     # Annotate reionization on/off and recombination
-    annotate!([-1, -1], [-0.2, -3.3], [("reionization on"), ("reionization off")])
+    annotate!([-1, -1], [-0.2, -3.3], [("reionization"), ("reionizatioff")])
     annotate!([-8.5],   [-0.2], [("recombination(s)")])
 
     savefig("plots/free_electron_fraction_log.pdf")
 end
 
-if !isfile("plots/free_electron_fraction_linear.pdf")
+if true || !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction (linear)")
 
     plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(x[1], x[end]), ylims=(-0.1, 1.3), yticks=-0.2:0.2:1.6, legend_position=:top, framestyle=:box)
@@ -83,7 +83,7 @@ if !isfile("plots/free_electron_fraction_linear.pdf")
     annotate!([-4.6], [0+0*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}  $, $\textrm{He}     $}}")])
 
     # Annotate reionization on/off
-    annotate!([-1, -1], [0.95, 0.05], [("reionization on"), ("reionization off")])
+    annotate!([-1, -1], [0.95, 0.05], [("reionization"), ("reionizatioff")])
     annotate!([-8.5],   [0.95],       [("recombination(s)")])
 
     hline!([1+2*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{++}"])
@@ -93,7 +93,7 @@ if !isfile("plots/free_electron_fraction_linear.pdf")
     savefig("plots/free_electron_fraction_linear.pdf")
 end
 
-if !isfile("plots/optical_depth.pdf")
+if true || !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
     plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-7.5, 3.5), legend_position=:topright)
 
@@ -108,8 +108,8 @@ if !isfile("plots/optical_depth.pdf")
     plot!(x, log10.(d2τpos.(co, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]")
 
     # Dummy plots to manually create legend
-    hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{$Y_p=0.24$ (H+He), reionization on}")
-    hline!([-10], color=:black, linestyle=:dash,  alpha=0.5, label=L"\textrm{$Y_p=0.00$ (H),\phantom{+He} reionization off}")
+    hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
+    hline!([-10], color=:black, linestyle=:dash,  alpha=0.5, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
 
     savefig("plots/optical_depth.pdf")
 end
@@ -129,8 +129,8 @@ if true || !isfile("plots/visibility_function.pdf")
     plot!(x, ys, color=cs, linestyle=ls, alpha=as, label=Ls)
 
     # Dummy plots to manually create legend
-    hline!([-20], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{$Y_p=0.24$ (H+He), reionization on}")
-    hline!([-20], color=:black, linestyle=:solid, alpha=0.3, label=L"\textrm{$Y_p=0.00$ (H),\phantom{+He} reionization off}")
+    hline!([-20], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
+    hline!([-20], color=:black, linestyle=:solid, alpha=0.3, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
 
     #plot!(x, [], xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.5, 0.3, 0.5, :right)), label=nothing)
     plot!(x, ys, color=cs, linestyle=ls, alpha=as, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.43, 0.3, 0.5, :right)))
