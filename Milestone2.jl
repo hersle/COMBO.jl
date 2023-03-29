@@ -94,11 +94,22 @@ end
 
 if true || !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
-    plot(xlabel = L"x = \log a", legend_position=:topright)
-    plot!(x, log10.(τ.(co, x)), label = L"\log_{10} [\tau(x)]")
-    plot!(x, log10.(-dτ.(co, x)), label = L"\log_{10} [-\tau'(x)]")
-    y(x) = d2τ(co, x) > 0 ? log10(d2τ(co, x)) : NaN # skip values where d2τ < 0. increase resolution here?
-    plot!(x, y.(x), label = L"\log_{10} [\tau''(x) > 0]") # TODO: is the little kink wrong?
+    plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-7.5, 3.5), legend_position=:topright)
+
+    d2τpos(co, x; reionization=true) = d2τ(co, x; reionization) > 0 ? d2τ(co, x; reionization) : 1e-10 # skip values where d2τ < 0. increase resolution here?
+
+    plot!(x, log10.(τ.(co_H, x; reionization=false)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(-dτ.(co_H, x; reionization=false)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(d2τpos.(co_H, x; reionization=false)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
+
+    plot!(x, log10.(τ.(co, x)),      color=1, linestyle=:solid, label=L"\log_{10} [+\tau\phantom{''}(x)]")
+    plot!(x, log10.(-dτ.(co, x)),    color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")
+    plot!(x, log10.(d2τpos.(co, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]") # TODO: is the little kink wrong? fix spike at joint
+
+    # Dummy plots to manually create legend
+    hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{$Y_p=0.24$ (H+He), reionization on}")
+    hline!([-10], color=:black, linestyle=:dash,  alpha=0.5, label=L"\textrm{$Y_p=0.00$ (H),\phantom{+He} reionization off}")
+
     savefig("plots/optical_depth.pdf")
 end
 

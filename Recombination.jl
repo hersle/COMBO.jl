@@ -26,7 +26,7 @@ function Xe_Saha_H(co::ΛCDM, x::Real)
 end
 
 # TODO: slow/fails for x ≲ -7
-function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-10)
+function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15)
     # To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
     # begin with an initial guess for Xe and iteratively solve the system of Saha equations
     # (1) ne * XHe+ / (1 - XHe+ - XHe++) = 2 / λe^3 * exp(-EHe1ion / (kB*Tb))
@@ -80,7 +80,7 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
 end
 
-time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0))
+time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0), rtol=1e-20, atol=1e-20)
 
 time_reionization_H(co::ΛCDM)  = -log(1 + co.z_reion_H)
 time_reionization_He(co::ΛCDM) = -log(1 + co.z_reion_He)
@@ -97,8 +97,9 @@ function Xe_reionization(co::ΛCDM, x::Real)
 end
 
 # TODO: spline whole thing?
-function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99, reionization::Bool=true)
-    x1 = time_switch_Peebles(co; Xe0=Xe1) # TODO: compute only once?
+function Xe(co::ΛCDM, x::Real; reionization::Bool=true)
+    x1 = time_switch_Peebles(co; Xe0=0.99) # TODO: compute only once?
+    Xe1 = Xe_Saha_H_He(co, x1) # ≈ start from corresponding value from Saha
     if x < x1
         Xe_total = Xe_Saha_H_He(co, x)
     else
@@ -112,19 +113,19 @@ function Xe(co::ΛCDM, x::Real; Xe1::Real=0.99, reionization::Bool=true)
     return Xe_total
 end
 
-ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
+ne(co::ΛCDM, x::Real; reionization::Bool=true) = nH(co,x) * Xe(co,x; reionization)
 
-dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
+dτ(co::ΛCDM, x::Real; reionization::Bool=true) = -ne(co,x; reionization) * σT * c / H(co,x)
 
-function τ(co::ΛCDM, x::Real; derivative::Integer=0)
+function τ(co::ΛCDM, x::Real; derivative::Integer=0, reionization::Bool=true)
     if isnothing(co.τ_spline)
-        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0, 1e-9)
+        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x; reionization), 0.0, -20.0, 0.0, 1e-9)
     end
     return co.τ_spline(x, Val{derivative})
 end
 
-d2τ(co::ΛCDM, x::Real) = τ(co, x; derivative=2)
-d3τ(co::ΛCDM, x::Real) = τ(co, x; derivative=3)
+d2τ(co::ΛCDM, x::Real; reionization::Bool=true) = τ(co, x; derivative=2, reionization)
+d3τ(co::ΛCDM, x::Real; reionization::Bool=true) = τ(co, x; derivative=3, reionization)
 
   g(co::ΛCDM, x::Real) = -dτ(co,x) * exp(-τ(co,x))
  dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
