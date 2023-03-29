@@ -23,14 +23,14 @@ xrec  = time_recombination(co)
 xdec  = (xlss + xrec) / 2
 xre1  = time_reionization_H(co)
 xre2 = time_reionization_He(co)
-@printf("Reionization of Hydrogen:           x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xre1,  a(xre1),  z(xre1),  η(co, xre1)  / Gyr, t(co, xre1)  / Gyr)
-@printf("Reionization of Helium:             x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xre2,  a(xre2),  z(xre2),  η(co, xre2)  / Gyr, t(co, xre2)  / Gyr)
-@printf("Saha -> Peebles switch (Xe = 0.99): x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xswi,  a(xswi),  z(xswi),  η(co, xswi)  / Gyr, t(co, xswi)  / Gyr)
-@printf("Last scattering surface (τ = 1):    x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xlss,  a(xlss),  z(xlss),  η(co, xlss)  / Gyr, t(co, xlss)  / Gyr)
-@printf("Recombination (Xe = 0.1):           x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrec,  a(xrec),  z(xrec),  η(co, xrec)  / Gyr, t(co, xrec)  / Gyr)
-@printf("Decoupling (average(LSS, rec)):     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xdec,  a(xdec),  z(xdec),  η(co, xdec)  / Gyr, t(co, xdec)  / Gyr)
-println("Corresponding sound horizon:        $(sound_horizon(co, xdec) / Gpc) Gpc")
-println("Freeze-out free electron fraction:  $(Xe(co, 0; reionization=false))")
+@printf("Reionization of Hydrogen:            x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xre1,  a(xre1),  z(xre1),  η(co, xre1)  / Gyr, t(co, xre1)  / Gyr)
+@printf("Reionization of Helium:              x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xre2,  a(xre2),  z(xre2),  η(co, xre2)  / Gyr, t(co, xre2)  / Gyr)
+@printf("Saha -> Peebles switch (Xe = 0.999): x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xswi,  a(xswi),  z(xswi),  η(co, xswi)  / Gyr, t(co, xswi)  / Gyr)
+@printf("Last scattering surface (τ = 1):     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xlss,  a(xlss),  z(xlss),  η(co, xlss)  / Gyr, t(co, xlss)  / Gyr)
+@printf("Recombination (Xe = 0.1):            x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrec,  a(xrec),  z(xrec),  η(co, xrec)  / Gyr, t(co, xrec)  / Gyr)
+@printf("Decoupling (average(LSS, rec)):      x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xdec,  a(xdec),  z(xdec),  η(co, xdec)  / Gyr, t(co, xdec)  / Gyr)
+println("Corresponding sound horizon:         $(sound_horizon(co, xdec) / Gpc) Gpc")
+println("Freeze-out free electron fraction:   $(Xe(co, 0; reionization=false))")
 
 if !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
@@ -50,9 +50,9 @@ if !isfile("plots/free_electron_fraction_log.pdf")
     hline!([-10], color=2,      linestyle=:solid, label=L"\textrm{$Y_p=0.00$ (H)}")
 
     # Mark and annotate Saha -> Peebles transition point
-    scatter!([time_switch_Peebles(co)], [log10(0.99)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
-    annotate!([time_switch_Peebles(co)+0.15], [log10(0.99)+0.50], [(L"\textrm{Saha $\rightarrow$ Peebles}")])
-    annotate!([time_switch_Peebles(co)+0.1], [log10(0.99)+0.25], [(L"\textrm{($X_e = 0.99$)}")])
+    scatter!([time_switch_Peebles(co)], [log10(0.999)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
+    annotate!([time_switch_Peebles(co)+0.15], [log10(0.999)+0.50], [(L"\textrm{Saha $\rightarrow$ Peebles}")])
+    annotate!([time_switch_Peebles(co)+0.1], [log10(0.999)+0.25], [(L"\textrm{($X_e = 0.999$)}")])
 
     # Annotate reionization on/off and recombination
     annotate!([-1, -1], [-0.2, -3.3], [("reionization on"), ("reionization off")])
@@ -104,7 +104,7 @@ if true || !isfile("plots/optical_depth.pdf")
 
     plot!(x, log10.(τ.(co, x)),      color=1, linestyle=:solid, label=L"\log_{10} [+\tau\phantom{''}(x)]")
     plot!(x, log10.(-dτ.(co, x)),    color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")
-    plot!(x, log10.(d2τpos.(co, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]") # TODO: is the little kink wrong? fix spike at joint
+    plot!(x, log10.(d2τpos.(co, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]")
 
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{$Y_p=0.24$ (H+He), reionization on}")

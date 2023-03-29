@@ -80,7 +80,7 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
 end
 
-time_switch_Peebles(co::ΛCDM; Xe0::Real=0.99) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0), rtol=1e-20, atol=1e-20)
+time_switch_Peebles(co::ΛCDM; Xe0::Real=0.999) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0), rtol=1e-20, atol=1e-20)
 
 time_reionization_H(co::ΛCDM)  = -log(1 + co.z_reion_H)
 time_reionization_He(co::ΛCDM) = -log(1 + co.z_reion_He)
@@ -98,7 +98,7 @@ end
 
 # TODO: spline whole thing?
 function Xe(co::ΛCDM, x::Real; reionization::Bool=true)
-    x1 = time_switch_Peebles(co; Xe0=0.99) # TODO: compute only once?
+    x1 = time_switch_Peebles(co) # TODO: compute only once?
     Xe1 = Xe_Saha_H_He(co, x1) # ≈ start from corresponding value from Saha
     if x < x1
         Xe_total = Xe_Saha_H_He(co, x)
