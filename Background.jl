@@ -20,6 +20,7 @@ mutable struct ΛCDM
 
     # recombination # TODO: separate struct?
     const Yp::Float64 # helium mass fraction
+    const reionization::Bool   # reionization on?
     const  z_reion_H::Float64  # Hydrogen reionization redshift time
     const Δz_reion_H::Float64  # Hydrogen reionization redshift duration
     const  z_reion_He::Float64 # Helium   reionization redshift time
@@ -39,7 +40,8 @@ mutable struct ΛCDM
         Ων0 = Neff * 7/8 * (4/11)^(4/3) * Ωγ0
         Ωr0 = Ωγ0 + Ων0
         ΩΛ0 = 1.0 - (Ωr0 + Ωm0 + Ωk0)
-        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, NaN, nothing, nothing, nothing, nothing)
+        reionization = count(isnan(num) for num in (z_reion_H, z_reion_He, Δz_reion_H, Δz_reion_He)) == 0 # turn off by setting either to NaN
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, reionization, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, NaN, nothing, nothing, nothing, nothing)
     end
 end
 

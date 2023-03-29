@@ -10,10 +10,11 @@ using LaTeXStrings
 using Printf
 
 #co = ΛCDM(Ωb0=0.05, Ωc0=0.45, Neff=0, h=0.7)
-co_H_He = ΛCDM()
-co_H = ΛCDM(Yp=0)
-#co = co_H_He # the default
-co = ΛCDM()
+co_H_He_reion  = ΛCDM()
+co_H_He_reioff = ΛCDM(z_reion_H=NaN)
+co_H_reion     = ΛCDM(Yp=0)
+co_H_reioff    = ΛCDM(Yp=0, z_reion_H=NaN)
+co             = co_H_He_reion # default
 x = range(-10, 0, length=10000)
 
 # TODO: gather into one common function?
@@ -30,18 +31,18 @@ xre2 = time_reionization_He(co)
 @printf("Recombination (Xe = 0.1):            x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrec,  a(xrec),  z(xrec),  η(co, xrec)  / Gyr, t(co, xrec)  / Gyr)
 @printf("Decoupling (average(LSS, rec)):      x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xdec,  a(xdec),  z(xdec),  η(co, xdec)  / Gyr, t(co, xdec)  / Gyr)
 println("Corresponding sound horizon:         $(sound_horizon(co, xdec) / Gpc) Gpc")
-println("Freeze-out free electron fraction:   $(Xe(co, 0; reionization=false))")
+println("Freeze-out free electron fraction:   $(Xe(co, 0))")
 
-if !isfile("plots/free_electron_fraction_log.pdf")
+if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(x[1], x[end]), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
-    plot!(x, log10.(Xe.(co_H, x; reionization=true)),    linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
-    plot!(x, log10.(Xe.(co_H, x; reionization=false)),   linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
-    plot!(x, log10.(Xe.(co, x; reionization=true)),      linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
-    plot!(x, log10.(Xe.(co, x; reionization=false)),     linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
-    plot!(x, log10.(Xe_Saha_H.(co_H, x)),                linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
-    plot!(x[x.<-7], log10.(Xe_Saha_H_He.(co, x[x.<-7])), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
+    plot!(x, log10.(Xe.(co_H_reion,     x)), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
+    plot!(x, log10.(Xe.(co_H_reioff,    x)), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
+    plot!(x, log10.(Xe.(co_H_He_reion,  x)), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
+    plot!(x, log10.(Xe.(co_H_He_reioff, x)), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
+    plot!(x, log10.(Xe_Saha_H.(co_H_reioff, x)),                linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
+    plot!(x[x.<-7], log10.(Xe_Saha_H_He.(co_H_He_reioff, x[x.<-7])), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
 
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, label=L"\textrm{Saha+Peebles}")
@@ -61,19 +62,19 @@ if !isfile("plots/free_electron_fraction_log.pdf")
     savefig("plots/free_electron_fraction_log.pdf")
 end
 
-if !isfile("plots/free_electron_fraction_linear.pdf")
+if true || !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction (linear)")
 
     plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(x[1], x[end]), ylims=(-0.1, 1.3), yticks=-0.2:0.2:1.6, legend_position=:top, framestyle=:box)
     #plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]), label="Saha equation")
     #plot!(x, Xe.(co, x), label="Saha & Peebles equation")
 
-    plot!(x,        Xe.(co_H, x; reionization=true),    linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
-    plot!(x,        Xe.(co_H, x; reionization=false),   linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
-    plot!(x,        Xe.(co, x; reionization=true),      linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
-    plot!(x,        Xe.(co, x; reionization=false),     linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
-    plot!(x,        Xe_Saha_H.(co_H, x),                linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
-    plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]),        linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
+    plot!(x,        Xe.(co_H_reion,     x), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
+    plot!(x,        Xe.(co_H_reioff,    x), linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
+    plot!(x,        Xe.(co_H_He_reion,  x), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
+    plot!(x,        Xe.(co_H_He_reioff, x), linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
+    plot!(x,        Xe_Saha_H.(co_H_reioff, x),                linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
+    plot!(x[x.<-7], Xe_Saha_H_He.(co_H_He_reioff, x[x.<-7]),        linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
 
     # Annotate stages
     annotate!([-9.2], [1+2*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{++}$}}")])
@@ -92,15 +93,15 @@ if !isfile("plots/free_electron_fraction_linear.pdf")
     savefig("plots/free_electron_fraction_linear.pdf")
 end
 
-if !isfile("plots/optical_depth.pdf")
+if true || !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
     plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-7.5, 3.5), legend_position=:topright)
 
-    d2τpos(co, x; reionization=true) = d2τ(co, x; reionization) > 0 ? d2τ(co, x; reionization) : 1e-10 # skip values where d2τ < 0. increase resolution here?
+    d2τpos(co, x) = d2τ(co, x) > 0 ? d2τ(co, x) : 1e-10 # skip values where d2τ < 0. increase resolution here?
 
-    plot!(x, log10.(τ.(co_H, x; reionization=false)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
-    plot!(x, log10.(-dτ.(co_H, x; reionization=false)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
-    plot!(x, log10.(d2τpos.(co_H, x; reionization=false)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(τ.(co_H_reioff, x)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(-dτ.(co_H_reioff, x)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(d2τpos.(co_H_reioff, x)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
 
     plot!(x, log10.(τ.(co, x)),      color=1, linestyle=:solid, label=L"\log_{10} [+\tau\phantom{''}(x)]")
     plot!(x, log10.(-dτ.(co, x)),    color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")

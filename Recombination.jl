@@ -82,10 +82,14 @@ end
 
 time_switch_Peebles(co::ΛCDM; Xe0::Real=0.999) = find_zero(x -> Xe_Saha_H_He(co, x) - Xe0, (-8.0, -7.0), rtol=1e-20, atol=1e-20)
 
-time_reionization_H(co::ΛCDM)  = -log(1 + co.z_reion_H)
-time_reionization_He(co::ΛCDM) = -log(1 + co.z_reion_He)
+time_reionization_H(co::ΛCDM)  = co.reionization ? -log(1 + co.z_reion_H)  : NaN
+time_reionization_He(co::ΛCDM) = co.reionization ? -log(1 + co.z_reion_He) : NaN
 
 function Xe_reionization(co::ΛCDM, x::Real)
+    if !co.reionization
+        return 0
+    end
+
     y(z) = (1+z)^(3/2)
     dy_dz(z) = 3/2 * (1+z)^(1/2)
     Δy(z, Δz) = dy_dz(z) * Δz
@@ -97,9 +101,9 @@ function Xe_reionization(co::ΛCDM, x::Real)
 end
 
 # TODO: spline whole thing?
-function Xe(co::ΛCDM, x::Real; reionization::Bool=true)
+function Xe(co::ΛCDM, x::Real)
     if isnan(co.x_switch_Peebles)
-        co.x_switch_Peebles = time_switch_Peebles(co) # TODO: compute only once!
+        co.x_switch_Peebles = time_switch_Peebles(co)
     end
     Xe0 = Xe_Saha_H_He(co, co.x_switch_Peebles) # ≈ start from corresponding value from Saha
 
@@ -109,32 +113,29 @@ function Xe(co::ΛCDM, x::Real; reionization::Bool=true)
         Xe_total = Xe_Peebles(co, x, co.x_switch_Peebles, Xe0)
     end
 
-    if reionization
-        Xe_total += Xe_reionization(co, x)
-    end
+    Xe_total += Xe_reionization(co, x)
 
     return Xe_total
 end
 
-ne(co::ΛCDM, x::Real; reionization::Bool=true) = nH(co,x) * Xe(co,x; reionization)
+ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
 
-dτ(co::ΛCDM, x::Real; reionization::Bool=true) = -ne(co,x; reionization) * σT * c / H(co,x)
+dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
 
-function τ(co::ΛCDM, x::Real; derivative::Integer=0, reionization::Bool=true)
+function τ(co::ΛCDM, x::Real; derivative::Integer=0)
     if isnothing(co.τ_spline)
-        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x; reionization), 0.0, -20.0, 0.0, 1e-9)
+        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0, 1e-9)
     end
     return co.τ_spline(x, Val{derivative})
 end
 
-d2τ(co::ΛCDM, x::Real; reionization::Bool=true) = τ(co, x; derivative=2, reionization)
-d3τ(co::ΛCDM, x::Real; reionization::Bool=true) = τ(co, x; derivative=3, reionization)
+d2τ(co::ΛCDM, x::Real) = τ(co, x; derivative=2)
+d3τ(co::ΛCDM, x::Real) = τ(co, x; derivative=3)
 
   g(co::ΛCDM, x::Real) = -dτ(co,x) * exp(-τ(co,x))
  dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
 d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
 
-# TODO: why are these so close to equal?
 time_last_scattering_surface(co::ΛCDM) = find_zero(x -> τ(co, x) - 1, (-20, 0))
 time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20, -3))
 
