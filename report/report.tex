@@ -651,14 +651,35 @@ and derivatives of derived un-splined quantities from analytical expressions.
 
 \subsection{Results}
 
+Here we examine our results for the Planck 2018 cosmology \eqref{eq_planck2018},
+with the reionization model turned on and off,
+and with Hydrogen only or Hydrogen and Helium.
+
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/free_electron_fraction_log.pdf}
-\end{figure}
-\begin{figure}
-	\centering
 	\includegraphics[scale=0.7]{../plots/free_electron_fraction_linear.pdf}
+	\caption{%
+		Evolution of the free electron fraction $X_e(x)$,
+		from the Saha and Peebles equations before and after the joint $X_e = 0.999$,
+		with and without Helium and reionization, compared to the result from the Saha equation alone.
+		Unlike the logarithmic plot, the linear plot is annotated with the majority atom/ion at each recombination stage.
+	}
+	\label{fig_free_electron_fraction}
 \end{figure}
+
+\Cref{fig_free_electron_fraction} shows how the free electron fraction $X_e$ evolves through recombination and reionization.
+As expected from \TODO{equation ref},
+$X_e$ gradually steps down, plateau by plateau, as the recombinations $\text{He}^{++} \rightarrow \text{He}^+ \rightarrow \text{He}$ and $\text{H}^+ \rightarrow \text{H}$ occur sequentially,
+as the thermal energy $k_B T_b$ decreases and reaches the different ionization energies at different times.
+With reionization, $X_e$ ramps back up at late times because increasing radiation from formed stars force the electrons out of the neutral atoms,
+but skipping the $\text{H}^+, \text{He}$ stage (\TODO{why?}).
+%$X_e$ gradually steps down from plateaus where $\{\XHp, \XHep, \XHepp\}$ (almost) changes
+%from $\{1,0,1\}$ to $\{1,1,0\}$ to $\{1,0,0\}$ to $\{0,0,0\}$
+
+Note that without reionization, the Peebles equation would cause the free electron density to asymptotically freeze out today at $X_e(0) = 10^{\{-3.6, -3.7\}}$ with and without Helium.
+In contrast, the Saha equation dives straight to $0$ during the final recombination to Hydrogen.
+
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/optical_depth.pdf}
