@@ -683,7 +683,7 @@ In contrast, the Saha equation dives straight to $0$ during the final recombinat
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/optical_depth.pdf}
-	\caption{\TODO{$\tau'(\eta(x))$} Evolution of the optical depth $\tau(x)$ through recombination and reionization history, with or without both Helium and reionization.}
+	\caption{\TODO{$\tau'(\eta(x))$} Evolution of the optical depth $\tau(x)$ and its derivatives through recombination and reionization history, with or without both Helium and reionization.}
 	\label{fig_optical_depth}
 \end{figure}
 
@@ -698,7 +698,15 @@ The two earliest additional smaller bumps in $\tau''(x)$ are explained by the ad
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/visibility_function.pdf}
+	\caption{The visibility function $g(x)$ and its (scaled) derivatives with or without both Helium and reionization. The main plot best shows its variation during recombination, while the embedded plot magnifies its behavior during reionization. Their numerical integrals are annotated.}
+	\label{fig_visibility_function}
 \end{figure}
+
+\Cref{fig_visibility_function} shows the visibility function.
+It is a probability distribution, and does indeed numerically integrate very close to $1$.
+Interpretation: probability that photon was last scattered at a given time $x$.
+Greatest during recombination, $50$ times smaller at reionization, slowly declines till today.
+Flat till today without reionization.
 
 \clearpage
 \section{Conclusions}
