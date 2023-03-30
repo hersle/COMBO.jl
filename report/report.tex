@@ -683,7 +683,18 @@ In contrast, the Saha equation dives straight to $0$ during the final recombinat
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/optical_depth.pdf}
+	\caption{\TODO{$\tau'(\eta(x))$} Evolution of the optical depth $\tau(x)$ through recombination and reionization history, with or without both Helium and reionization.}
+	\label{fig_optical_depth}
 \end{figure}
+
+\Cref{fig_optical_depth} shows the corresponding evolution of the optical depth $\tau$.
+The optical depth measures the ``thickness'' of what the most distant light (from the horizon \TODO{?}) reaching us today has traveled through,
+so the plot should be interpreted from right to left, and $\tau$ necessarily monotonically increases as we go back in time.
+Without reionization, the optical depth steadily increases to the still small value $\tau \approx 10^{-1}$ at $z \approx -7$, just after the last recombination.
+With reionization, this value is reached simply from reionization.
+For $x \approx -7$, reionization no longer matters, and the optical depth quickly ramps up to $\tau \approx 10^{2}$, as the electrons become free.
+The two earliest additional smaller bumps in $\tau''(x)$ are explained by the addition of Helium and the accompanying two additional recombination processes. \TODO{?}
+
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/visibility_function.pdf}
