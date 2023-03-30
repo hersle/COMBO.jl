@@ -522,6 +522,81 @@ On the other hand, our Hubble parameter is somewhat larger than Planck's and exe
 
 \subsection{Theory}
 
+Photon temperature
+\begin{equation}
+	T_\gamma(t) = T_{\gamma 0} / a(t)
+\end{equation}
+Baryon temperature
+\begin{equation}
+	T_b(t) = T_{\gamma}
+\end{equation}
+
+Saha equation H
+\begin{equation}
+	\frac{X_e^2}{1-X_e} = \frac{1}{n_b} \left( \frac{h}{2 \pi m_e k_B T_b} \right)^{-\frac32} \exp \left( -\frac{E^\text{ion}_\text{H}}{k_B T_b} \right)
+\end{equation}
+
+Saha equation H+He
+\newcommand{\XHp}{X_{\text{H}^+}}
+\newcommand{\XHep}{X_{\text{He}^+}}
+\newcommand{\XHepp}{X_{\text{He}^{++}}}
+\begin{subequations}
+\begin{align}
+    \frac{\XHepp}{1 - \XHep - \XHepp} &= 2 \, \frac{\lambda_e^{-3}}{n_e} \exp \left(-\frac{E^\text{ion}_\text{He1}}{k_B T_b} \right), \\
+    \frac{\XHepp}{\XHep} &= 4 \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_\text{He2}}{k_B T_b}\right), \\
+    \frac{\XHp}{1-\XHp} &= \phantom{1} \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right), \\
+    X_e &= \XHp + \frac{Y_p}{4(1-Y_p)} \Big( \XHep + 2 \XHepp \Big) .
+\end{align}
+\end{subequations}
+
+Peebles
+\begin{equation}
+	\odv{X_e}{x} = \frac{C_r}{H} \left( \beta (1-X_e) - n_H \alpha_2 X_e^2 \right)
+\end{equation}
+where
+\begin{subequations}
+\begin{align}
+	C_r &= \frac{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha}{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha + \beta_2}, \\
+	\alpha &= \text{fine structure constant}, \\
+	\alpha_2 &= \frac{64 \pi}{\sqrt{27 \pi}} \left(\frac{\alpha}{m_e}\right)^2 \sqrt{\frac{E^\text{ion}_\text{H}}{k_B T_b}} \phi_2 \hbar^2/c, \\
+	\beta &= \frac{\alpha_2}{\lambda_e^3} \exp \left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right), \\
+	\beta_2 &= \beta \exp \left(\frac{3 E^\text{ion}_\text{H}}{4 k_B T_b}\right), \\
+	\Lambda_{2s \rightarrow 1s} &= 8.227 / \mathrm{s}, \\
+	\Lambda_\alpha &= H \frac{(3 E^\text{ion}_{\text{H}})^3}{(\hbar c)^3 (8 \pi)^2 n_{1s}}, \\
+	\phi_2 &= 0.448 \log \left( \frac{E^\text{ion}_\text{H}}{k_B T_b} \right),
+	n_{1s} &= (1-X_e) n_H, \\
+\end{align}
+\end{subequations}
+
+Optical depth
+\begin{equation}
+	\tau(\eta) = \int_\eta^{\eta_0} n_e \sigma_T a c \, d\eta = \int_x^0 \frac{n_e \sigma_T c}{H} \, dx
+\end{equation}
+
+Visibility function
+\TODO{fix wrong $\tau'$ in code}
+\begin{equation}
+	g(\eta) = -\tau(\eta) \, e^{-\tau(\eta)}
+\end{equation}
+
+Reionization
+\TODO{meaning of $f$?}
+\TODO{$y$ or $z$? in last term?}
+\begin{equation}
+	X_e \rightarrow X_e + \frac{1+f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_1} \right) \right]
+                        + \frac{f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-2}{\Delta y^\text{reion}_2} \right) \right]
+\end{equation}
+where $y = (1+z)^{3/2}$, $\Delta y = |y'(z)| \Delta z$ and we have the four reionization parameters in \ref{eq_planck2018}.
+
+Sound horizon
+\begin{equation}
+	s(\eta) = \int_0^\eta c_s(\eta) d\eta = \int_{-\infty}^x \frac{c_s \, dx}{\mathcal{H}},
+	\quad \text{where} \quad
+	c_s(\eta) = c \sqrt{\frac{R(a)}{3(1+R(a))}}
+	\quad \text{and} \quad
+	R(a) = \frac{4 \, \Omega_{\gamma 0}}{3 \, \Omega_{b 0} a}
+\end{equation}
+
 \subsection{Implementation}
 
 \subsection{Results}
