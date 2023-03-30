@@ -51,7 +51,7 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     hline!([-10], color=2,      linestyle=:solid, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$)}")
 
     # Mark and annotate Saha -> Peebles transition point
-    scatter!( [time_switch_Peebles(co)],       [log10(0.999)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
+    scatter!( [time_switch_Peebles(co)],      [log10(0.999)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
     annotate!([time_switch_Peebles(co)+0.15], [log10(0.999)+0.50], [(L"\textrm{Saha $\rightarrow$ Peebles}")])
     annotate!([time_switch_Peebles(co)+0.10], [log10(0.999)+0.25], [(L"\textrm{($X_e = 0.999$)}")])
 
@@ -66,8 +66,6 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction (linear)")
 
     plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(x[1], x[end]), ylims=(-0.1, 1.3), yticks=-0.25:0.25:1.5, legend_position=:top, framestyle=:box)
-    #plot!(x[x.<-7], Xe_Saha_H_He.(co, x[x.<-7]), label="Saha equation")
-    #plot!(x, Xe.(co, x), label="Saha & Peebles equation")
 
     plot!(x, Xe.(co_H_reion,     x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
     plot!(x, Xe.(co_H_reioff,    x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off

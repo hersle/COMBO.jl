@@ -599,6 +599,56 @@ Sound horizon
 
 \subsection{Implementation}
 
+\begin{enumerate}
+\item
+We solve the Hydrogen-only Saha equation
+as the quadratic equation $X_e^2 + R X_e - R = 0$,
+where $R$ is the right side of \TODO{ref eq}.
+Its positive solution is $X_e = (-R + \sqrt{R^2+4R})/2$.
+However, $R$ can become very large, so we avoid numerical instability when $R > 10^{10}$
+by taking the Taylor expansion $X_e = (R/2) (1 - \sqrt{1 + 4/R}) \eqsim (R/2) (1 - 1 + 2/R - 2/R^2) = 1 - 1/R$.
+
+\item
+We solve the Hydrogen and Helium Saha equation by fixed-point iteration.
+Starting with an initial guess for $X_e$,
+we analytically compute $\XHp$, $\XHep$ and $\XHepp$,
+and $X_e$ again for the iteration until $|X_e^{i+1}-X_e^{i}| < \text{tol} = 10^{-15}$.
+We choose the initial guess for $X_e$ as the Hydrogen-only solution from the point above,
+as this is a constant-time operation and results in even fewer iterations compared to using a constant initial guess, like $X_e = 1$.
+Note that the fixed-point iteration requires few iterations when the solution is $X_e \approx 1$ (where Saha's approximation is good),
+but rapidly increasing iterations as $X_e \rightarrow 0$ (when Saha's approximation is bad).
+Fortunately, in this regime, almost all Helium has combined,
+so we have $\XHepp \ll \XHep \ll \XHp$, and setting $\XHepp=\XHep=0$ we recover the Hydrogen-only Saha equation,
+so we take that as the solution when the initial guess is $X_e < 0.5$.
+
+\item
+We solve the Peebles equation with an ODE integrator, like in section 1.
+We switch from the Saha equation to the Peebles equation when $X_e^\text{switch} = 0.999$,
+use a numerical root-finder to find the corresponding time $x^\text{switch}$
+and use $(x^\text{switch}, X_e^\text{switch})$ as initial values for the ODE integrator.
+As before, we spline the result so subsequent computations at arbitrary $x$ are fast.
+
+\item
+To compute $X_e(x)$ at any time $x$ with reionization,
+we start with the result from the Saha equation if $X_e > 0.999$,
+otherwise the result from the Peebles equation.
+To add reionization, we simply add the terms \TODO{ref}.
+
+\item
+To compute the optical depth,
+we use an ODE integrator to integrate the integrand from today, when $x=0$ and $\tau = 1$.
+As before, we spline the result.
+
+\item
+To compute the sound horizon,
+we integrate with an ODE integrator from a finite early time, like $x_0 = -20$,
+with initial sound horizon $s(x_0) \approx c_s(x_0) / \mathcal{H}(x_0)$.
+
+\item
+We compute derivatives of splined quantities with spline methods,
+and derivatives of derived un-splined quantities from analytical expressions.
+\end{enumerate}
+
 \subsection{Results}
 
 \begin{figure}
