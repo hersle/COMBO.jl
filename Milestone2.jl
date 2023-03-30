@@ -8,6 +8,7 @@ using .Cosmology
 using .Constants
 using LaTeXStrings
 using Printf
+using QuadGK
 
 #co = ΛCDM(Ωb0=0.05, Ωc0=0.45, Neff=0, h=0.7)
 co_H_He_reion  = ΛCDM()
@@ -115,9 +116,10 @@ end
 if true || !isfile("plots/visibility_function.pdf")
     # TODO: inset reionization plot (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
     println("Plotting visibility function")
+
     plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-10, +10), legend_position=:topright)
 
-    ys = [g.(co_H_He_reioff, x) / 1, dg.(co_H_He_reioff, x) / 10, d2g.(co_H_He_reioff, x) / 100,
+    ys = [g.(co_H_reioff, x) / 1, dg.(co_H_reioff, x) / 10, d2g.(co_H_reioff, x) / 100,
           g.(co_H_He_reion,  x) / 1, dg.(co_H_He_reion,  x) / 10, d2g.(co_H_He_reion,  x) / 100]
     cs = [1  2  3  1  2  3]
     as = [0.3  0.3  0.3  1.0  1.0  1.0]
@@ -130,8 +132,10 @@ if true || !isfile("plots/visibility_function.pdf")
     hline!([-20], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
     hline!([-20], color=:black, linestyle=:solid, alpha=0.3, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
 
-    #plot!(x, [], xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.5, 0.3, 0.5, :right)), label=nothing)
-    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.43, 0.3, 0.5, :right)))
+    annotate!([-7.5], [9.0], [text(L"\int_{-20}^0 g(x) dx = %$(round(quadgk(x -> g(co_H_He_reion, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:black)])
+    annotate!([-7.5], [7.7], [text(L"\int_{-20}^0 g(x) dx = %$(round(quadgk(x -> g(co_H_reioff, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:gray)])
+
+    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
 
     savefig("plots/visibility_function.pdf")
 end
