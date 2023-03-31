@@ -634,8 +634,8 @@ with the many, but easy-to-compute quantities
 As a differential equation, the Peebles equation needs an initial value.
 This can be taken as the point $(x, X_e)$ of the Saha equation just after it departs from equilibrium, at $X_e = 0.999$, for example.
 
-We also include a phenomenological reionization model,
-where we ramp up the free electron fraction according to the smoothed step functions
+We also include a phenomenological model for \textbf{reionization}, due to radiation from stars formed at later times again kicking electrons out of neutral atoms.
+In this model, we manually ramp up the free electron fraction according to the smoothed step functions
 \TODO{$y$ or $z$ in last term?}
 \begin{equation}
 	X_e^\text{reion} = \frac{1+f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_1} \right) \right]
@@ -766,11 +766,14 @@ These parameters give the event times reported in \cref{table_times2}.
 At early times, as we expected from the Saha equations \eqref{eq_saha_H_He},
 we see that $X_e$ gradually steps down as the universe cools and the recombinations $\text{He}^{++} \rightarrow \text{He}^+ \rightarrow \text{He}$ and $\text{H}^+ \rightarrow \text{H}$ occur sequentially.
 It flattens out at exactly the values we expect from \eqref{eq_Saha_H_He_Xe} with $\{\XHp, \XHep, \XHepp\}$ equal to $\{1,0,1\}$, $\{1,1,0\}$, $\{1,0,0\}$ and $\{0,0,0\}$.
-With reionization, $X_e$ ramps back up at late times because increasing radiation from formed stars force the electrons out of the neutral atoms \TODO{motivate in theory, not here}.
+We also see how the reionization model brings $X_e$ back up at late times;
+first reionizing $\text{H} \rightarrow \text{H}^+$ and $\text{He} \rightarrow \text{He}^+$ together,
+and later $\text{He}^{+} \rightarrow \text{He}^{++}$.
 %$X_e$ gradually steps down from plateaus where $\{\XHp, \XHep, \XHepp\}$ (almost) changes
 %from $\{1,0,1\}$ to $\{1,1,0\}$ to $\{1,0,0\}$ to $\{0,0,0\}$
 
-Note that without reionization, the Peebles equation causes the free electron density to asymptotically freeze out today at the small values $X_e(0) = \{10^{-3.6}, 10^{-3.7}\}$ with and without Helium.
+Note that without reionization, the Peebles equation causes the free electron fraction to asymptotically freeze out today at the small values $X_e(0) = \{10^{-3.6}, 10^{-3.7}\}$ with and without Helium.
+If we took reionization of even more elements into account, the free electron fraction could freeze out at even (slightly) greater values.
 In contrast, the Saha equation dives straight to $0$ during the final recombination to Hydrogen.
 
 Note that under the hood of this plot, as described in the implementation details,
