@@ -523,22 +523,22 @@ On the other hand, our Hubble parameter is somewhat larger than Planck's and exe
 
 Photons (of the CMB) observed today were emitted at various times in the past.
 In this section, our main goal is to accurately compute the optical depth and visibility function of the universe,
-which play key roles in predicting the today's observed CMB spectrum.
+which play key roles in predicting today's observed CMB spectrum.
 The most important process that affects this is Thomson scattering
 \begin{equation}
 	e^- + \gamma \leftrightarrow e^- + \gamma
 \label{eq_thomson_scattering}
 \end{equation}
 of photons off free electrons as they travel through the universe.
-To quantify the scattering,
-we must therefore study the (re)combination and (re)ionization history of the universe.
+To quantify the scattering, we must quantify the electrons,
+and thus study the (re)combination and (re)ionization history of the universe.
 
 \subsection{Theory}
 
 Light emitted from a source with intensity $I_0$,
 traveling through a medium with \textbf{optical depth} $\tau$ that scatters certain photons,
 is observed at the other end with intensity $I = I_0 e^{-\tau}$.
-As the name suggests, it measures the ``thickness'' of the medium the light travels through:
+As its name suggests, $\tau$ measures the ``thickness'' of the medium the light travels through:
 a transparent medium through which most photons travels freely has $\tau \ll 1$,
 while an opaque medium that scatters most photons has $\tau \gtrsim 1$.
 
@@ -553,13 +553,13 @@ In this case, the optical depth of photons emitted at conformal time $\eta$ and 
 A natural quantity derived from the optical depth is the \textbf{visibility function}%
 \footnote{The normalization and interpretation of the visibility function also holds if it is defined with respect to the derivative of any other time, like $g(\eta) = -\tau'(\eta) e^{-\tau(\eta)}$.}
 \begin{equation}
-	\tilde{g}(x) = -\tau'(x) \, e^{-\tau(x)} = \Big( e^{-\tau(x)} \Big)'.
+	\tilde{g}(x) = \Big( e^{-\tau(x)} \Big)' = -\tau'(x) \, e^{-\tau(x)}.
 \label{eq_visibility_function}
 \end{equation}
 As $\tau=0$ today and $\tau \rightarrow \infty$ at early times,
-it is normalized to $\int_{-\infty}^0 \tilde{g}(x) dx = 1$.
-Moreover, $e^{-\tau(x)} = I/I_0(x)$ measures how many ``input'' photons at $x$ that are ``output'' at $x=0$,
-so its \emph{change} measures how many photons were lost between two times.
+it is normalized to $\int_{-\infty}^0 \tilde{g}(x) dx = e^0 - e^{-\infty}= 1$.
+Moreover, if $e^{-\tau(x)} = I/I_0(x)$ measures how many ``input'' photons at $x$ that are ``output'' at $x=0$,
+then its \emph{change} measures how many photons were lost between two times.
 Accordingly, we interpret $\tilde{g}(x) dx$ as \emph{the probability that a photon observed today was last scattered between $x \pm dx/2$}.
 
 We already know how all the quantities in the optical depth \eqref{eq_optical_depth} evolves, except the free electron density $n_e$.
@@ -578,7 +578,7 @@ and photons ionizing H and He $(\leftarrow$):
 \label{eq_recombinations}%
 \end{subequations}%
 Before recombination, when these processes are in equilibrium and take place in an assumed charge neutral universe,
-this gives rise to the three \textbf{Saha equations}
+they give rise to the three \textbf{Saha equations}
 \newcommand{\XHp}{X_{\text{H}^+}}
 \newcommand{\XHep}{X_{\text{He}^+}}
 \newcommand{\XHepp}{X_{\text{He}^{++}}}
@@ -587,19 +587,19 @@ this gives rise to the three \textbf{Saha equations}
     \frac{\XHp}{1-\XHp} &= \phantom{1} \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right) = R_1, \\
     \frac{\XHep}{1 - \XHep - \XHepp} &= 2 \, \frac{\lambda_e^{-3}}{n_e} \exp \left(-\frac{E^\text{ion}_\text{He}}{k_B T_b} \right) = R_2, \\
     \frac{\XHepp}{\XHep} &= 4 \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_{\text{He}^+}}{k_B T_b}\right) = R_3,
-\end{align}
-\label{eq_saha_H_He}
-\end{subequations}
+\end{align}%
+\label{eq_saha_H_He}%
+\end{subequations}%
 for the ionization fractions $\XHp = n_{\text{H}^+} / n_\text{H}$, $\XHep = n_{\text{He}^+} / n_\text{He}$ and $\XHepp = n_{\text{He}^{++}} / n_\text{He}$,
 where $n_\text{He} = Y_p \rho_b(t) / 4 m_\text{H}$ is the number density of helium and $\lambda_e = h / \sqrt{2 \pi m_e k_B T_b}$ is the de Broglie wavelength of electrons with baryon temperature $T_b$.
-The free electron fraction then follows as
+Assuming neutrality, the free electron fraction then follows as
 \begin{equation}
     X_e = \frac{n_{\text{H}^+} + n_{\text{He}^+} + 2 n_{\text{He}^{++}}}{n_H} = \XHp +  \Big( \XHep + 2 \XHepp \Big) f_\text{He}, \quad \text{where} \quad f_\text{He} = \frac{n_\text{He}}{n_\text{H}} = \frac{Y_p}{4(1-Y_p)}.
 \label{eq_Saha_H_He_Xe}
 \end{equation}
-In the early hot universe, the right sides $R_i \gg 1$ are very large, so $\XHp \approx 1$, $\XHep \approx 0$ and $\XHepp \approx 1$.
+In the early hot universe, the right sides $R_i \gg 1$ are very large, so $\{\XHp,\XHep,\XHepp\} \approx \{1,0,1\}$.
 As the universe cools down, $\{R_3, R_2, R_1\}$ fall off one-by-one, in that order, due to differing ionization energies in the exponentials,
-and $\text{He}^{++}$, $\text{He}^+$ and $\text{H}^+$ recombine one-by-one.
+and $\text{He}^{++}$, $\text{He}^+$ and $\text{H}^+$ recombine with $e^-$ one-by-one.
 %as the thermal energy reaches the decreasing ionization energies $k_B T_b \approx \{E^\text{ion}_\text{H}, E^\text{ion}_{\text{He}^+}, E^\text{ion}_{\text{He}^{++}}\}$.
 
 Without helium ($Y_p=0$) or when it has fully recombined ($\XHp \gg \XHep \gg \XHepp$),
@@ -622,7 +622,7 @@ with the many, but easy-to-compute quantities
 \begin{align*}
 	C_r &= \frac{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha}{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha + \beta_2}, &
 	%\alpha &= \text{fine structure constant}, \\
-	\alpha_2 &= \frac{64 \pi}{\sqrt{27 \pi}} \left(\frac{\alpha \hbar}{m_e \sqrt{c}}\right)^2 \sqrt{\frac{E^\text{ion}_\text{H}}{k_B T_b}} \phi_2, \\
+	\alpha_2 &= \frac{64 \pi}{\sqrt{27 \pi}} \frac{\alpha^2 \hbar^2}{m_e^2 c} \sqrt{\frac{E^\text{ion}_\text{H}}{k_B T_b}} \phi_2, \\
 	\beta &= \frac{\alpha_2}{\lambda_e^3} \exp \left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right), &
 	\beta_2 &= \beta \exp \left(\frac{3 E^\text{ion}_\text{H}}{4 k_B T_b}\right), \\
 	\Lambda_{2s \rightarrow 1s} &= 8.227 / \mathrm{s}, &
@@ -639,18 +639,18 @@ In this model, we manually ramp up the free electron fraction according to the s
 \TODO{$y$ or $z$ in last term?}
 \begin{equation}
 	X_e^\text{reion} = \frac{1+f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_1} \right) \right]
-                     + \frac{f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_2} \right) \right]
+                     + \frac{f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_2-y}{\Delta y^\text{reion}_2} \right) \right]
 \label{eq_reionization}
 \end{equation}
-where $y = (1+z)^{3/2}$, $\Delta y = |y'(z)| \Delta z$ and we have the four reionization parameters \ref{eq_planck2018}.
+where $y = (1+z)^{3/2}$, $\Delta y = |y'(z)| \Delta z$ and we have the four reionization parameters \eqref{eq_planck2018}.
 Comparing with equation \eqref{eq_Saha_H_He_Xe}, we see this corresponds to reionizing $\text{H} \rightarrow \text{H}^+$ and $\text{He} \rightarrow \text{He}^+$ simultaneously \TODO{what motivates doing only these together?} first,
 and later $\text{He}^{+} \rightarrow \text{He}^{++}$ separately.
 
 Finally, then, the full free electron fraction is found by stitching together the results of the Saha and Peebles equation and adding reionization:
 \begin{equation}
 	X_e(x) = \begin{cases}
-	             X_e^\text{reion} + X_e^\text{Saha}(x) & \text{for $X_e^\text{Saha} > 0.999$}, \\
-	             X_e^\text{reion} + X_e^\text{Peebles}(x) & \text{for $X_e^\text{Saha} < 0.999$}. \\
+	             X_e^\text{reion}(x) + X_e^\text{Saha}(x) & \text{for $X_e^\text{Saha} > 0.999$}, \\
+	             X_e^\text{reion}(x) + X_e^\text{Peebles}(x) & \text{for $X_e^\text{Saha} < 0.999$}. \\
 	         \end{cases}
 \label{eq_free_electron_fraction}
 \end{equation}
@@ -670,10 +670,10 @@ After recombination and decoupling, however,
 the baryon temperature generally evolves according to a differential equation that is coupled to the Peebles equation.
 However, for our purposes of computing $X_e$,
 it turns out that the error in assuming the common temperature \eqref{eq_baryon_temperature} is only of order $10^{-6}$ \cite[page 16]{keskitaloEffectMatterBaryon2005},
-so we approximate $T_b \approx T_\gamma = T_{\gamma 0}$ \emph{all the time}.
+so we approximate $T_b \approx T_\gamma = T_{\gamma 0} / a$ \emph{all the time}.
 
 Throughout the recombination history, we will refer to
-the \textbf{time of decoupling}, or the \textbf{last scattering surface}, as the time when the visibility function $g$ peaks,
+\textbf{decoupling} as the time when the visibility function $g$ peaks,
 and we say that the electrons and ions have \textbf{recombined} when the free electron fraction drops below $X_e = 0.1$.
 
 The last quantity we introduce is the sound horizon
@@ -697,7 +697,7 @@ as the quadratic equation $X_e^2 + R X_e - R = 0$.
 Its positive solution is $X_e = (-R + \sqrt{R^2+4R})/2$,
 but since $R$ can skyrocket and overflow,
 we take the second-order Taylor expansion $X_e = (R/2) (1 - \sqrt{1 + 4/R}) \simeq 1 - 1/R$
-for $R > 10^{10}$ that can only underflow, avoiding numerical issues.
+when $R > 10^{10}$ that can only underflow, avoiding numerical issues.
 
 \item
 We solve the H+He Saha equation \eqref{eq_saha_H_He} with fixed-point iteration.
@@ -710,21 +710,15 @@ We choose the initial guess $X_e^{(0)}$ as the fast H-only solution from above,
 resulting in fewer iterations compared to using a constant initial guess, like $X_e^{(0)} = 1$.
 Note that while few iterations are needed around $X_e \approx 1$,
 the convergence becomes extremely slow as $X_e \rightarrow 0$.
-Fortunately, in this regime, almost all Helium has already combined,
-so we have $\XHepp \ll \XHep \ll \XHp$ and simply take the H-only solution when it is $X_e < 0.5$.
+The Saha equation isn't valid in this regime anyway,
+but we can still solve it accurately because most helium has already combined,
+so $\XHepp \ll \XHep \ll \XHp$, and we simply the H-only solution when it is $X_e < 0.5$.
 
 \item
 We solve the Peebles equation with an ODE integrator and spline the result, like in \cref{sec_background_cosmology}.
-As explained below equation \eqref{eq_free_electron_fraction},
-we specify the initial values to the integrator
-as $X_e = 0.999$ and the corresponding time $x$ found by a numerical root finder.
-Note that the exponential in $\beta_2$ is unsafe and can overflow,
-but substituting $\beta$ yields a new safe exponential that can only underflow.
-
-\item
-To compute $X_e(x)$ at any time $x$ with reionization,
-we choose the Saha or Peebles equation from the branching \eqref{eq_free_electron_fraction},
-and then add the reionization contribution \eqref{eq_reionization}.
+As its initial condition, we give the time $x$ when $X_e^\text{Saha}(x) = 0.999$, found with a numerical root finder.
+Note that the exponential in $\beta_2$ can overflow,
+but substituting $\beta$ in $\beta_2$ yields a new exponential that can only underflow and is safe to compute.
 
 \item
 To compute the optical depth \eqref{eq_optical_depth} and the sound horizon \eqref{eq_sound_horizon},
@@ -744,20 +738,16 @@ Here we examine our results for the Planck 2018 cosmology \eqref{eq_planck2018},
 with and without the reionization model \eqref{eq_reionization} and helium.
 These parameters give the event times reported in \cref{table_times2}.
 
-\begin{figure}
+\begin{figure}[ht!]
 	\centering
 	\includegraphics[scale=0.7]{../plots/free_electron_fraction_log.pdf}
 	\includegraphics[scale=0.7]{../plots/free_electron_fraction_linear.pdf}
 	\caption{%
 		Evolution of the free electron fraction \eqref{eq_free_electron_fraction},
-		from the Saha and Peebles equations before and after the joint $X_e = 0.999$,
-		with and without Helium and reionization, compared to the result from the Saha equation alone.
-		Unlike the logarithmic plot, the linear plot is annotated with the majority atom/ion at each recombination stage.
-		From left to right, the vertical lines mark
-		the switch from the Saha to the Peebles equation (when $X_e = 0.999$),
-		decoupling ($\argmax{\tilde{g}(x)}$),
-		the time of recombination (when $X_e = 0.1$),
-		the first ($z^\text{reion}_1$) and second ($z^\text{reion}_2$) reionization.
+		from the Saha and Peebles equations or Saha equation alone,
+		with and without helium and reionization.
+		The linear plot is annotated with the majority atom/ion at each recombination stage.
+		The five vertical lines mark the times in \cref{table_times2}.
 	}
 	\label{fig_free_electron_fraction}
 \end{figure}
@@ -765,50 +755,58 @@ These parameters give the event times reported in \cref{table_times2}.
 \Cref{fig_free_electron_fraction} shows how the free electron fraction \eqref{eq_free_electron_fraction} evolves through recombination and reionization.
 At early times, as we expected from the Saha equations \eqref{eq_saha_H_He},
 we see that $X_e$ gradually steps down as the universe cools and the recombinations $\text{He}^{++} \rightarrow \text{He}^+ \rightarrow \text{He}$ and $\text{H}^+ \rightarrow \text{H}$ occur sequentially.
-It flattens out at exactly the values we expect from \eqref{eq_Saha_H_He_Xe} with $\{\XHp, \XHep, \XHepp\}$ equal to $\{1,0,1\}$, $\{1,1,0\}$, $\{1,0,0\}$ and $\{0,0,0\}$.
+It flattens out at exactly the values we expect from equation \eqref{eq_Saha_H_He_Xe} with $\{\XHp, \XHep, \XHepp\}$ equal to $\{1,0,1\}$, $\{1,1,0\}$, $\{1,0,0\}$ and $\{0,0,0\}$.
 We also see how the reionization model brings $X_e$ back up at late times;
 first reionizing $\text{H} \rightarrow \text{H}^+$ and $\text{He} \rightarrow \text{He}^+$ together,
 and later $\text{He}^{+} \rightarrow \text{He}^{++}$.
 %$X_e$ gradually steps down from plateaus where $\{\XHp, \XHep, \XHepp\}$ (almost) changes
 %from $\{1,0,1\}$ to $\{1,1,0\}$ to $\{1,0,0\}$ to $\{0,0,0\}$
 
-Note that without reionization, the Peebles equation causes the free electron fraction to asymptotically freeze out today at the small values $X_e(0) = \{10^{-3.6}, 10^{-3.7}\}$ with and without Helium.
+Note that without reionization, the Peebles equation causes the free electron fraction to asymptotically freeze out today at the small values $X_e(0) = \{10^{-3.6}, 10^{-3.7}\}$ with and without helium.
 If we took reionization of even more elements into account, the free electron fraction could freeze out at even (slightly) greater values.
-In contrast, the Saha equation dives straight to $0$ during the final recombination to Hydrogen.
+In contrast, the Saha equation dives straight to $0$ during the final recombination to hydrogen.
 
 Note that under the hood of this plot, as described in the implementation details,
 the code switches from the Saha to the Peebles equation when $X_e = 0.999$,
-and the Saha-only prediction switches from the full H+He system \eqref{eq_saha_H_He} to the H-only system \eqref{eq_saha_H} when $X_e < 0.5$.
+and the Saha-only prediction switches from the full H+He system \eqref{eq_saha_H_He} to the H-only equation \eqref{eq_saha_H} when $X_e = 0.5$.
 The fact that the functions appear continuous and smooth at all these joints shows that the numerical implementation is robust.
 It also agrees well with \cite[\textsc{fig. 1}]{callinHowCalculateCMB2006}.
 
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/optical_depth.pdf}
-	\caption{Evolution of the optical depth \eqref{eq_optical_depth} and its derivatives through recombination and reionization history, with or without both Helium and reionization. The vertical lines mark the same times as in \cref{fig_free_electron_fraction}.}
+	\caption{%
+		Evolution of the optical depth \eqref{eq_optical_depth} and its derivatives through recombination and reionization history, with or without both helium and reionization.
+		The five vertical lines mark the times in \cref{table_times2}.
+	}
 	\label{fig_optical_depth}
 \end{figure}
 
 \Cref{fig_optical_depth} shows the evolution of the optical depth \eqref{eq_optical_depth}.
 As it measures the ``thickness'' of the medium that light emitted at various times $x$ has traveled through before reaching us today,
-the plot is most sensible to interpret backwards in time (from right to left), and $\tau$ necessarily monotonically increases as we go back in time.
-Without reionization, we see that the optical depth steadily increases to the still small value $\tau \approx 10^{-1}$ at $x \approx -7$, just after the last recombination.
-With reionization, the same value is reached very quickly due to reionization, after which it flattens out.
-For $x \approx -7$, the optical depth quickly ramps up to $\tau \approx 10^{2}$, as the electrons become free.
+the plot is most sensible to interpret backwards in time (from right to left), and $\tau$ necessarily increases monotonically that way.
+Without reionization, we see that the optical depth steadily increases to the still small value $\tau \approx 10^{-1}$ at $x \approx -7$, just after recombination.
+With reionization, the same value is reached much quicker due to the ionized electrons, after which it flattens out.
+For $x \approx -7$, the optical depth quickly ramps up to $\tau \approx 10^{2}$, as the electrons become free,
+after which it continues to rise in the opaque early universe.
 
-The three additional bumps in $\tau''(x)$ at $x \approx \{-9, -8, -1.5\}$ are caused by the smaller Helium recombinations and reionizations.
+The three additional bumps in $\tau''(x)$ at $x \approx \{-9, -8, -1.5\}$ are caused by the smaller helium recombinations and reionizations.
 Also note that $\tau'$ has an inflection point during the first reionization,
-so $\tau''(x)$ is negative here and falls off our logarithmic plot.
+so $\tau''(x)$ is negative there and falls off the logarithmic plot.
 
 The numerical implementation of $\tau(x)$ appears safe, as it uses the same ODE integrator that has been thoroughly tested with many earlier plots,
 and the function appears well-resolved and smooth even during the recombinations and reionizations.
 It also agrees well with \cite[\textsc{fig. 2}]{callinHowCalculateCMB2006}.
 
-\begin{figure}
+\begin{figure}[t]
 	\centering
 	\includegraphics[scale=0.7]{../plots/visibility_function_linear.pdf}
 	\includegraphics[scale=0.7]{../plots/visibility_function_log.pdf}
-	\caption{The visibility function \eqref{eq_visibility_function} and its (scaled) derivatives with or without both Helium and reionization on a linear and logarithmic scale. Its numerical integrals are annotated. The vertical lines mark the same times as in \cref{fig_free_electron_fraction}.}
+	\caption{
+		The visibility function \eqref{eq_visibility_function} and its (scaled) derivatives with or without both helium and reionization on a linear and logarithmic scale.
+		Its numerical integrals are annotated.
+		The five vertical lines mark the times in \cref{table_times2}.
+	}
 	\label{fig_visibility_function}
 \end{figure}
 
@@ -821,9 +819,9 @@ This motivates naming the distance they have traveled the ``last scattering surf
 Reionization gives rise to new free electrons, more scattering, and thus a more recent, but much smaller ``last scattering surface''.
 The electrons are much more dilute at this point, so the visibility reaches only around $1/50$ of its peak value during decoupling.
 
-As it is calculated analytically from trusted the optical depth, we have good reason to trust the visibility function's numerical implementation, too.
+As it is calculated analytically from the trusted optical depth, we have good reason to trust the visibility function's numerical implementation, too.
 It behaves smoothly during recombination and reionization, again demonstrating that the integration tolerance for the optical depth is sufficient.
-The plot also shows that it integrates to $1$ with only tiny numerical errors, as we showed it should.
+The plot also shows that it integrates numerically to $1$ with only tiny numerical errors, as we showed it should.
 It also agrees well with \cite[\textsc{fig. 3}]{callinHowCalculateCMB2006}.
 
 Finally, we calculate the sound horizon \eqref{eq_sound_horizon} at decoupling,
@@ -832,7 +830,7 @@ Finally, we calculate the sound horizon \eqref{eq_sound_horizon} at decoupling,
 \end{equation}
 For example, this agrees with the famous acoustic peak around $s \approx 105\,\mathrm{Mpc}/h$ in \cite[\textsc{Fig. 2}]{eisensteinDetectionBaryonAcoustic2005}.
 
-\begin{table}
+\begin{table}[b]
 \centering
 \caption{%
 	The time of occurence of important events in the recombination and reionization history of a universe with the Planck cosmology \eqref{eq_planck2018},
