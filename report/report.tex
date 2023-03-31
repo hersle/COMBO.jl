@@ -740,11 +740,9 @@ but use analytical expressions for other quantities.
 
 \subsection{Results}
 
-\TODO{report sound horizon. plot?}
-
 Here we examine our results for the Planck 2018 cosmology \eqref{eq_planck2018},
-with the reionization model turned on and off,
-and with Hydrogen only or Hydrogen and Helium.
+with and without the reionization model \eqref{eq_reionization} and helium.
+These parameters give the event times reported in \cref{table_times2}.
 
 \begin{figure}
 	\centering
@@ -765,18 +763,21 @@ and with Hydrogen only or Hydrogen and Helium.
 \end{figure}
 
 \Cref{fig_free_electron_fraction} shows how the free electron fraction \eqref{eq_free_electron_fraction} evolves through recombination and reionization.
-As expected from the Saha equations \eqref{eq_saha_H_He},
-$X_e$ gradually steps down, plateau by plateau, as the recombinations $\text{He}^{++} \rightarrow \text{He}^+ \rightarrow \text{He}$ and $\text{H}^+ \rightarrow \text{H}$ occur sequentially,
-as the thermal energy $k_B T_b$ decreases and reaches the different ionization energies at different times.
-With reionization, $X_e$ ramps back up at late times because increasing radiation from formed stars force the electrons out of the neutral atoms.
+At early times, as we expected from the Saha equations \eqref{eq_saha_H_He},
+we see that $X_e$ gradually steps down as the universe cools and the recombinations $\text{He}^{++} \rightarrow \text{He}^+ \rightarrow \text{He}$ and $\text{H}^+ \rightarrow \text{H}$ occur sequentially.
+It flattens out at exactly the values we expect from \eqref{eq_Saha_H_He_Xe} with $\{\XHp, \XHep, \XHepp\}$ equal to $\{1,0,1\}$, $\{1,1,0\}$, $\{1,0,0\}$ and $\{0,0,0\}$.
+With reionization, $X_e$ ramps back up at late times because increasing radiation from formed stars force the electrons out of the neutral atoms \TODO{motivate in theory, not here}.
 %$X_e$ gradually steps down from plateaus where $\{\XHp, \XHep, \XHepp\}$ (almost) changes
 %from $\{1,0,1\}$ to $\{1,1,0\}$ to $\{1,0,0\}$ to $\{0,0,0\}$
 
 Note that without reionization, the Peebles equation causes the free electron density to asymptotically freeze out today at the small values $X_e(0) = \{10^{-3.6}, 10^{-3.7}\}$ with and without Helium.
 In contrast, the Saha equation dives straight to $0$ during the final recombination to Hydrogen.
 
-From the plot, we read off the reionization time reported in \cref{table_times2}.
-\TODO{define in theory}
+Note that under the hood of this plot, as described in the implementation details,
+the code switches from the Saha to the Peebles equation when $X_e = 0.999$,
+and the Saha-only prediction switches from the full H+He system \eqref{eq_saha_H_He} to the H-only system \eqref{eq_saha_H} when $X_e < 0.5$.
+The fact that the functions appear continuous and smooth at all these joints shows that the numerical implementation is robust.
+It also agrees well with \cite[\textsc{fig. 1}]{callinHowCalculateCMB2006}.
 
 \begin{figure}
 	\centering
@@ -785,15 +786,20 @@ From the plot, we read off the reionization time reported in \cref{table_times2}
 	\label{fig_optical_depth}
 \end{figure}
 
-\Cref{fig_optical_depth} shows the corresponding evolution of the optical depth \eqref{eq_optical_depth}.
-The optical depth measures the total ``thickness'' of what the most distant light (from the horizon \TODO{?}) reaching us today has traveled through,
-so the plot should be interpreted backwards in time (from right to left), and $\tau$ necessarily monotonically increases as we go back in time.
-Without reionization, the optical depth steadily increases to the still small value $\tau \approx 10^{-1}$ at $x \approx -7$, just after the last recombination.
-With reionization, this value is instead reached very quickly due to reionization, after which it flats out.
-For $x \approx -7$, reionization no longer matters, and the optical depth quickly ramps up to $\tau \approx 10^{2}$, as the electrons become free.
-The three additional bumps in $\tau''(x)$ at $x \approx \{-9, -8, -1.5\}$ are caused by the smaller Helium recombinations and reionizations.
+\Cref{fig_optical_depth} shows the evolution of the optical depth \eqref{eq_optical_depth}.
+As it measures the ``thickness'' of the medium that light emitted at various times $x$ has traveled through before reaching us today,
+the plot is most sensible to interpret backwards in time (from right to left), and $\tau$ necessarily monotonically increases as we go back in time.
+Without reionization, we see that the optical depth steadily increases to the still small value $\tau \approx 10^{-1}$ at $x \approx -7$, just after the last recombination.
+With reionization, the same value is reached very quickly due to reionization, after which it flattens out.
+For $x \approx -7$, the optical depth quickly ramps up to $\tau \approx 10^{2}$, as the electrons become free.
 
-We obtain the last scattering surface, or time of decoupling, reported in \cref{table_times2}. \TODO{define in theory}
+The three additional bumps in $\tau''(x)$ at $x \approx \{-9, -8, -1.5\}$ are caused by the smaller Helium recombinations and reionizations.
+Also note that $\tau'$ has an inflection point during the first reionization,
+so $\tau''(x)$ is negative here and falls off our logarithmic plot.
+
+The numerical implementation of $\tau(x)$ appears safe, as it uses the same ODE integrator that has been thoroughly tested with many earlier plots,
+and the function appears well-resolved and smooth even during the recombinations and reionizations.
+It also agrees well with \cite[\textsc{fig. 2}]{callinHowCalculateCMB2006}.
 
 \begin{figure}
 	\centering
@@ -802,19 +808,22 @@ We obtain the last scattering surface, or time of decoupling, reported in \cref{
 	\label{fig_visibility_function}
 \end{figure}
 
+\TODO{log plot, can talk more then}
 \Cref{fig_visibility_function} shows the visibility function \eqref{eq_visibility_function},
-which we interpreted as the probability density of the time that a photon observed today was last scattered.
-Indeed, the plot shows that it does indeed integrate to $1$.
-
+which we interpreted as the probability density for the time that a photon observed today was last scattered.
 There is low visibility before recombination, as photons back then were continuously scattered in the coupled photon-baryon plasma.
-As recombination begins, the visibility increases to a maximum, as the decrease in free electrons clears the path for the first ``wave'' of photons hitting us today.
-This is the ``last scattering surface'' of most photons that reach us today.
-As recombination ends, the visibility function drops to $0$ again, as there are almost no more free electrons to scatter off.
+During recombination, the visibility spikes, as the decrease in free electrons clears the way for the first and largest ``wave'' of photons escaping to today.
+This motivates naming the distance they have traveled the ``last scattering surface''.
 
-Only with reionization does the visibility increase again at late times, due to the new rise in free electrons.
-However, the electrons are much more dilute now, so the visibility is only around $1/50$ of its peak value during recombination.
+Reionization gives rise to new free electrons, and thus a more recent, but much smaller last scattering surface.
+The electrons are much more dilute now, so the visibility reaches only around $1/50$ of its peak value during decoupling.
+
+As it is calculated directly from the optical depth, the visibility function's numerical implementation also seems sound.
+It behaves smoothly during recombination and reionization, again demonstrating that the integration tolerance for the optical depth is sufficient.
+It also agrees well with \cite[\textsc{fig. 3}]{callinHowCalculateCMB2006}.
 
 Finally, we report the sound horizon \eqref{eq_sound_horizon} at decoupling: $s(x_\text{LSS}) = 0.14\,\mathrm{Gpc}$.
+\TODO{plot?}
 
 \begin{table}
 \centering
@@ -827,10 +836,11 @@ Finally, we report the sound horizon \eqref{eq_sound_horizon} at decoupling: $s(
 	\toprule
 	Event                                                               & $x$     & $a$       & $z$    & $\eta$    & $t$ \\
 	\midrule
-	Last scattering surface / decoupling ($\tau = 1$)                   & $-6.99$ & $0.0009$  & $1084$ & $0.9\,\mathrm{Gyr}$ & $0.38\,\mathrm{Myr}$ \\
-	Recombination ($X_e = 0.1$)                                 & $-6.97$ & $0.0009$    & $1063$ & $0.9\,\mathrm{Gyr}$ & $0.39\,\mathrm{Myr}$   \\
-	Hydrogen reionization ($z = z^\text{reion}_\text{H}$) & $-2.20$ & $0.1111$    & $8$ & $16.4\,\mathrm{Gyr}$ & $0.637\,\mathrm{Gyr}$  \\
-	Helium reionization ($z = z^\text{reion}_\text{H}$)   & $-1.50$     & $0.2222$       & $3.50$    & $23.5\,\mathrm{Gyr}$ & $1.800\,\mathrm{Gyr}$  \\
+	Switch from Saha to Peebles ($X_e^\text{Saha} = 0.999$) & $-7.43$ & $0.0006$  & $1685$ & $0.7\,\mathrm{Gyr}$ & $0.18\,\mathrm{Myr}$ \\
+	Decoupling ($\argmax(\tilde{g}(x)$)                     & $-6.99$ & $0.0009$  & $1084$ & $0.9\,\mathrm{Gyr}$ & $0.38\,\mathrm{Myr}$ \\
+	Recombination ($X_e = 0.1$)                             & $-6.97$ & $0.0009$  & $1063$ & $0.9\,\mathrm{Gyr}$ & $0.39\,\mathrm{Myr}$ \\
+	Hydrogen reionization ($z = z^\text{reion}_\text{H}$)   & $-2.20$ & $0.1111$  & $8$    & $16.4\,\mathrm{Gyr}$ & $0.637\,\mathrm{Gyr}$ \\
+	Helium reionization ($z = z^\text{reion}_\text{H}$)     & $-1.50$ & $0.2222$  & $3.50$ & $23.5\,\mathrm{Gyr}$ & $1.800\,\mathrm{Gyr}$ \\
 	\bottomrule
 \end{tabular}
 \end{table}
