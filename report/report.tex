@@ -803,23 +803,24 @@ It also agrees well with \cite[\textsc{fig. 2}]{callinHowCalculateCMB2006}.
 
 \begin{figure}
 	\centering
-	\includegraphics[scale=0.7]{../plots/visibility_function.pdf}
-	\caption{The visibility function \eqref{eq_visibility_function} and its (scaled) derivatives with or without both Helium and reionization. The main plot best shows its variation during recombination, while the embedded plot magnifies its behavior during reionization. Their numerical integrals are annotated. The vertical lines mark the same times as in \cref{fig_free_electron_fraction}.}
+	\includegraphics[scale=0.7]{../plots/visibility_function_linear.pdf}
+	\includegraphics[scale=0.7]{../plots/visibility_function_log.pdf}
+	\caption{The visibility function \eqref{eq_visibility_function} and its (scaled) derivatives with or without both Helium and reionization on a linear and logarithmic scale. Its numerical integrals are annotated. The vertical lines mark the same times as in \cref{fig_free_electron_fraction}.}
 	\label{fig_visibility_function}
 \end{figure}
 
-\TODO{log plot, can talk more then}
 \Cref{fig_visibility_function} shows the visibility function \eqref{eq_visibility_function},
 which we interpreted as the probability density for the time that a photon observed today was last scattered.
-There is low visibility before recombination, as photons back then were continuously scattered in the coupled photon-baryon plasma.
-During recombination, the visibility spikes, as the decrease in free electrons clears the way for the first and largest ``wave'' of photons escaping to today.
+There is very low visibility before recombination, as photons back then were continuously scattered in the coupled photon-baryon plasma.
+During recombination and decoupling, the visibility spikes, as the decrease in free electrons clears the way for the first and largest ``wave'' of photons escaping to today.
 This motivates naming the distance they have traveled the ``last scattering surface''.
 
-Reionization gives rise to new free electrons, and thus a more recent, but much smaller last scattering surface.
-The electrons are much more dilute now, so the visibility reaches only around $1/50$ of its peak value during decoupling.
+Reionization gives rise to new free electrons, more scattering, and thus a more recent, but much smaller ``last scattering surface''.
+The electrons are much more dilute at this point, so the visibility reaches only around $1/50$ of its peak value during decoupling.
 
-As it is calculated directly from the optical depth, the visibility function's numerical implementation also seems sound.
+As it is calculated analytically from trusted the optical depth, we have good reason to trust the visibility function's numerical implementation, too.
 It behaves smoothly during recombination and reionization, again demonstrating that the integration tolerance for the optical depth is sufficient.
+The plot also shows that it integrates to $1$ with only tiny numerical errors, as we showed it should.
 It also agrees well with \cite[\textsc{fig. 3}]{callinHowCalculateCMB2006}.
 
 Finally, we report the sound horizon \eqref{eq_sound_horizon} at decoupling: $s(x_\text{LSS}) = 0.14\,\mathrm{Gpc}$.

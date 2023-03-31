@@ -121,9 +121,9 @@ if true || !isfile("plots/optical_depth.pdf")
     savefig("plots/optical_depth.pdf")
 end
 
-if true || !isfile("plots/visibility_function.pdf")
+if true || !isfile("plots/visibility_function_linear.pdf")
     # TODO: inset reionization plot (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
-    println("Plotting visibility function")
+    println("Plotting visibility function (linear)")
 
     plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-10, +10), legend_position=:topright)
 
@@ -149,7 +149,22 @@ if true || !isfile("plots/visibility_function.pdf")
     # Zoom-in plot
     plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
 
-    savefig("plots/visibility_function.pdf")
+    savefig("plots/visibility_function_linear.pdf")
+end
+
+if true || !isfile("plots/visibility_function_log.pdf")
+    # TODO: inset reionization plot (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
+    println("Plotting visibility function (logarithmic)")
+
+    plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(x[1], x[end]), ylims=(-15, +5), legend_position=:topright)
+
+    plot!(x, log10.(g.(co_H_He_reion, x)), color=1, alpha=1.0, label=nothing)
+    plot!(x, log10.(g.(co_H_reioff, x)), color=1, alpha=0.3, label=nothing)
+
+    # Mark event times
+    vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.25, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
+
+    savefig("plots/visibility_function_log.pdf")
 end
 
 end 
