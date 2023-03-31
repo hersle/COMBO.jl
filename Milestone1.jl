@@ -23,10 +23,10 @@ xacc = acceleration_onset(co)
 x1, x2, x3, x4 = minimum(x), xrm, xmΛ, maximum(x)
 x0 = 0.0
 
-@printf("Ωr = Ωm:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xrm,  a(xrm),  z(xrm),  η(co, xrm)  / Gyr, t(co, xrm)  / Gyr)
-@printf("d²a/dt² = 0: x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xacc, a(xacc), z(xacc), η(co, xacc) / Gyr, t(co, xacc) / Gyr)
-@printf("Ωm = ΩΛ:     x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", xmΛ,  a(xmΛ),  z(xmΛ),  η(co, xmΛ)  / Gyr, t(co, xmΛ)  / Gyr)
-@printf("Today:       x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr\n", x0,   a(x0),   z(x0),   η(co, x0)   / Gyr, t(co, x0)   / Gyr)
+println("Ωr = Ωm:     ", format_time_variations(co, xrm))
+println("d²a/dt² = 0: ", format_time_variations(co, xacc))
+println("Ωm = ΩΛ:     ", format_time_variations(co, xmΛ))
+println("Today:       ", format_time_variations(co, x0))
 
 
 if !isdir("plots")
