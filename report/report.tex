@@ -766,7 +766,7 @@ Note that without reionization, the Peebles equation causes the free electron fr
 If we took reionization of even more elements into account, the free electron fraction could freeze out at even (slightly) greater values.
 In contrast, the Saha equation dives straight to $0$ during the final recombination to hydrogen.
 
-Note that under the hood of this plot, as described in the implementation details,
+Also note that under the hood of this plot, as described in the implementation details,
 the code switches from the Saha to the Peebles equation when $X_e = 0.999$,
 and the Saha-only prediction switches from the full H+He system \eqref{eq_saha_H_He} to the H-only equation \eqref{eq_saha_H} when $X_e = 0.5$.
 The fact that the functions appear continuous and smooth at all these joints shows that the numerical implementation is robust.
@@ -829,6 +829,8 @@ Finally, we calculate the sound horizon \eqref{eq_sound_horizon} at decoupling,
 	s(x=-6.99) = 0.14\,\mathrm{Gpc}.
 \end{equation}
 For example, this agrees with the famous acoustic peak around $s \approx 105\,\mathrm{Mpc}/h$ in \cite[\textsc{Fig. 2}]{eisensteinDetectionBaryonAcoustic2005}.
+
+\TODO{compare decoupling/recombination times with those reported from always using the Saha equation}
 
 \begin{table}[b]
 \centering
