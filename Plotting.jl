@@ -20,6 +20,7 @@ default(
     legend_font_halign = :left,
     fontfamily = "Computer Modern",
     framestyle = :box,
+    xticks = -20:1:+20,
 )
 
 # a hack to "rasterize" a scatter plot

@@ -10,7 +10,6 @@ using LaTeXStrings
 using Printf
 using QuadGK
 
-#co = ΛCDM(Ωb0=0.05, Ωc0=0.45, Neff=0, h=0.7)
 co_H_He_reion  = ΛCDM()
 co_H_He_reioff = ΛCDM(z_reion_H=NaN)
 co_H_reion     = ΛCDM(Yp=0)
@@ -19,13 +18,18 @@ co             = co_H_He_reion # default
 x = range(-10, 0, length=8000)
 
 # TODO: gather into one common function?
-println("Saha -> Peebles switch (Xe = 0.999): ", format_time_variations(co, time_switch_Peebles(co)))
-println("Last scattering surface (τ = 1):     ", format_time_variations(co, time_last_scattering_surface(co)))
-println("Recombination (Xe = 0.1):            ", format_time_variations(co, time_recombination(co)))
-println("Reionization of Hydrogen (z_reion_H):", format_time_variations(co, time_reionization_H(co)))
-println("Reionization of Helium (z_reion_He): ", format_time_variations(co, time_reionization_He(co)))
-println("Sound horizon at decoupling:         ", sound_horizon(co, time_last_scattering_surface(co)) / Gpc, " Gpc")
-println("Today's free electron fraction:      ", Xe(co, 0))
+xswi = time_switch_Peebles(co)
+xdec = time_decoupling(co) # TODO: compute from dg = 0
+xrec = time_recombination(co)
+xre1 = time_reionization_H(co)
+xre2 = time_reionization_He(co)
+println("Saha -> Peebles (Xe = 0.999):  ", format_time_variations(co, xswi))
+println("Decoupling (max(g)):           ", format_time_variations(co, xdec))
+println("Recombination (Xe = 0.1):      ", format_time_variations(co, xrec))
+println("H  reionization (z_reion_H):   ", format_time_variations(co, xre1))
+println("He reionization (z_reion_He):  ", format_time_variations(co, xre2))
+println("Sound horizon at decoupling:   ", sound_horizon(co, xdec) / Gpc, " Gpc")
+println("Free electron fraction: today: ", Xe(co, 0))
 
 if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
@@ -45,13 +49,16 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     hline!([-10], color=2,      linestyle=:solid, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$)}")
 
     # Mark and annotate Saha -> Peebles transition point
-    scatter!( [time_switch_Peebles(co)],      [log10(0.999)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
-    annotate!([time_switch_Peebles(co)+0.15], [log10(0.999)+0.50], [(L"\textrm{Saha $\rightarrow$ Peebles}")])
-    annotate!([time_switch_Peebles(co)+0.10], [log10(0.999)+0.25], [(L"\textrm{($X_e = 0.999$)}")])
+    #scatter!( [time_switch_Peebles(co)],      [log10(0.999)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
+    #annotate!([time_switch_Peebles(co)+0.15], [log10(0.999)+0.50], [(L"\textrm{Saha $\rightarrow$ Peebles}")])
+    #annotate!([time_switch_Peebles(co)+0.10], [log10(0.999)+0.25], [(L"\textrm{($X_e = 0.999$)}")])
 
     # Annotate reionization on/off and recombination
     annotate!([-1, -1], [-0.2, -3.3], [("reionization"), ("reionizatioff")])
     annotate!([-8.5],   [-0.2], [("recombination(s)")])
+
+    # Mark event times
+    vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.5, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
 
     savefig("plots/free_electron_fraction_log.pdf")
 end
@@ -78,10 +85,15 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
     annotate!([-1, -1], [0.95, 0.05], [("reionization"), ("reionizatioff")])
     annotate!([-8.5],   [0.95],       [("recombination(s)")])
 
+    # Mark plateaus
     hline!([1+2*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{++}"])
     hline!([1+1*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{+}"])
     hline!([1+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}"])
     hline!([0+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{nothing}"])
+
+    # Mark event times
+    vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.5, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
+
     savefig("plots/free_electron_fraction_linear.pdf")
 end
 
@@ -102,6 +114,9 @@ if true || !isfile("plots/optical_depth.pdf")
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
     hline!([-10], color=:black, linestyle=:dash,  alpha=0.5, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
+
+    # Mark event times
+    vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.5, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
 
     savefig("plots/optical_depth.pdf")
 end
@@ -128,7 +143,11 @@ if true || !isfile("plots/visibility_function.pdf")
     annotate!([-7.5], [9.0], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(co_H_He_reion, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:black)])
     annotate!([-7.5], [7.7], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(co_H_reioff, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:gray)])
 
-    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), xticks=[-3,-2,-1], subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
+    # Mark event times
+    vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.25, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
+
+    # Zoom-in plot
+    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
 
     savefig("plots/visibility_function.pdf")
 end

@@ -59,9 +59,6 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=1000
         converged = abs(Xe_new - Xe) < tol # ... until Xe becomes self consistent
         Xe = Xe_new
         iters += 1
-        if converged
-        println("x = $x, R1 = $R1, R2 = $R2, R3 = $R3")
-        end
     end
 
 
@@ -146,8 +143,8 @@ d3τ(co::ΛCDM, x::Real) = τ(co, x; derivative=3)
  dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
 d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
 
-time_last_scattering_surface(co::ΛCDM) = find_zero(x -> τ(co, x) - 1, (-20, 0))
-time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20, -3))
+time_decoupling(co::ΛCDM) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0, (-20, -3)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
+time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20, -3)) # exclude reionization for x > -3
 
 function sound_horizon(co::ΛCDM, x::Real)
     R(x) = 4*co.Ωγ0 / (3*co.Ωb0*a(x))

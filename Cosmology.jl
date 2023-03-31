@@ -8,7 +8,7 @@ export equality_rm, equality_mΛ, acceleration_onset
 export dL, dA
 
 export Tγ, Xe_Saha_H, Xe_Saha_H_He, Xe_Peebles, Xe, τ, dτ, d2τ, g, dg, d2g, time_switch_Peebles
-export time_last_scattering_surface, time_recombination, sound_horizon
+export time_decoupling, time_recombination, sound_horizon
 export time_reionization_H, time_reionization_He
 export multirange
 export format_time_variations

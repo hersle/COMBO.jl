@@ -29,6 +29,7 @@
 \DeclareMathOperator{\asin}{asin}
 \DeclareMathOperator{\sinc}{sinc}
 \DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\argmax}{argmax}
 %\setlength{\mathindent}{20pt}
 
 \begin{document}
@@ -739,8 +740,6 @@ but use analytical expressions for other quantities.
 
 \subsection{Results}
 
-\TODO{annotate times with vlines in plots}
-
 \TODO{report sound horizon. plot?}
 
 Here we examine our results for the Planck 2018 cosmology \eqref{eq_planck2018},
@@ -756,6 +755,11 @@ and with Hydrogen only or Hydrogen and Helium.
 		from the Saha and Peebles equations before and after the joint $X_e = 0.999$,
 		with and without Helium and reionization, compared to the result from the Saha equation alone.
 		Unlike the logarithmic plot, the linear plot is annotated with the majority atom/ion at each recombination stage.
+		From left to right, the vertical lines mark
+		the switch from the Saha to the Peebles equation (when $X_e = 0.999$),
+		decoupling ($\argmax{\tilde{g}(x)}$),
+		the time of recombination (when $X_e = 0.1$),
+		the first ($z^\text{reion}_1$) and second ($z^\text{reion}_2$) reionization.
 	}
 	\label{fig_free_electron_fraction}
 \end{figure}
@@ -777,7 +781,7 @@ From the plot, we read off the reionization time reported in \cref{table_times2}
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/optical_depth.pdf}
-	\caption{Evolution of the optical depth \eqref{eq_optical_depth} and its derivatives through recombination and reionization history, with or without both Helium and reionization.}
+	\caption{Evolution of the optical depth \eqref{eq_optical_depth} and its derivatives through recombination and reionization history, with or without both Helium and reionization. The vertical lines mark the same times as in \cref{fig_free_electron_fraction}.}
 	\label{fig_optical_depth}
 \end{figure}
 
@@ -794,7 +798,7 @@ We obtain the last scattering surface, or time of decoupling, reported in \cref{
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/visibility_function.pdf}
-	\caption{The visibility function \eqref{eq_visibility_function} and its (scaled) derivatives with or without both Helium and reionization. The main plot best shows its variation during recombination, while the embedded plot magnifies its behavior during reionization. Their numerical integrals are annotated.}
+	\caption{The visibility function \eqref{eq_visibility_function} and its (scaled) derivatives with or without both Helium and reionization. The main plot best shows its variation during recombination, while the embedded plot magnifies its behavior during reionization. Their numerical integrals are annotated. The vertical lines mark the same times as in \cref{fig_free_electron_fraction}.}
 	\label{fig_visibility_function}
 \end{figure}
 
