@@ -528,136 +528,139 @@ The most important process that affects this is Thomson scattering
 	e^- + \gamma \leftrightarrow e^- + \gamma
 \label{eq_thomson_scattering}
 \end{equation}
-of photons off free electrons,
-so to do so we have to study the evolution of free electrons through the recombination and reionization history of the universe.
+of photons off free electrons as they travel through the universe.
+To quantify the scattering,
+we must therefore study the (re)combination and (re)ionization history of the universe.
 
 \subsection{Theory}
 
 Light emitted from a source with intensity $I_0$,
 traveling through a medium with \textbf{optical depth} $\tau$ that scatters certain photons,
 is observed at the other end with intensity $I = I_0 e^{-\tau}$.
-In a cosmological context, we take this medium to be a gas of electrons with number density $n_e$
-and the main scattering mechanism to be Thomson scattering with cross-section $\sigma_T = (8\pi/3) (\alpha \hbar / m_e c)^2$.
+As the name suggests, it measures the ``thickness'' of the medium the light travels through:
+a transparent medium through which most photons travels freely has $\tau \ll 1$,
+while an opaque medium that scatters most photons has $\tau \gtrsim 1$.
+
+In a cosmological context where the main mechanism is Thomson scattering \eqref{eq_thomson_scattering} with known cross-section $\sigma_T = (8\pi/3) (\alpha \hbar / m_e c)^2$,
+we take the medium to be a gas of electrons with number density $n_e$.
 In this case, the optical depth of photons emitted at conformal time $\eta$ and observed today at $\eta_0$ is
 \begin{equation}
 	\tau(\eta) = \int_\eta^{\eta_0} n_e \sigma_T a c \, d\eta = \int_x^0 \frac{n_e \sigma_T c}{H} \, dx.
 \label{eq_optical_depth}
 \end{equation}
 
-A natural quantity derived from the optical depth is the \textbf{visibility function}
-\footnote{here wrt $x$, other places wrt another time variable $\eta$. whichever definition gives the interpretation that it is the probability ... at some time $x$, with integral $1$.}
+A natural quantity derived from the optical depth is the \textbf{visibility function}%
+\footnote{The normalization and interpretation of the visibility function also holds if it is defined with respect to the derivative of any other time, like $g(\eta) = -\tau'(\eta) e^{-\tau(\eta)}$.}
 \begin{equation}
-	g(\eta) = -\tau'(\eta) \, e^{-\tau(\eta)} = \Big( e^{-\tau(\eta)} \Big)'
-	\qquad \text{or} \qquad
-	\tilde{g}(x) = -\tau'(x) \, e^{-\tau(x)} = \Big( e^{-\tau(x)} \Big)',
+	\tilde{g}(x) = -\tau'(x) \, e^{-\tau(x)} = \Big( e^{-\tau(x)} \Big)'.
 \label{eq_visibility_function}
 \end{equation}
-here defined in terms of the two different time variables $\eta$ and $x$.
 As $\tau=0$ today and $\tau \rightarrow \infty$ at early times,
-we see that they both have the property $\int_0^{\eta_0} g(\eta) d\eta = \int_{-\infty}^0 \tilde{g}(x) dx = 1$.
-They can therefore be interpreted as probability densities for a photon observed today being last scattered off a free electron at time $\eta$ or $x$.
+it is normalized to $\int_{-\infty}^0 \tilde{g}(x) dx = 1$.
+Moreover, $e^{-\tau(x)} = I/I_0(x)$ measures how many ``input'' photons at $x$ that are ``output'' at $x=0$,
+so its \emph{change} measures how many photons were lost between two times.
+Accordingly, we interpret $\tilde{g}(x) dx$ as \emph{the probability that a photon observed today was last scattered between $x \pm dx/2$}.
 
 We already know how all the quantities in the optical depth \eqref{eq_optical_depth} evolves, except the free electron density $n_e$.
-Therefore, we set out to compute the free electron density $X_e = n_e / n_H$,
-where $n_H \approx (1-Y_p) \rho_b / m_H$ is the number density of Hydrogen,
-$Y_p$ is the primordial mass fraction of Helium
-and $1-Y_p$ that of Hydrogen.
-
-Electrons (re)combine with protons and ionized Helium ($\rightarrow$),
-and photons can (re)ionize Hydrogen and Helium $(\leftarrow$):
+Therefore, we set out to compute the free electron fraction $X_e(t) = n_e(t) / n_H(t)$,
+where $n_H(t) \approx (1-Y_p) \rho_b(t) / m_\text{H}$ is the number density of hydrogen and
+$Y_p$ and $1-Y_p$ are the primordial mass fractions of helium and hydrogen.
+The free electron balance is mainly affected by
+electrons combining with ionized H and He ($\rightarrow$)
+and photons ionizing H and He $(\leftarrow$):
 \begin{subequations}
 \begin{align}
-	e^- + \text{H}^+ &\leftrightarrow \text{H} + \gamma,\\
-	e^- + \text{He}^+ &\leftrightarrow \text{He} + \gamma, \\
-	e^- + \text{He}^{++} &\leftrightarrow \text{He}^+ + \gamma.
-\end{align}
-\label{eq_thomson}
-\end{subequations}
-Before recombination, when these processes are (almost) in equilibrium,
-this gives rise to the three \textbf{Saha equations} (for H+He)
-\TODO{charge neutral}
-\TODO{reorder?}
-\TODO{expectation with $k_B T \approx E_{ion}$}
+	e^- + \text{H}^+ &\leftrightarrow \text{H} + \gamma && \text{with ionization energy} & E_\text{H}^\text{ion} = 13.59844\,\mathrm{eV}, \\
+	e^- + \text{He}^+ &\leftrightarrow \text{He} + \gamma && \text{with ionization energy} & E_\text{He}^\text{ion} = 24.58738\,\mathrm{eV}, \\
+	e^- + \text{He}^{++} &\leftrightarrow \text{He}^+ + \gamma && \text{with ionization energy} & E_{\text{He}^+}^\text{ion} = 54.41776\,\mathrm{eV}.
+\end{align}%
+\label{eq_recombinations}%
+\end{subequations}%
+Before recombination, when these processes are in equilibrium and take place in an assumed charge neutral universe,
+this gives rise to the three \textbf{Saha equations}
 \newcommand{\XHp}{X_{\text{H}^+}}
 \newcommand{\XHep}{X_{\text{He}^+}}
 \newcommand{\XHepp}{X_{\text{He}^{++}}}
 \begin{subequations}
 \begin{align}
-    \frac{\XHepp}{1 - \XHep - \XHepp} &= 2 \, \frac{\lambda_e^{-3}}{n_e} \exp \left(-\frac{E^\text{ion}_\text{He1}}{k_B T_b} \right), \\
-    \frac{\XHepp}{\XHep} &= 4 \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_\text{He2}}{k_B T_b}\right), \\
-    \frac{\XHp}{1-\XHp} &= \phantom{1} \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right),
+    \frac{\XHp}{1-\XHp} &= \phantom{1} \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right) = R_1, \\
+    \frac{\XHep}{1 - \XHep - \XHepp} &= 2 \, \frac{\lambda_e^{-3}}{n_e} \exp \left(-\frac{E^\text{ion}_\text{He}}{k_B T_b} \right) = R_2, \\
+    \frac{\XHepp}{\XHep} &= 4 \, \frac{\lambda_e^{-3}}{n_e} \exp\left(-\frac{E^\text{ion}_{\text{He}^+}}{k_B T_b}\right) = R_3,
 \end{align}
 \label{eq_saha_H_He}
 \end{subequations}
-\TODO{ionization energies in $\leftrightarrow$ reactions above}
-\TODO{define $X$s}
-where $\lambda_e = h / \sqrt{2 \pi m_e k_B T_b}$ is the de Broglie wavelength of electrons with the baryon temperature $T_b$,
-for the free electron fraction
+for the ionization fractions $\XHp = n_{\text{H}^+} / n_\text{H}$, $\XHep = n_{\text{He}^+} / n_\text{He}$ and $\XHepp = n_{\text{He}^{++}} / n_\text{He}$,
+where $n_\text{He} = Y_p \rho_b(t) / 4 m_\text{H}$ is the number density of helium and $\lambda_e = h / \sqrt{2 \pi m_e k_B T_b}$ is the de Broglie wavelength of electrons with baryon temperature $T_b$.
+The free electron fraction then follows as
 \begin{equation}
-    X_e = \XHp + \frac{Y_p}{4(1-Y_p)} \Big( \XHep + 2 \XHepp \Big) .
+    X_e = \frac{n_{\text{H}^+} + n_{\text{He}^+} + 2 n_{\text{He}^{++}}}{n_H} = \XHp +  \Big( \XHep + 2 \XHepp \Big) f_\text{He}, \quad \text{where} \quad f_\text{He} = \frac{n_\text{He}}{n_\text{H}} = \frac{Y_p}{4(1-Y_p)}.
 \label{eq_Saha_H_He_Xe}
 \end{equation}
-Without Helium ($Y_p=0$) or when Helium has recombined ($\XHp \gg \XHep \gg \XHepp$),
-this reduces to the Hydrogen-only Saha equation
+In the early hot universe, the right sides $R_i \gg 1$ are very large, so $\XHp \approx 1$, $\XHep \approx 0$ and $\XHepp \approx 1$.
+As the universe cools down, $\{R_3, R_2, R_1\}$ fall off one-by-one, in that order, due to differing ionization energies in the exponentials,
+and $\text{He}^{++}$, $\text{He}^+$ and $\text{H}^+$ recombine one-by-one.
+%as the thermal energy reaches the decreasing ionization energies $k_B T_b \approx \{E^\text{ion}_\text{H}, E^\text{ion}_{\text{He}^+}, E^\text{ion}_{\text{He}^{++}}\}$.
+
+Without helium ($Y_p=0$) or when it has fully recombined ($\XHp \gg \XHep \gg \XHepp$),
+the equations reduces to the hydrogen-only \textbf{Saha equation}
 \begin{equation}
 	\frac{X_e^2}{1-X_e} = \frac{\lambda_e^{-3}}{n_b} \exp \left( -\frac{E^\text{ion}_\text{H}}{k_B T_b} \right).
 \label{eq_saha_H}
 \end{equation}
 
-During and after recombination, the Saha equation is no longer valid,
+During and after recombination, when the reactions \eqref{eq_recombinations} are far from equilibrium,
+the Saha equation is no longer valid,
 and the evolution of $X_e$ is more accurately described by the \textbf{Peebles equation}
-\TODO{summarize difference from Saha}
+\TODO{is it only ``difficult to integrate'' (Callin) Peebles at early times, or is it \emph{wrong} there?}
 \begin{equation}
-	\odv{X_e}{x} = \frac{C_r}{H} \left( \beta (1-X_e) - n_H \alpha_2 X_e^2 \right),
+	\odv{X_e}{x} = \frac{C_r}{H} \Big[ \beta (1-X_e) - n_H \alpha_2 X_e^2 \Big],
 \label{eq_Peebles}
 \end{equation}
-with the many easy-to-compute quantities
-\begin{subequations}
-\begin{align}
-	C_r &= \frac{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha}{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha + \beta_2}, \\
-	\alpha &= \text{fine structure constant}, \\
+with the many, but easy-to-compute quantities
+%\begin{subequations}
+\begin{align*}
+	C_r &= \frac{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha}{\Lambda_{2s \rightarrow 1s} + \Lambda_\alpha + \beta_2}, &
+	%\alpha &= \text{fine structure constant}, \\
 	\alpha_2 &= \frac{64 \pi}{\sqrt{27 \pi}} \left(\frac{\alpha \hbar}{m_e \sqrt{c}}\right)^2 \sqrt{\frac{E^\text{ion}_\text{H}}{k_B T_b}} \phi_2, \\
-	\beta &= \frac{\alpha_2}{\lambda_e^3} \exp \left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right), \\
+	\beta &= \frac{\alpha_2}{\lambda_e^3} \exp \left(-\frac{E^\text{ion}_\text{H}}{k_B T_b}\right), &
 	\beta_2 &= \beta \exp \left(\frac{3 E^\text{ion}_\text{H}}{4 k_B T_b}\right), \\
-	\Lambda_{2s \rightarrow 1s} &= 8.227 / \mathrm{s}, \\
+	\Lambda_{2s \rightarrow 1s} &= 8.227 / \mathrm{s}, &
 	\Lambda_\alpha &= H \frac{(3 E^\text{ion}_{\text{H}})^3}{(\hbar c)^3 (8 \pi)^2 n_{1s}}, \\
-	\phi_2 &= 0.448 \log \left( \frac{E^\text{ion}_\text{H}}{k_B T_b} \right), \\
+	\phi_2 &= 0.448 \log \left( \frac{E^\text{ion}_\text{H}}{k_B T_b} \right), &
 	n_{1s} &= (1-X_e) n_H.
-\end{align}
-\end{subequations}
-Unlike the Saha equation, the Peebles equation is a differential equation and needs an initial value.
-Their results can be stitched together at a joint $(x, X_e(x))$, which is also used as the initial value for the Peebles equation.
-
-\TODO{is it only ``difficult to integrate'' Peebles at early times, or is it \emph{wrong} there?}
+\end{align*}
+%\end{subequations}
+As a differential equation, the Peebles equation needs an initial value.
+This can be taken as the point $(x, X_e)$ of the Saha equation just after it departs from equilibrium, at $X_e = 0.999$, for example.
 
 We also include a phenomenological reionization model,
-where we ramp up the free electron fraction according to
-\TODO{meaning of $f$?}
-\TODO{$y$ or $z$? in last term?}
-\TODO{why skip $\text{H}^+, \text{He}$?}
+where we ramp up the free electron fraction according to the smoothed step functions
+\TODO{$y$ or $z$ in last term?}
 \begin{equation}
 	X_e^\text{reion} = \frac{1+f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_1} \right) \right]
-                     + \frac{f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-2}{\Delta y^\text{reion}_2} \right) \right]
+                     + \frac{f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_2} \right) \right]
 \label{eq_reionization}
 \end{equation}
-where $y = (1+z)^{3/2}$, $\Delta y = |y'(z)| \Delta z$ and we have the four reionization parameters in \ref{eq_planck2018}.
+where $y = (1+z)^{3/2}$, $\Delta y = |y'(z)| \Delta z$ and we have the four reionization parameters \ref{eq_planck2018}.
+Comparing with equation \eqref{eq_Saha_H_He_Xe}, we see this corresponds to reionizing $\text{H} \rightarrow \text{H}^+$ and $\text{He} \rightarrow \text{He}^+$ simultaneously \TODO{why?} first,
+and later $\text{He}^{+} \rightarrow \text{He}^{++}$ separately.
 
 Finally, then, the full free electron fraction is found by stitching together the results of the Saha and Peebles equation and adding reionization:
 \begin{equation}
 	X_e(x) = \begin{cases}
-	             X_e^\text{reion} + X_e^\text{Saha}(x) & \text{(for $X_e^\text{Saha} > 0.999$)}, \\
-	             X_e^\text{reion} + X_e^\text{Peebles}(x) & \text{(for $X_e^\text{Saha} < 0.999$)}. \\
+	             X_e^\text{reion} + X_e^\text{Saha}(x) & \text{for $X_e^\text{Saha} > 0.999$}, \\
+	             X_e^\text{reion} + X_e^\text{Peebles}(x) & \text{for $X_e^\text{Saha} < 0.999$}. \\
 	         \end{cases}
 \label{eq_free_electron_fraction}
 \end{equation}
 
-In the above expressions, we need the baryon temperature $T_b(t)$.
-While the photon temperature follows the simple black-body evolution
+We have not yet specified the evolution of the baryon temperature $T_b(t)$ that we need in the expressions above.
+The photon temperature follows the simple black-body evolution
 \begin{equation}
-	T_\gamma(t) = \frac{T_{\gamma 0}}{a(t)},
+	T_\gamma(t) = \frac{T_{\gamma 0}}{a(t)}.
 \label{eq_photon_temperature}
 \end{equation}
-At early times, the baryons and photons are coupled and share the common temperature
+Only at early times, when the photons and baryons are coupled, do they share the common temperature
 \begin{equation}
 	T_b(t) = T_{\gamma}(t).
 \label{eq_baryon_temperature}
@@ -665,8 +668,12 @@ At early times, the baryons and photons are coupled and share the common tempera
 After recombination and decoupling, however,
 the baryon temperature generally evolves according to a differential equation that is coupled to the Peebles equation.
 However, for our purposes of computing $X_e$,
-the error in assuming the common temperature \eqref{eq_baryon_temperature} is only of order $10^{-6}$ \TODO{ref},
-so we use this approximation through all time.
+it turns out that the error in assuming the common temperature \eqref{eq_baryon_temperature} is only of order $10^{-6}$ \TODO{ref},
+so we approximate $T_b \approx T_\gamma = T_{\gamma 0}$ \emph{all the time}.
+
+Throughout the recombination history, we will refer to
+the \textbf{time of decoupling}, or the \textbf{last scattering surface}, as the time when the visibility function $g$ peaks,
+and we say that the electrons and ions have \textbf{recombined} when the free electron fraction drops below $X_e = 0.1$.
 
 The last quantity we introduce is the sound horizon
 of the coupled photon-baryon plasma.

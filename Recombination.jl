@@ -6,7 +6,7 @@ nb(co::ΛCDM, x::Real) = ρb(co, x) / mH
 nH(co::ΛCDM, x::Real) = (1-co.Yp) * nb(co, x)
 nHe(co::ΛCDM, x::Real) = co.Yp/4 * nb(co, x)
 Tγ(co::ΛCDM, x::Real) = co.Tγ0 / a(x)
-fHe(Yp::Real) = Yp / (4*(1-Yp)) # TODO: what is this? replace with my hlines?
+fHe(Yp::Real) = Yp / (4*(1-Yp))
 
 function Xe_Saha_H(co::ΛCDM, x::Real)
     Tb = Tγ(co, x)
@@ -33,9 +33,6 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=1000
 
     Tb = Tγ(co, x)
     λe = h / √(2*π*me*kB*Tb)
-    RHS1 = 2 / λe^3 * exp(-EHe1ion/(kB*Tb))
-    RHS2 = 4 / λe^3 * exp(-EHe2ion/(kB*Tb))
-    RHS3 = 1 / λe^3 * exp(-EH1ion /(kB*Tb))
 
     # 1. Guess Xe
     Xe = Xe_Saha_H(co, x) # use fast H-only Saha equation for guess
@@ -50,19 +47,23 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=1000
     while !converged && iters < maxiters
         # 2. Compute corresponding XH+, XHe+, XHe++
         ne = Xe * nH(co, x)
-        F1 = ne / RHS1
-        F2 = ne / RHS2
-        F3 = ne / RHS3
-        XH1  = 1 / (1 + F3)
-        XHe1 = 1 / (1 + F1 + 1/F2)
-        XHe2 = 1 / (1 + F2 + F1*F2)
+        R1 = 1 / λe^3 * exp(-EH1ion /(kB*Tb)) / ne
+        R2 = 2 / λe^3 * exp(-EHe1ion/(kB*Tb)) / ne
+        R3 = 4 / λe^3 * exp(-EHe2ion/(kB*Tb)) / ne
+        XH1  = 1 / (1 + 1/R1)
+        XHe1 = 1 / (1 + 1/R2 + R3)
+        XHe2 = 1 / (1 + 1/R3 + 1/(R2*R3))
 
         # 3. Compute corresponding Xe ...
         Xe_new = XH1 + fHe(co.Yp) * (XHe1 + 2*XHe2)
         converged = abs(Xe_new - Xe) < tol # ... until Xe becomes self consistent
         Xe = Xe_new
         iters += 1
+        if converged
+        println("x = $x, R1 = $R1, R2 = $R2, R3 = $R3")
+        end
     end
+
 
     return iters < maxiters ? Xe : NaN
 end
@@ -107,7 +108,6 @@ function Xe_reionization(co::ΛCDM, x::Real)
     dy_dz(z) = 3/2 * (1+z)^(1/2)
     Δy(z, Δz) = dy_dz(z) * Δz
     smoothstep(y, Δy, h) = h/2 * (1 + tanh(y / Δy))
-    # TODO: replace heights with my hlines?
     Xe_reionization_total  = smoothstep(y(co.z_reion_H ) - y(z(x)), Δy(co.z_reion_H,  co.Δz_reion_H),  1+fHe(co.Yp))
     Xe_reionization_total += smoothstep(y(co.z_reion_He) - y(z(x)), Δy(co.z_reion_He, co.Δz_reion_He), 0+fHe(co.Yp))
     return Xe_reionization_total
