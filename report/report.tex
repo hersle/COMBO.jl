@@ -296,7 +296,7 @@ We create a cosmology with the Planck 2018 parameters \eqref{eq_planck2018} and 
 
 \Cref{fig_density_parameters} shows that the universe
 transitions from being dominated by radiation to matter to the cosmological constant,
-with the equality times \eqref{eq_equality_times} reported in \cref{table_times}.
+with the equality times \eqref{eq_equality_times} reported in \cref{table_times1}.
 In this cosmology, there is no curvature $\Omega_{k} = \Omega_{k0} = 0$,
 and all density parameters sum to $\Omega_{r} + \Omega_m + \Omega_k + \Omega_\Lambda = 1$ at all times -- as they should, by the Friedmann equation \eqref{eq_friedmann} and definition \eqref{eq_density_parameters}.
 
@@ -316,7 +316,7 @@ and all density parameters sum to $\Omega_{r} + \Omega_m + \Omega_k + \Omega_\La
 
 \Cref{fig_conformal_hubble} shows the evolution of the conformal Hubble parameter \eqref{eq_conformal_hubble} and its two derivatives.
 Note that the expansion rate $\dot{a}$ decreases most quickly during radiation domination and slower during matter domination,
-but the universe starts to \emph{accelerate} slightly before $\Omega_m = \Omega_\Lambda$, at the time reported in \cref{table_times}.
+but the universe starts to \emph{accelerate} slightly before $\Omega_m = \Omega_\Lambda$, at the time reported in \cref{table_times1}.
 This is caused by the rise of the cosmological constant, and its effective negative pressure.
 Moreover, during the three dominated eras,
 the evolution is consistent with the analytical expectation \eqref{eq_conformal_hubble_dominated}.
@@ -342,7 +342,7 @@ the evolution is consistent with the analytical expectation \eqref{eq_conformal_
 
 \Cref{fig_cosmic_conformal_time} shows the relation between the scale factor and cosmic and conformal time \eqref{eq_cosmic_conformal_time} from numerical integration.
 Before the cosmological constant becomes important, they closely match the analytical times \eqref{eq_cosmic_conformal_time_anal} from a universe with only radiation and matter.
-We can also read off the current age of the universe, as reported in \cref{table_times}.
+We can also read off the current age of the universe, as reported in \cref{table_times1}.
 
 \Cref{fig_eta_H} shows the evolution of the product $\eta \mathcal{H}$.
 The former plots indicate that our computation of conformal time and the Hubble parameter work independently,
@@ -360,7 +360,7 @@ and the conformal Hubble parameter \eqref{eq_conformal_hubble_dominated_radiatio
 	The time of occurence of four important events in the evolution of a universe with the Planck cosmology \eqref{eq_planck2018},
 	expressed in terms of the scale factor $a$, its natural logarithm $x = \log a$, redshift $z = \frac1a - 1$, cosmic time $t$ and conformal time $\eta$.
 }
-\label{table_times}
+\label{table_times1}
 \begin{tabular}{l c c c c c}
 	\toprule
 	Event                                                               & $x$     & $a$       & $z$    & $\eta$    & $t$ \\
@@ -731,7 +731,7 @@ but use analytical expressions for other quantities.
 
 \subsection{Results}
 
-\TODO{report table with times}
+\TODO{annotate times with vlines in plots}
 
 \TODO{report sound horizon. plot?}
 
@@ -764,6 +764,8 @@ but skipping the $\text{H}^+, \text{He}$ stage (\TODO{why?}).
 Note that without reionization, the Peebles equation would cause the free electron density to asymptotically freeze out today at $X_e(0) = 10^{\{-3.6, -3.7\}}$ with and without Helium.
 In contrast, the Saha equation dives straight to $0$ during the final recombination to Hydrogen.
 
+We obtain the reionization time reported in \cref{table_times2}.
+
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/optical_depth.pdf}
@@ -779,6 +781,8 @@ With reionization, this value is reached simply from reionization.
 For $x \approx -7$, reionization no longer matters, and the optical depth quickly ramps up to $\tau \approx 10^{2}$, as the electrons become free.
 The two earliest additional smaller bumps in $\tau''(x)$ are explained by the addition of Helium and the accompanying two additional recombination processes. \TODO{?}
 
+We obtain the last scattering surface, or time of decoupling, reported in \cref{table_times2}.
+
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.7]{../plots/visibility_function.pdf}
@@ -791,6 +795,25 @@ It is a probability distribution, and does indeed numerically integrate very clo
 Interpretation: probability that photon was last scattered at a given time $x$.
 Greatest during recombination, $50$ times smaller at reionization, slowly declines till today.
 Flat till today without reionization.
+
+\begin{table}
+\centering
+\caption{%
+	The time of occurence of important events in the recombination and reionization history of a universe with the Planck cosmology \eqref{eq_planck2018},
+	expressed in terms of the scale factor $a$, its natural logarithm $x = \log a$, redshift $z = \frac1a - 1$, cosmic time $t$ and conformal time $\eta$.
+}
+\label{table_times2}
+\begin{tabular}{l c c c c c}
+	\toprule
+	Event                                                               & $x$     & $a$       & $z$    & $\eta$    & $t$ \\
+	\midrule
+	Last scattering surface / decoupling ($\tau = 1$)                   & $-6.99$ & $0.0009$  & $1084$ & $0.9\,\mathrm{Gyr}$ & $0.38\,\mathrm{Myr}$ \\
+	Recombination ($X_e = 0.1$)                                 & $-6.97$ & $0.0009$    & $1063$ & $0.9\,\mathrm{Gyr}$ & $0.39\,\mathrm{Myr}$   \\
+	Hydrogen reionization ($z = z^\text{reion}_\text{H}$) & $-2.20$ & $0.1111$    & $8$ & $16.4\,\mathrm{Gyr}$ & $0.637\,\mathrm{Gyr}$  \\
+	Helium reionization ($z = z^\text{reion}_\text{H}$)   & $-1.50$     & $0.2222$       & $3.50$    & $23.5\,\mathrm{Gyr}$ & $1.800\,\mathrm{Gyr}$  \\
+	\bottomrule
+\end{tabular}
+\end{table}
 
 \clearpage
 \section{Conclusions}
