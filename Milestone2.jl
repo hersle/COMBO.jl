@@ -23,12 +23,13 @@ xdec = time_decoupling(co) # TODO: compute from dg = 0
 xrec = time_recombination(co)
 xre1 = time_reionization_H(co)
 xre2 = time_reionization_He(co)
+shor = sound_horizon(co, xdec) / Gpc
 println("Saha -> Peebles (Xe = 0.999):  ", format_time_variations(co, xswi))
 println("Decoupling (max(g)):           ", format_time_variations(co, xdec))
 println("Recombination (Xe = 0.1):      ", format_time_variations(co, xrec))
 println("H  reionization (z_reion_H):   ", format_time_variations(co, xre1))
 println("He reionization (z_reion_He):  ", format_time_variations(co, xre2))
-println("Sound horizon at decoupling:   ", sound_horizon(co, xdec) / Gpc, " Gpc")
+println("Sound horizon at decoupling:   s = $shor Gpc, k = 2*π/s = $(2*π/shor) / Gpc")
 println("Free electron fraction: today: ", Xe(co, 0))
 
 if true || !isfile("plots/free_electron_fraction_log.pdf")
