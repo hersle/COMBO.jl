@@ -8,4 +8,7 @@ using .Cosmology
 using .Constants
 using LaTeXStrings
 
+co = ΛCDM()
+perturbations(co, 0.1 / Mpc, 1e-18, 10)
+
 end
