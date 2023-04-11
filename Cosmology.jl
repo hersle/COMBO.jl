@@ -13,8 +13,9 @@ export time_reionization_H, time_reionization_He
 export multirange
 export format_time_variations
 
-export perturbations
+export perturbations_tight_coupling
 export time_tight_coupling
+export δc, δb, vc, vb, Φ, Θl
 
 include("Background.jl")
 include("Recombination.jl")
