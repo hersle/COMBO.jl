@@ -14,6 +14,7 @@ export multirange
 export format_time_variations
 
 export perturbations
+export time_tight_coupling
 
 include("Background.jl")
 include("Recombination.jl")

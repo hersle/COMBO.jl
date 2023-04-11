@@ -46,6 +46,15 @@ function initial_conditions(co::ΛCDM, k::Real, x0::Real, lmax::Integer)
     return y
 end
 
+function time_tight_coupling(co::ΛCDM, k::Real)
+    x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
+    x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
+    x3 = -8.3 # TODO: time_recombination() or -8.3? at least a dynamic way of computing it?
+    #x3 = time_recombination(co)
+    #println("$x1 $x2 $x3")
+    return min(x1, x2, x3)
+end
+
 function perturbations(co::ΛCDM, k::Real, x0::Real, lmax::Integer)
     # TODO: integrate dy/dx = f
     # input k is in SI-units (meters), but internal functions work with Planck units
