@@ -13,8 +13,11 @@ export time_reionization_H, time_reionization_He
 export multirange
 export format_time_variations
 
+export perturbations
+
 include("Background.jl")
 include("Recombination.jl")
+include("Perturbations.jl")
 include("Utils.jl")
 
 end
