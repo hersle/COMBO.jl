@@ -21,14 +21,21 @@ function initial_conditions(co::ΛCDM, k::Real, x0::Real, lmax::Integer)
     dτ0 = dτ(co, x0)
 
     fν = 0 # TODO: include neutrinos: co.Ων0 / co.Ωr0
-    Ψ  = -c^2 / (3/2 + 2*fν/5)
+    Ψ  = -1 / (3/2 + 2*fν/5)
     Φ  = -(1 + 2*fν/5) * Ψ # TODO: "acts as normalization" ?
-    δb = δc = -3/2 * Ψ / c^2
-    vb = vc = -k/(2*aH0) * Ψ # TODO: units?
-
-    Θ0 = -1/2 * Ψ
-    Θ1 = -k / (3*aH0) * Θ0 # = k / (6*aH0) * Ψ
-    Θ2 = -20*k / (45*aH0*dτ0) * Θ1 # TODO: include polarization
+    δb = δc = -3/2 * Ψ
+    vb = vc = -k*c/(2*aH0) * Ψ # TODO: units?
+    function Θl(l::Integer)
+        if l == 0
+            return -1/2 * Ψ
+        elseif l == 1
+            return -c*k / (3*aH0) * Θl(0) # = k / (6*aH0) * Ψ
+        elseif l == 2
+            return -20*c*k / (45*aH0*dτ0) * Θl(1) # TODO: include polarization
+        else
+            return -l/(2*l+1) * k/(aH0*dτ0) * Θl(l-1)
+        end
+    end
 
     y = Vector{Float64}(undef, i_max(lmax))
     y[i_δc] = δc
@@ -36,11 +43,8 @@ function initial_conditions(co::ΛCDM, k::Real, x0::Real, lmax::Integer)
     y[i_δb] = δb
     y[i_vb] = vb
     y[i_Φ]  = Φ
-    y[i_Θl(0)] = -1/2 * Ψ
-    y[i_Θl(1)] = -k / (3*aH0) * Θ0 # = k / (6*aH0) * Ψ
-    y[i_Θl(2)] = -20*k / (45*aH0*dτ0) * Θ1 # TODO: include polarization
-    for l in 3:lmax
-        y[i_Θl(l)] = -l/(2*l+1) * k/(aH0*dτ0) * y[i_Θl(l-1)]
+    for l in 0:lmax
+        y[i_Θl(l)] = Θl(l)
     end
 
     return y
