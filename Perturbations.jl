@@ -1,8 +1,5 @@
 include("Constants.jl")
 
-# TODO: start/end with SI units, but solve equation in Planck units
-# TODO: no, cannot do that! my other functions use SI units
-
 # index map (1-based)
 const i_δc = 1
 const i_vc = 2
@@ -59,10 +56,12 @@ function time_tight_coupling(co::ΛCDM, k::Real)
     return min(x1, x2, x3)
 end
 
-# TODO: tight coupling is equivalent to lmax=2, then post-compute l>lmax
+# tight coupling is equivalent to lmax=2, then post-compute l>lmax
+# TODO: add tight_coupling flag, recurse to find full solution?
+# TODO: or simply have an if-else in dy_dx to switch "on the fly"
 function perturbations_tight_coupling(co::ΛCDM, x::Real, k::Real; x0::Real=-20.0, lmax::Integer=1)
     if isnothing(co.perturb_tc_spline)
-        # TODO: integrate dy/dx = f
+        # integrate dy/dx = f
         # input k is in SI-units (meters), but internal functions work with Planck units
         function dy_dx(x, y)
             # pre-compute some common combined quantities
