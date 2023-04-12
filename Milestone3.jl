@@ -11,7 +11,7 @@ using LaTeXStrings
 co = ΛCDM(Neff=0)
 k = 0.15 / Mpc
 xtce = time_tight_coupling(co, k)
-println("Tight coupling end: ", format_time_variations(co, xtce))
+println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
 if !isfile("plots/time_tight_coupling.pdf")
     println("Plotting tight coupling end time")
@@ -26,7 +26,7 @@ end
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf")
     k = 0.01 / Mpc
     x = range(-18, time_tight_coupling(co,k), length=200)
-    println("k = $k / Mpc")
+    println("Using k = $k / Mpc")
 
     println("Plotting overdensity")
     plot(xlabel=L"x = \log a", ylabel=L"\log_{10} \delta")
@@ -52,8 +52,5 @@ if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || 
     plot!(x, Θl.(co, x, k, 1)) # TODO: wrong sign?
     savefig("plots/temperature_fluctuation.pdf")
 end
-
-perturbations_tight_coupling(co, 1e-10, k)
-δc(co, 1e-10, k)
 
 end
