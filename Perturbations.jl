@@ -82,7 +82,7 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
             dΘ0 = -ck_aH*Θ1 - dΦ
             q   = (-((1-R)*dτ(co,x)+(1+R)*d2τ(co,x))*(3*Θ1+vb) - ck_aH*Ψ + (1-daH_aH)*ck_aH*(-Θ0+2*Θ2) - ck_aH*dΘ0) /
                   ((1+R)*dτ(co,x) + daH_aH - 1)
-            dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(q+ck_aH*(-Θ0+2*Θ2)) - ck_aH*Ψ)
+            dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(q+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
             dΘ1 = (q - dvb) / 3
 
             # re-pack variables into vector
