@@ -25,7 +25,7 @@ end
 
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf")
     k = 0.01 / Mpc
-    x = range(-18, time_tight_coupling(co,k), length=200)
+    x = range(-18, 0, length=200)
     println("Using k = $k / Mpc")
 
     println("Plotting overdensity")
