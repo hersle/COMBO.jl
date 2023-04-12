@@ -71,7 +71,7 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
             Φ  = y[i_Φ]
             Θ0 = y[i_Θl(0)]
             Θ1 = y[i_Θl(1)]
-            Θ2 = -20/45 * ck_aH * Θ1/dτ(co,x)
+            Θ2 = -20/45 * ck_aH * Θ1/dτ(co,x) # TODO: polarization
 
             # 2) compute derivatives
             Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θ2) # TODO: neutrinos
@@ -80,7 +80,8 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
             dδb = ck_aH*vb - 3*dΦ
             dvc = -vc - ck_aH*Ψ
             dΘ0 = -ck_aH*Θ1 - dΦ
-            q   = (-((1-R)*dτ(co,x)+(1+R)*d2τ(co,x))*(3*Θ1+vb) - ck_aH*Ψ + (1-daH_aH)*ck_aH*(-Θ0+2*Θ2) - ck_aH*dΘ0) /
+            dΘ2 = 0 # approximate Θ2' = 0 in q (see discussion under Callin (34))
+            q   = (-((1-R)*dτ(co,x)+(1+R)*d2τ(co,x))*(3*Θ1+vb) - ck_aH*Ψ + (1-daH_aH)*ck_aH*(-Θ0+2*Θ2) + ck_aH*(-dΘ0+2*dΘ2)) /
                   ((1+R)*dτ(co,x) + daH_aH - 1)
             dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(q+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
             dΘ1 = (q - dvb) / 3
