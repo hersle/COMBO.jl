@@ -45,6 +45,7 @@ function time_tight_coupling(co::ΛCDM, k::Real)
     x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
     x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
     x3 = time_switch_Peebles(co) # TODO: safe, or -8.3 (Hans)?
+    return -15.0 # TODO: tight coupling unnecessary with stiff solver?
     return min(x1, x2, x3)
 end
 
@@ -123,7 +124,8 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
 
     if isnothing(co.perturbations_untight_spline)
-        function dy_dx(x, y)
+        function dy_dx!(x, y, dy)
+            println("x = $x")
             # pre-compute some common combined quantities
             ck_aH = c*k / aH(co,x)
             R = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
@@ -134,29 +136,26 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
             δb = y[i_δb]
             vb = y[i_vb]
             Φ  = y[i_Φ]
-            Θl(l::Integer) = y[i_Θl(l)] # probably inlined
+            Θ0 = y[i_Θl(0)]
+            Θl = @view y[i_Θl(1):i_Θl(lmax)] # for l ≥ 1 (since Julia is 1-indexed) # TODO: use OffsetArrays?
 
             # 2) compute derivatives
-            Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θl(2)) # TODO: Ωγ0 (Hans) or Ωr (Callin)? TODO: neutrinos
-            Π   = Θl(2) + 0 # TODO: polarization
-            dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θl(0)) # TODO: neutrinos
+            Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θl[2]) # TODO: Ωγ0 (Hans) or Ωr (Callin)? TODO: neutrinos
+            Π   = Θl[2] + 0 # TODO: polarization
+            dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0) # TODO: neutrinos
             dδc = ck_aH*vc - 3*dΦ
             dδb = ck_aH*vb - 3*dΦ
             dvc = -vc - ck_aH*Ψ
-            dvb = -vb - ck_aH*Ψ + dτ(co,x)*R*(3*Θl(1)+vb)
+            dvb = -vb - ck_aH*Ψ + dτ(co,x)*R*(3*Θl[1]+vb)
             @assert lmax != 3 # TODO: how to calculate dΘl with lmax = 3?
-            dΘl0   = -ck_aH*Θl(1) - dΦ
-            dΘl1   =  ck_aH/3 * (Θl(0)-2*Θl(2)+Ψ) + dτ(co,x)*(Θl(1)+vb/3)
-            dΘl2   =  ck_aH/(2*2+1) * (2*Θl(2-1) - (2+1)*Θl(2+1)) + dτ(co,x)*(Θl(2)-Π/10)
-
-            l      = 3:lmax-1
-            dΘl    = @. ck_aH/(2*l+1) * (l*Θl(l-1) - (l+1)*Θl(l+1)) + dτ(co,x)*(Θl(l)-0) # TODO: reduce allocation?
-
-            dΘlmax = ck_aH*Θl(lmax-1) - c*(lmax+1)/(aH(co,x)*η(co,x))*Θl(lmax) + dτ(co,x)*Θl(lmax)
+            dΘl0   = -ck_aH*Θl[1] - dΦ
+            dΘl1   =  ck_aH/3 * (Θ0-2*Θl[2]+Ψ) + dτ(co,x)*(Θl[1]+vb/3)
+            dΘl2   =  ck_aH/(2*2+1) * (2*Θl[2-1] - (2+1)*Θl[2+1]) + dτ(co,x)*(Θl[2]-Π/10)
+            dΘlmax = ck_aH*Θl[lmax-1] - c*(lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + dτ(co,x)*Θl[lmax]
 
             # re-pack variables into vector
             # TODO: pack and assign simultaneously?
-            dy = Vector{Float64}(undef, i_max(lmax))
+            #dy = Vector{Float64}(undef, i_max(lmax))
             dy[i_δc]    = dδc
             dy[i_vc]    = dvc
             dy[i_δb]    = dδb
@@ -165,13 +164,15 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
             dy[i_Θl(0)] = dΘl0
             dy[i_Θl(1)] = dΘl1
             dy[i_Θl(2)] = dΘl2
-            dy[i_Θl.(l)] .= dΘl
+            for l in 3:lmax-1
+                dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + dτ(co,x)*(Θl[l]-0) # probably inlined? TODO: reduce allocation?
+            end
             dy[i_Θl(lmax)] = dΘlmax
-            return dy
+            #return dy
         end
 
         y1 = initial_conditions_untight(co, x1, k, lmax)
-        co.perturbations_untight_spline = _spline_integral(dy_dx, x1, x2, y1, name="perturbations untight (k=$(k*Mpc)/Mpc)")
+        co.perturbations_untight_spline = _spline_integral_inplace(dy_dx!, x1, x2, y1, name="perturbations untight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_untight_spline(x)

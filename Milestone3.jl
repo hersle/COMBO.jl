@@ -24,7 +24,7 @@ if !isfile("plots/time_tight_coupling.pdf")
 end
 
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf")
-    k = 0.01 / Mpc
+    k = 0.1 / Mpc
     x = range(-18, 0, length=5000)
     println("Using k = $k / Mpc")
 
