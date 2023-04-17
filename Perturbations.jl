@@ -44,7 +44,7 @@ end
 function time_tight_coupling(co::ΛCDM, k::Real)
     x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
     x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
-    x3 = -8.3 # time_recombination(co) # -8.3 # TODO: time_recombination() or -8.3? at least a dynamic way of computing it?
+    x3 = time_switch_Peebles(co) # TODO: safe, or -8.3 (Hans)?
     return min(x1, x2, x3)
 end
 
@@ -118,7 +118,7 @@ function initial_conditions_untight(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     return y
 end
 
-function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=-0.0, lmax::Integer=100)
+function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=100)
     x1 = time_tight_coupling(co, k)
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
 
