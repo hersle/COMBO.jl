@@ -44,14 +44,12 @@ end
 function time_tight_coupling(co::ΛCDM, k::Real)
     x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
     x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
-    x3 = -8.3 # TODO: time_recombination() or -8.3? at least a dynamic way of computing it?
+    x3 = -8.3 # time_recombination(co) # -8.3 # TODO: time_recombination() or -8.3? at least a dynamic way of computing it?
     return min(x1, x2, x3)
 end
 
 # tight coupling is equivalent to lmax=2, then post-compute l>lmax
-# TODO: add tight_coupling flag, recurse to find full solution?
-# TODO: or simply have an if-else in dy_dx to switch "on the fly"
-# TODO: store splines for each requested k-value
+# TODO: store splines for each requested k-value?
 function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
     x2 = time_tight_coupling(co, k)
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
@@ -107,8 +105,7 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
 end
 
 function initial_conditions_untight(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
-    # TODO: order indices so this can simply "return perturbations_tight(co, x0, k
-    # TODO: then set the additional l>1
+    # TODO: order indices so this can simply "return perturbations_tight(co, x0, k), then set the additional l>1
     y = Vector{Float64}(undef, i_max(lmax))
     y[i_δc] = δc(co, x0, k)
     y[i_vc] = vc(co, x0, k)
@@ -121,16 +118,14 @@ function initial_conditions_untight(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     return y
 end
 
-function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=100)
+function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=-0.0, lmax::Integer=100)
     x1 = time_tight_coupling(co, k)
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
 
     if isnothing(co.perturbations_untight_spline)
         function dy_dx(x, y)
-            #=
             # pre-compute some common combined quantities
             ck_aH = c*k / aH(co,x)
-            daH_aH = daH(co,x) / aH(co,x)
             R = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
 
             # 1) un-pack variables from vector
