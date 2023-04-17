@@ -98,7 +98,7 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
         end
 
         y1 = initial_conditions_tight(co, x1, k)
-        co.perturbations_tight_spline = _spline_integral(dy_dx, x1, x2, y1)
+        co.perturbations_tight_spline = _spline_integral(dy_dx, x1, x2, y1; name="perturbations tight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_tight_spline(x)
@@ -171,7 +171,7 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=-0.0, lmax:
         end
 
         y1 = initial_conditions_untight(co, x1, k, lmax)
-        co.perturbations_untight_spline = _spline_integral(dy_dx, x1, x2, y1)
+        co.perturbations_untight_spline = _spline_integral(dy_dx, x1, x2, y1, name="perturbations untight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_untight_spline(x)

@@ -20,8 +20,11 @@ end
 # Hans says "RK2" is sufficient (https://cmb.wintherscoming.no/theory_numerical.php)
 # DifferentialEquations recommends (for high accuracy (low tolerance)) auto-switching stiffness solver AutoVern7(Rodas5()) solver (https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/#Unknown-Stiffness-Problems)
 # TODO: autodiff?
-function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1; solver=AutoVern7(Rodas5(autodiff=false, diff_type = Val{:central})), reltol::Float64=1e-10, abstol::Float64=1e-10)
-    sol = solve(ODEProblem((y, p, x) -> dy_dx(x, y), y1, (x1, x2)), solver, reltol=reltol, abstol=abstol)
+
+function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1; solver=AutoVern7(Rodas5(autodiff=false, diff_type = Val{:central})), reltol::Float64=1e-10, abstol::Float64=1e-10, name="unnamed quantity")
+    f(y, p, x) = dy_dx(x, y)
+    sol = solve(ODEProblem(f, y1, (x1, x2)), solver, reltol=reltol, abstol=abstol)
+    println("Integrated $name")
     return sol # use dense output to interpolate
 end
 
