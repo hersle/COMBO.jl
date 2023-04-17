@@ -15,8 +15,13 @@ end
 # internal function that computes y(x) on a cubic spline,
 # given dy/dx, from x=x1 with y(x1)=y1, to x=x2
 # TODO: generalize to take (x0, y0), integrate in both directions, and combine splines?
-function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1; reltol::Float64=1e-10, abstol::Float64=1e-10)
-    sol = solve(ODEProblem((y, p, x) -> dy_dx(x, y), y1, (x1, x2)), Tsit5(); reltol=reltol, abstol=abstol)
+# TODO: write about choice of solver
+# CLASS uses "rkck4" (non-stiff) or "ndf15" (stiff) evolver (https://github.com/lesgourg/class_public/blob/aa92943e4ab86b56970953589b4897adf2bd0f99/include/common.h)
+# Hans says "RK2" is sufficient (https://cmb.wintherscoming.no/theory_numerical.php)
+# DifferentialEquations recommends (for high accuracy (low tolerance)) auto-switching stiffness solver AutoVern7(Rodas5()) solver (https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/#Unknown-Stiffness-Problems)
+# TODO: autodiff?
+function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1; solver=AutoVern7(Rodas5(autodiff=false, diff_type = Val{:central})), reltol::Float64=1e-10, abstol::Float64=1e-10)
+    sol = solve(ODEProblem((y, p, x) -> dy_dx(x, y), y1, (x1, x2)), solver, reltol=reltol, abstol=abstol)
     return sol # use dense output to interpolate
 end
 
