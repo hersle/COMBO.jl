@@ -54,7 +54,7 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
 
     if isnothing(co.perturbations_tight_spline)
-        function dy_dx(x, y)
+        function dy_dx!(x, y, dy)
             # pre-compute some common combined quantities
             ck_aH = c*k / aH(co,x)
             daH_aH = daH(co,x) / aH(co,x)
@@ -85,7 +85,6 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
 
             # re-pack variables into vector
             lmax = 1 # tight coupling: only need to integrate Θ(l<=2) (see above comment)
-            dy = Vector{Float64}(undef, i_max(lmax))
             dy[i_δc]    = dδc
             dy[i_vc]    = dvc
             dy[i_δb]    = dδb
@@ -93,11 +92,11 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
             dy[i_Φ]     = dΦ
             dy[i_Θl(0)] = dΘ0
             dy[i_Θl(1)] = dΘ1
-            return dy
+            return nothing
         end
 
         y1 = initial_conditions_tight(co, x1, k)
-        co.perturbations_tight_spline = _spline_integral(dy_dx, x1, x2, y1; name="perturbations tight (k=$(k*Mpc)/Mpc)")
+        co.perturbations_tight_spline = _spline_integral(dy_dx!, x1, x2, y1; name="perturbations tight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_tight_spline(x)
@@ -127,6 +126,7 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
             # pre-compute some common combined quantities
             ck_aH = c*k / aH(co,x)
             R = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
+            τ′ = dτ(co,x) # ′ = \prime != '
 
             # 1) un-pack variables from vector
             δc = y[i_δc]
@@ -144,16 +144,15 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
             dδc = ck_aH*vc - 3*dΦ
             dδb = ck_aH*vb - 3*dΦ
             dvc = -vc - ck_aH*Ψ
-            dvb = -vb - ck_aH*Ψ + dτ(co,x)*R*(3*Θl[1]+vb)
+            dvb = -vb - ck_aH*Ψ + τ′*R*(3*Θl[1]+vb)
             @assert lmax != 3 # TODO: how to calculate dΘl with lmax = 3?
             dΘl0   = -ck_aH*Θl[1] - dΦ
-            dΘl1   =  ck_aH/3 * (Θ0-2*Θl[2]+Ψ) + dτ(co,x)*(Θl[1]+vb/3)
-            dΘl2   =  ck_aH/(2*2+1) * (2*Θl[2-1] - (2+1)*Θl[2+1]) + dτ(co,x)*(Θl[2]-Π/10)
-            dΘlmax = ck_aH*Θl[lmax-1] - c*(lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + dτ(co,x)*Θl[lmax]
+            dΘl1   =  ck_aH/3 * (Θ0-2*Θl[2]+Ψ) + τ′*(Θl[1]+vb/3)
+            dΘl2   =  ck_aH/(2*2+1) * (2*Θl[2-1] - (2+1)*Θl[2+1]) + τ′*(Θl[2]-Π/10)
+            dΘlmax = ck_aH*Θl[lmax-1] - c*(lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + τ′*Θl[lmax]
 
             # re-pack variables into vector
             # TODO: pack and assign simultaneously?
-            #dy = Vector{Float64}(undef, i_max(lmax))
             dy[i_δc]    = dδc
             dy[i_vc]    = dvc
             dy[i_δb]    = dδb
@@ -163,14 +162,14 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
             dy[i_Θl(1)] = dΘl1
             dy[i_Θl(2)] = dΘl2
             for l in 3:lmax-1
-                dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + dτ(co,x)*(Θl[l]-0) # probably inlined? TODO: reduce allocation?
+                dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + τ′*(Θl[l]-0) # probably inlined? TODO: reduce allocation?
             end
             dy[i_Θl(lmax)] = dΘlmax
-            #return dy
+            return nothing # dy is in-place
         end
 
         y1 = initial_conditions_untight(co, x1, k, lmax)
-        co.perturbations_untight_spline = _spline_integral_inplace(dy_dx!, x1, x2, y1, name="perturbations untight (k=$(k*Mpc)/Mpc)")
+        co.perturbations_untight_spline = _spline_integral(dy_dx!, x1, x2, y1, name="perturbations untight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_untight_spline(x)

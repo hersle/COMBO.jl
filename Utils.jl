@@ -1,4 +1,5 @@
 using Printf
+using Dates
 
 function quadroots(a::Real, b::Real, c::Real)
     d = b^2 - 4*a*c
@@ -21,20 +22,37 @@ end
 # DifferentialEquations recommends (for high accuracy (low tolerance)) auto-switching stiffness solver AutoVern7(Rodas5()) solver (https://docs.sciml.ai/DiffEqDocs/stable/solvers/ode_solve/#Unknown-Stiffness-Problems)
 # TODO: autodiff?
 #
-function _spline_integral_inplace(dy_dx!::Function, x1::Float64, x2::Float64, y1; solver=AutoVern7(Rodas5(autodiff=false, diff_type = Val{:central})), reltol::Float64=1e-10, abstol::Float64=1e-10, name="unnamed quantity")
-    function f!(dy, y, p, x)
-        dy_dx!(x, y, dy)
-    end
-    sol = solve(ODEProblem(f!, y1, (x1, x2)), solver, reltol=reltol, abstol=abstol)
-    println("Integrated $name")
+
+function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, reltol::Float64=1e-8, abstol::Float64=1e-8, name="unnamed quantity")
+    t1 = now()
+    sol = solve(ODEProblem(f, y1, (x1, x2)), solver, reltol=reltol, abstol=abstol, dense=true)
+    t2 = now()
+    dt = t2 - t1
+
+    # print some statistics
+    success = sol.retcode == SciMLBase.ReturnCode.Success
+    println("Integrated $name $(success ? "successfully" : "unsuccessfully"):")
+    println("- system size:      $(length(y1)) variables")
+    println("- algorithm$(isnothing(solver) ? " (auto):" : ":       ") $(typeof(sol.alg))")
+    println("- abstol & reltol:  $abstol & $reltol")
+    println("- domain:           [$(sol.t[1]), $(sol.t[end])] with $(length(sol.t)) points")
+    println("- time elapsed:     $dt")
+
+    @assert success "failed integrating $name"
+
     return sol # use dense output to interpolate
 end
 
-function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1; solver=AutoVern7(Rodas5(autodiff=false, diff_type = Val{:central})), reltol::Float64=1e-10, abstol::Float64=1e-10, name="unnamed quantity")
+# integrate systems of equations with in-place RHS
+function _spline_integral(dy_dx!::Function, x1::Float64, x2::Float64, y1::Vector{Float64}; kwargs...)
+    f!(dy, y, p, x) = dy_dx!(x, y, dy)
+    return _spline_integral_generic(f!, x1, x2, y1; kwargs...)
+end
+
+# integrate scalar equations with out-of-place (scalar) RHS
+function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; kwargs...)
     f(y, p, x) = dy_dx(x, y)
-    sol = solve(ODEProblem(f, y1, (x1, x2)), solver, reltol=reltol, abstol=abstol)
-    println("Integrated $name")
-    return sol # use dense output to interpolate
+    return _spline_integral_generic(f, x1, x2, y1; kwargs...)
 end
 
 function multirange(posts, lengths)
