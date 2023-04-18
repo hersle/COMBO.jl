@@ -1,5 +1,3 @@
-include("Constants.jl")
-
 ρcrit(co::ΛCDM, x::Real) = 3 * H(co, x)^2 / (8 * π * G)
 ρb(co::ΛCDM, x::Real) = Ωb(co, x) * ρcrit(co, x)
 nb(co::ΛCDM, x::Real) = ρb(co, x) / mH
