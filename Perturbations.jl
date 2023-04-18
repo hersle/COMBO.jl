@@ -116,13 +116,13 @@ function initial_conditions_untight(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     return y
 end
 
-function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=100)
+function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=30) # lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
     x1 = time_tight_coupling(co, k)
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
 
     if isnothing(co.perturbations_untight_spline)
         function dy_dx!(x, y, dy)
-            println("x = $x")
+            print("x = $x\r") # print progress
             # pre-compute some common combined quantities
             ck_aH = c*k / aH(co,x)
             R = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
@@ -168,8 +168,12 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
             return nothing # dy is in-place
         end
 
+        # TODO: why do explicit methods take small steps when x ≈ -7.4 or so?
+        # TODO: which quantity behaves weirdly here?
+        # TODO: try to integrate with an explicit solver to a small time,
+        # TODO: then plot all functions on a small interval around it to see if any of them behaves badly
         y1 = initial_conditions_untight(co, x1, k, lmax)
-        co.perturbations_untight_spline = _spline_integral(dy_dx!, x1, x2, y1, name="perturbations untight (k=$(k*Mpc)/Mpc)")
+        co.perturbations_untight_spline = _spline_integral(dy_dx!, x1, x2, y1; name="perturbations untight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_untight_spline(x)

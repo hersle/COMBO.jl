@@ -23,9 +23,10 @@ end
 # TODO: autodiff?
 #
 
-function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, reltol::Float64=1e-8, abstol::Float64=1e-8, name="unnamed quantity")
+#function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, reltol::Float64=1e-8, abstol::Float64=1e-8, name="unnamed quantity")
+function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, kwargs...)
     t1 = now()
-    sol = solve(ODEProblem(f, y1, (x1, x2)), solver, reltol=reltol, abstol=abstol, dense=true)
+    sol = solve(ODEProblem(f, y1, (x1, x2)), solver; kwargs..., abstol=abstol, reltol=reltol)
     t2 = now()
     dt = t2 - t1
 
