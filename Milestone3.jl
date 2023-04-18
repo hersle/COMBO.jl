@@ -37,6 +37,14 @@ if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || 
     vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash)
     savefig("plots/temperature_fluctuation.pdf")
 
+    println("Plotting Θ0 + Ψ")
+    plot(xlabel=L"x = \log a", ylabel=L"\Theta_0 + \Psi")
+    ynum  = Θl.(co,x,k,0) .+ Ψ.(co,x,k)
+    yanal = -maximum(abs.(ynum)) * cos.(k*c*η.(co,x)/√(3))
+    plot!(x, ynum)
+    plot!(x, yanal, color=:gray, linewidth=0.5)
+    savefig("plots/Theta_plus_Psi.pdf")
+
     # return
 
     println("Plotting overdensity")

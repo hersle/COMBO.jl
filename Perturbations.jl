@@ -181,6 +181,7 @@ end
 vc(co::ΛCDM, x::Real, k::Real) = x <= time_tight_coupling(co, k) ? perturbations_tight(co, x, k)[i_vc] : perturbations_untight(co, x, k)[i_vc]
 vb(co::ΛCDM, x::Real, k::Real) = x <= time_tight_coupling(co, k) ? perturbations_tight(co, x, k)[i_vb] : perturbations_untight(co, x, k)[i_vb]
  Φ(co::ΛCDM, x::Real, k::Real) = x <= time_tight_coupling(co, k) ? perturbations_tight(co, x, k)[i_Φ]  : perturbations_untight(co, x, k)[i_Φ]
+ Ψ(co::ΛCDM, x::Real, k::Real) = -Φ(co,x,k) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*Θl(co,x,k,2)) # TODO: neutrinos
 function Θl(co::ΛCDM, x::Real, k::Real, l::Integer)
     if x <= time_tight_coupling(co, k)
         # Take Θl(l<2) from tight integration and Θl(l>=2) from recursive relations
