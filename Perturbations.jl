@@ -95,7 +95,7 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
         end
 
         y1 = initial_conditions_tight(co, x1, k)
-        co.perturbations_tight_spline = _spline_integral(dy_dx!, x1, x2, y1; name="perturbations tight (k=$(k*Mpc)/Mpc)")
+        co.perturbations_tight_spline = _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-10, reltol=1e-10, name="perturbations tight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_tight_spline(x)
@@ -115,13 +115,13 @@ function initial_conditions_untight(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     return y
 end
 
-function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=30) # lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
+function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=6) # lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
     x1 = time_tight_coupling(co, k)
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
 
     if isnothing(co.perturbations_untight_spline)
         function dy_dx!(x, y, dy)
-            print("x = $x\r") # print progress
+            #print("x = $x\r") # print progress
             # pre-compute some common combined quantities
             ck_aH = c*k / aH(co,x)
             R = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
@@ -138,7 +138,7 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
 
             # 2) compute derivatives
             Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θl[2]) # TODO: Ωγ0 (Hans) or Ωr (Callin)? TODO: neutrinos
-            Π   = Θl[2] + 0 # TODO: polarization
+            Π   = Θl[2] + 0 # TODO: include or not? # TODO: polarization
             dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0) # TODO: neutrinos
             dδc = ck_aH*vc - 3*dΦ
             dδb = ck_aH*vb - 3*dΦ
@@ -171,8 +171,9 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
         # TODO: which quantity behaves weirdly here?
         # TODO: try to integrate with an explicit solver to a small time,
         # TODO: then plot all functions on a small interval around it to see if any of them behaves badly
+        # TODO: specify stiff solver explicitly, or use an automatic one?
         y1 = initial_conditions_untight(co, x1, k, lmax)
-        co.perturbations_untight_spline = _spline_integral(dy_dx!, x1, x2, y1; name="perturbations untight (k=$(k*Mpc)/Mpc)")
+        co.perturbations_untight_spline = _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-10, reltol=1e-10, name="perturbations untight (k=$(k*Mpc)/Mpc)")
     end
 
     return co.perturbations_untight_spline(x)
