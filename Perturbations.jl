@@ -149,7 +149,7 @@ function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::
             dΘl0   = -ck_aH*Θl[1] - dΦ
             dΘl1   =  ck_aH/3 * (Θ0-2*Θl[2]+Ψ) + τ′*(Θl[1]+vb/3)
             dΘl2   =  ck_aH/(2*2+1) * (2*Θl[2-1] - (2+1)*Θl[2+1]) + τ′*(Θl[2]-Π/10)
-            dΘlmax = ck_aH*Θl[lmax-1] - c*(lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + τ′*Θl[lmax]
+            dΘlmax = ck_aH*Θl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + τ′*Θl[lmax] # 2nd term: their η is my c*η
 
             # re-pack variables into vector
             # TODO: pack and assign simultaneously?
