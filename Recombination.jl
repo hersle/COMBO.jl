@@ -21,46 +21,30 @@ function Xe_Saha_H(co::ΛCDM, x::Real)
     return b < 1e10 ? quadroots(a, b, c)[2] : 1 - 1/b # choose Taylor expansion for large b
 end
 
-function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=10000)
-    # To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
-    # begin with an initial guess for Xe and iteratively solve the system of Saha equations
-    # (1) ne * XHe+ / (1 - XHe+ - XHe++) = 2 / λe^3 * exp(-EHe1ion / (kB*Tb))
-    # (2) ne * XHe++ / XHe+ = 4 / λe^3 * exp(-EHe2ion/(kB*Tb))
-    # (3) ne * XH+ / (1-XH+) = 1 / λe^3 * exp(-EH1ion/(kB*Tb))
-    # for {XH+, XHe+, XHe++} = {XH1, XHe1, XHe2}.
-
+# To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
+# begin with an initial guess for Xe and iteratively solve the system of Saha equations
+# (1) ne * XHe+ / (1 - XHe+ - XHe++) = 2 / λe^3 * exp(-EHe1ion / (kB*Tb))
+# (2) ne * XHe++ / XHe+ = 4 / λe^3 * exp(-EHe2ion/(kB*Tb))
+# (3) ne * XH+ / (1-XH+) = 1 / λe^3 * exp(-EH1ion/(kB*Tb))
+# for {XH+, XHe+, XHe++} = {XH1, XHe1, XHe2}.
+function Xe_Saha_H_He_fixed_point(co, x, Xe)
     Tb = Tγ(co, x)
     λe = h / √(2*π*me*kB*Tb)
+    ne = Xe * nH(co, x)
+    R1 = 1 / λe^3 * exp(-EH1ion /(kB*Tb)) / ne
+    R2 = 2 / λe^3 * exp(-EHe1ion/(kB*Tb)) / ne
+    R3 = 4 / λe^3 * exp(-EHe2ion/(kB*Tb)) / ne
+    XH1  = 1 / (1 + 1/R1)
+    XHe1 = 1 / (1 + 1/R2 + R3)
+    XHe2 = 1 / (1 + 1/R3 + 1/(R2*R3))
+    return XH1 + fHe(co.Yp) * (XHe1 + 2*XHe2)
+end
 
-    # 1. Guess Xe
-    Xe = Xe_Saha_H(co, x) # use fast H-only Saha equation for guess
-    if Xe < 0.5
-        # for small Xe, the fixed-point iteration below converges extremely slowly,
-        # but here there is almsot no He anyway, so just take the fast H-only solution
-        return Xe
-    end
-
-    converged = false
-    iters = 0
-    while !converged && iters < maxiters
-        # 2. Compute corresponding XH+, XHe+, XHe++
-        ne = Xe * nH(co, x)
-        R1 = 1 / λe^3 * exp(-EH1ion /(kB*Tb)) / ne
-        R2 = 2 / λe^3 * exp(-EHe1ion/(kB*Tb)) / ne
-        R3 = 4 / λe^3 * exp(-EHe2ion/(kB*Tb)) / ne
-        XH1  = 1 / (1 + 1/R1)
-        XHe1 = 1 / (1 + 1/R2 + R3)
-        XHe2 = 1 / (1 + 1/R3 + 1/(R2*R3))
-
-        # 3. Compute corresponding Xe ...
-        Xe_new = XH1 + fHe(co.Yp) * (XHe1 + 2*XHe2)
-        converged = abs(Xe_new - Xe) < tol # ... until Xe becomes self consistent
-        Xe = Xe_new
-        iters += 1
-    end
-
-
-    return iters < maxiters ? Xe : NaN
+function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=10000)
+    # Fixed-point iterate for Xe, starting with the fast H-only Saha equation as the initial guess
+    # If Xe0 is small, the iterations converges very slowly, but then there is almost no He anyway, so we just take the H-only solution
+    Xe0 = Xe_Saha_H(co, x)
+    return Xe0 < 0.5 ? Xe0 : fixed_point_iterate(Xe -> Xe_Saha_H_He_fixed_point(co, x, Xe), Xe0; tol=tol)
 end
 
 function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)

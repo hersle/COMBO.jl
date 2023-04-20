@@ -77,30 +77,22 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
             dvc = -vc - ck_aH*Ψ
             dΘ0 = -ck_aH*Θ1 - dΦ
 
-            # TODO: calculate q with recurrence relation, not approximating dΘ2 = 0 ?
-            # TODO: start with dΘ2 = 0 and dΘ1(dΘ2=0)
-            d_aHdτ = daH(co,x)*dτ(co,x) + aH(co,x)*d2τ(co,x)
-            dΘ2func(dΘ1) = -20/45*ck_aH * (dΘ1/dτ(co,x) - Θ1*d_aHdτ / (aH(co,x)*dτ(co,x)^2)) # anal Θ2′(x)
-            dΘ1func(dΘ2) = (-45/20/ck_aH*dΘ2 + Θ1*d_aHdτ/(aH(co,x)*dτ(co,x)^2)) * dτ(co,x) # inverse of dΘ2func
-            q, dvb = NaN, NaN # declare now, to make available after scope of while loop
-            dΘ2 = 0.0
-            dΘ1 = dΘ1func(dΘ2)
-            converged = false
-            iters = 0
-            # TODO: make Util fixed-point iteration function that works on scalars and vectors
-            while !converged
-                q   = (-((1-R)*dτ(co,x)+(1+R)*d2τ(co,x))*(3*Θ1+vb) - ck_aH*Ψ + (1-daH_aH)*ck_aH*(-Θ0+2*Θ2) + ck_aH*(-dΘ0+2*dΘ2)) / # approximate Θ2' = 0 (see discussion under Callin (34))
-                      ((1+R)*dτ(co,x) + daH_aH - 1) # q is Callin's 3*Θ1′ + vb′
-                dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(q+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
-                dΘ1_new = (q - dvb) / 3
-                dΘ2_new = dΘ2func(dΘ1_new)
-                converged = max(abs(dΘ2_new - dΘ2), abs(dΘ1_new - dΘ1)) < 1e-30
-                dΘ1 = dΘ1_new
-                dΘ2 = dΘ2_new
-                iters += 1
+            # calculate (dΘ1, dΘ2) (and dvb) with fixed-point iteration
+            d_aHdτ = daH(co,x)*dτ(co,x) + aH(co,x)*d2τ(co,x) # needed in fixed-point iteration
+            function dvb_dΘ1_dΘ2_fixed_point(dvb_dΘ1_dΘ2)
+                _, dΘ1, dΘ2 = dvb_dΘ1_dΘ2 # ignore dvb; it's in the tuple just so it is available after the fixed-point iteration
+                d_3Θ1_plus_vb = (-((1-R)*dτ(co,x)+(1+R)*d2τ(co,x))*(3*Θ1+vb) - ck_aH*Ψ + (1-daH_aH)*ck_aH*(-Θ0+2*Θ2) + ck_aH*(-dΘ0+2*dΘ2)) / # approximate Θ2' = 0 (see discussion under Callin (34))
+                                ((1+R)*dτ(co,x) + daH_aH - 1) # Callin's 3*Θ1′ + vb′ = Hans' q
+                dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(d_3Θ1_plus_vb+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
+                dΘ1 = (d_3Θ1_plus_vb - dvb) / 3
+                dΘ2 = -20/45*ck_aH * (dΘ1/dτ(co,x) - Θ1*d_aHdτ / (aH(co,x)*dτ(co,x)^2)) # anal Θ2′(x) # TODO: or from q?
+                return (dvb, dΘ1, dΘ2)
             end
-            dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(q+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
-            dΘ1 = (q - dvb) / 3
+            dvb, dΘ1, dΘ2 = fixed_point_iterate(dvb_dΘ1_dΘ2_fixed_point, (NaN, 0.0, 0.0); tol=1e-30)
+
+            if abs(x - co.x_tight_latest) < 1e-30
+                println("(tight) x = $x, dΘ2 = $dΘ2, Θ2 = $Θ2, Θ2′/Θ2 = $(dΘ2/Θ2)")
+            end
 
             # re-pack variables into vector
             lmax = 1 # tight coupling: only need to integrate Θ(l<=2) (see above comment)

@@ -64,3 +64,17 @@ function format_time_variations(co::ΛCDM, x::Real)
     return @sprintf("x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr",
                      x,          a(x),      z(x),      η(co,x) / Gyr, t(co,x) / Gyr)
 end
+
+function fixed_point_iterate(xfunc::Function, x0; tol::Float64=1e-10, maxiters::Integer=100)
+    converged = false
+    iters = 0
+    x = x0
+    while !converged && iters < maxiters
+        x_new = xfunc(x)
+        converged = maximum(abs.(x_new .- x)) < tol # TODO: or vector 2-norm?
+        x = x_new
+        iters += 1
+    end
+    @assert iters < maxiters
+    return x
+end
