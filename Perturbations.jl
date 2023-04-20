@@ -90,10 +90,6 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
             end
             dvb, dΘ1, dΘ2 = fixed_point_iterate(dvb_dΘ1_dΘ2_fixed_point, (NaN, 0.0, 0.0); tol=1e-30)
 
-            if abs(x - co.x_tight_latest) < 1e-30
-                println("(tight) x = $x, dΘ2 = $dΘ2, Θ2 = $Θ2, Θ2′/Θ2 = $(dΘ2/Θ2)")
-            end
-
             # re-pack variables into vector
             lmax = 1 # tight coupling: only need to integrate Θ(l<=2) (see above comment)
             dy[i_δc]    = dδc
@@ -127,7 +123,7 @@ function initial_conditions_untight(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     return y
 end
 
-function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=6) # lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
+function perturbations_untight(co::ΛCDM, x::Real, k::Real; x2::Real=0.0, lmax::Integer=30) # lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
     x1 = time_tight_coupling(co, k)
     @assert x1 <= x <= x2 "x = $x, x1 = $x1, x2 = $x2"
 
@@ -197,11 +193,14 @@ vc(co::ΛCDM, x::Real, k::Real) = x <= time_tight_coupling(co, k) ? perturbation
 vb(co::ΛCDM, x::Real, k::Real) = x <= time_tight_coupling(co, k) ? perturbations_tight(co, x, k)[i_vb] : perturbations_untight(co, x, k)[i_vb]
  Φ(co::ΛCDM, x::Real, k::Real) = x <= time_tight_coupling(co, k) ? perturbations_tight(co, x, k)[i_Φ]  : perturbations_untight(co, x, k)[i_Φ]
  Ψ(co::ΛCDM, x::Real, k::Real) = -Φ(co,x,k) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*Θl(co,x,k,2)) # TODO: neutrinos
+# TODO: Θl(l≥2) has a small kink at time_tight_coupling !!!
 function Θl(co::ΛCDM, x::Real, k::Real, l::Integer)
     if x <= time_tight_coupling(co, k)
         # Take Θl(l<2) from tight integration and Θl(l>=2) from recursive relations
+        # TODO: speed up recursion?
         return l  < 2 ? perturbations_tight(co, x, k)[i_Θl(l)] :
                l == 2 ? -20*c*k / (45*aH(co,x)*dτ(co,x)) * Θl(co, x, k, 1) : # TODO: polarization
+
                         -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * Θl(co, x, k, l-1) # recursive relation
     else
         # Take all Θl from untight integration

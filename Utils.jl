@@ -37,7 +37,7 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
     success = sol.retcode == SciMLBase.ReturnCode.Success
     println("Integrated $name $(success ? "successfully" : "unsuccessfully"):")
     println("- system size:      $(length(y1)) variables")
-    println("- algorithm$(isnothing(solver) ? " (auto):" : ":       ") $(typeof(sol.alg))")
+    println("- algorithm$(isnothing(solver) ? " (auto):" : ":       ") $(typeof(sol.alg))") # nothing means that DifferentialEquations decides the integration algorithm
     println("- abstol & reltol:  $abstol & $reltol")
     println("- domain:           [$(sol.t[1]), $(sol.t[end])] with $(length(sol.t)) points")
     println("- time elapsed:     $dt")
