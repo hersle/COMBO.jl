@@ -76,9 +76,29 @@ function perturbations_tight(co::ΛCDM, x::Real, k::Real; x1::Real=-20.0)
             dδb = ck_aH*vb - 3*dΦ
             dvc = -vc - ck_aH*Ψ
             dΘ0 = -ck_aH*Θ1 - dΦ
-            dΘ2 = 0 # approximate Θ2' = 0 in q (see discussion under Callin (34))
-            q   = (-((1-R)*dτ(co,x)+(1+R)*d2τ(co,x))*(3*Θ1+vb) - ck_aH*Ψ + (1-daH_aH)*ck_aH*(-Θ0+2*Θ2) + ck_aH*(-dΘ0+2*dΘ2)) /
-                  ((1+R)*dτ(co,x) + daH_aH - 1)
+
+            # TODO: calculate q with recurrence relation, not approximating dΘ2 = 0 ?
+            # TODO: start with dΘ2 = 0 and dΘ1(dΘ2=0)
+            d_aHdτ = daH(co,x)*dτ(co,x) + aH(co,x)*d2τ(co,x)
+            dΘ2func(dΘ1) = -20/45*ck_aH * (dΘ1/dτ(co,x) - Θ1*d_aHdτ / (aH(co,x)*dτ(co,x)^2)) # anal Θ2′(x)
+            dΘ1func(dΘ2) = (-45/20/ck_aH*dΘ2 + Θ1*d_aHdτ/(aH(co,x)*dτ(co,x)^2)) * dτ(co,x) # inverse of dΘ2func
+            q, dvb = NaN, NaN # declare now, to make available after scope of while loop
+            dΘ2 = 0.0
+            dΘ1 = dΘ1func(dΘ2)
+            converged = false
+            iters = 0
+            # TODO: make Util fixed-point iteration function that works on scalars and vectors
+            while !converged
+                q   = (-((1-R)*dτ(co,x)+(1+R)*d2τ(co,x))*(3*Θ1+vb) - ck_aH*Ψ + (1-daH_aH)*ck_aH*(-Θ0+2*Θ2) + ck_aH*(-dΘ0+2*dΘ2)) / # approximate Θ2' = 0 (see discussion under Callin (34))
+                      ((1+R)*dτ(co,x) + daH_aH - 1) # q is Callin's 3*Θ1′ + vb′
+                dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(q+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
+                dΘ1_new = (q - dvb) / 3
+                dΘ2_new = dΘ2func(dΘ1_new)
+                converged = max(abs(dΘ2_new - dΘ2), abs(dΘ1_new - dΘ1)) < 1e-30
+                dΘ1 = dΘ1_new
+                dΘ2 = dΘ2_new
+                iters += 1
+            end
             dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(q+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
             dΘ1 = (q - dvb) / 3
 
