@@ -47,7 +47,9 @@ function Xe_Saha_H_He(co::ΛCDM, x::Real; tol::Float64=1e-15, maxiters::Int=1000
     return Xe0 < 0.5 ? Xe0 : fixed_point_iterate(Xe -> Xe_Saha_H_He_fixed_point(co, x, Xe), Xe0; tol=tol)
 end
 
-function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
+# @code_warntype on Xe(co,x) says that this can return Any, unless its return type is explicitly stated (due to Union{...., Nothing}?)
+# TODO: handle in a better way?
+function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)::Float64
     if isnothing(co.Xe_Peebles_spline)
         function dXe_dx(x, Xe)
             Tb = Tγ(co,x) # K # TODO: assumptions? separate baryon evolution?
@@ -68,9 +70,9 @@ function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)
     return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
 end
 
-function time_switch_Peebles(co::ΛCDM)
+function time_switch_Peebles(co::ΛCDM)::Float64
     if isnan(co.x_switch_Peebles)
-        co.x_switch_Peebles = find_zero(x -> Xe_Saha_H_He(co, x) - 0.999, (-20, +20), rtol=1e-20, atol=1e-20)
+        co.x_switch_Peebles = find_zero(x -> Xe_Saha_H_He(co, x) - 0.999, (-20.0, +20.0), rtol=1e-20, atol=1e-20)
     end
     return co.x_switch_Peebles
 end
@@ -80,7 +82,7 @@ time_reionization_He(co::ΛCDM) = co.reionization ? -log(1 + co.z_reion_He) : Na
 
 function Xe_reionization(co::ΛCDM, x::Real)
     if !co.reionization
-        return 0
+        return 0.0
     end
 
     y(z) = (1+z)^(3/2)
@@ -94,10 +96,11 @@ end
 
 # TODO: spline whole thing?
 function Xe(co::ΛCDM, x::Real)
-    if x < time_switch_Peebles(co)
+    xswitch = time_switch_Peebles(co) # TODO: this allocates for some strange reason
+    if x < xswitch
         Xe_total = Xe_Saha_H_He(co, x)
     else
-        x1 = time_switch_Peebles(co)
+        x1 = xswitch
         Xe1 = Xe_Saha_H_He(co, x1)
         Xe_total = Xe_Peebles(co, x, x1, Xe1) # start Peebles from last value of Saha
     end
@@ -125,8 +128,8 @@ d3τ(co::ΛCDM, x::Real) = τ(co, x; derivative=3)
  dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
 d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
 
-time_decoupling(co::ΛCDM) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0, (-20, -3)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
-time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20, -3)) # exclude reionization for x > -3
+time_decoupling(co::ΛCDM) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
+time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3
 
 function sound_horizon(co::ΛCDM, x::Real)
     R(x) = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
