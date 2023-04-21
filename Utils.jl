@@ -52,23 +52,22 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
     x = sol.t[sortinds]
     y = sol.u[sortinds]
 
-    if length(y1) == 1
-        return Spline1D(x, y)
-    else
-        return [Spline1D(sol.t, sol.u[i] for i in 1:length(y1))]
-    end
+    return x, y
 end
 
 # integrate systems of equations with in-place RHS
 function _spline_integral(dy_dx!::Function, x1::Float64, x2::Float64, y1::Vector{Float64}; kwargs...)
     f!(dy, y, p, x) = dy_dx!(x, y, dy)
-    return _spline_integral_generic(f!, x1, x2, y1; kwargs...)
+    x, y = _spline_integral_generic(f!, x1, x2, y1; kwargs...)
+    y = [y[ix][iy] for iy in 1:length(y1), ix in 1:length(x)] # convert vector of vectors to 2D matrix
+    return [Spline1D(x, y[i,:], k=3, bc="error") for i in 1:length(y1)]
 end
 
 # integrate scalar equations with out-of-place (scalar) RHS
 function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; kwargs...)
     f(y, p, x) = dy_dx(x, y)
-    return _spline_integral_generic(f, x1, x2, y1; kwargs...)
+    x, y = _spline_integral_generic(f, x1, x2, y1; kwargs...)
+    return Spline1D(x, y, bc="error")
 end
 
 function multirange(posts, lengths)
