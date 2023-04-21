@@ -24,7 +24,7 @@ end
 #
 
 #function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, reltol::Float64=1e-8, abstol::Float64=1e-8, name="unnamed quantity")
-function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, benchmark=false, kwargs...)
+function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, benchmark=false, verbose=false, kwargs...)
     if benchmark
         sol = solve(ODEProblem(f, y1, (x1, x2)), solver; kwargs..., abstol=abstol, reltol=reltol) # pre-compile before measuring
     end
@@ -35,12 +35,14 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
 
     # print some statistics
     success = sol.retcode == SciMLBase.ReturnCode.Success
-    println("Integrated $name $(success ? "successfully" : "unsuccessfully"):")
-    println("- system size:      $(length(y1)) variables")
-    println("- algorithm$(isnothing(solver) ? " (auto):" : ":       ") $(typeof(sol.alg))") # nothing means that DifferentialEquations decides the integration algorithm
-    println("- abstol & reltol:  $abstol & $reltol")
-    println("- domain:           [$(sol.t[1]), $(sol.t[end])] with $(length(sol.t)) points")
-    println("- time elapsed:     $dt")
+    if verbose
+        println("Integrated $name $(success ? "successfully" : "unsuccessfully"):")
+        println("- system size:      $(length(y1)) variables")
+        println("- algorithm$(isnothing(solver) ? " (auto):" : ":       ") $(typeof(sol.alg))") # nothing means that DifferentialEquations decides the integration algorithm
+        println("- abstol & reltol:  $abstol & $reltol")
+        println("- domain:           [$(sol.t[1]), $(sol.t[end])] with $(length(sol.t)) points")
+        println("- time elapsed:     $dt")
+    end
 
     @assert success "failed integrating $name"
 
