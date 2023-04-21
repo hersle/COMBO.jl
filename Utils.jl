@@ -46,7 +46,17 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
 
     @assert success "failed integrating $name"
 
-    return sol # use dense output to interpolate
+    # spline wants points with ascending x values,
+    # while the integrator can output them in a different order
+    sortinds = sortperm(sol.t)
+    x = sol.t[sortinds]
+    y = sol.u[sortinds]
+
+    if length(y1) == 1
+        return Spline1D(x, y)
+    else
+        return [Spline1D(sol.t, sol.u[i] for i in 1:length(y1))]
+    end
 end
 
 # integrate systems of equations with in-place RHS

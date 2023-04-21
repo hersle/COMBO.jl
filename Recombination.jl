@@ -114,21 +114,21 @@ ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
 
 dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
 
-function τ(co::ΛCDM, x::Real; derivative::Integer=0)
+function τ(co::ΛCDM, x::Real; deriv::Integer=0)
     if isnothing(co.τ_spline)
         co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0; reltol=1e-15, abstol=1e-15, name="optical depth τ")
     end
-    return co.τ_spline(x, Val{derivative})
+    return deriv == 0 ? co.τ_spline(x) : derivative(co.τ_spline, x; nu=deriv)
 end
 
-d2τ(co::ΛCDM, x::Real) = τ(co, x; derivative=2)
-d3τ(co::ΛCDM, x::Real) = τ(co, x; derivative=3)
+d2τ(co::ΛCDM, x::Real) = τ(co, x; deriv=2)
+d3τ(co::ΛCDM, x::Real) = τ(co, x; deriv=3)
 
   g(co::ΛCDM, x::Real) = -dτ(co,x) * exp(-τ(co,x))
  dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
 d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
 
-time_decoupling(co::ΛCDM) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
+time_decoupling(co::ΛCDM) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
 time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3
 
 function sound_horizon(co::ΛCDM, x::Real)
