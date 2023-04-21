@@ -49,25 +49,21 @@ end
 
 # @code_warntype on Xe(co,x) says that this can return Any, unless its return type is explicitly stated (due to Union{...., Nothing}?)
 # TODO: handle in a better way?
-function Xe_Peebles(co::ΛCDM, x::Real, x1::Real, Xe1::Real)::Float64
-    if isnothing(co.Xe_Peebles_spline)
-        function dXe_dx(x, Xe)
-            Tb = Tγ(co,x) # K # TODO: assumptions? separate baryon evolution?
-            n_1s = (1-Xe) * nH(co,x) # 1/m^3
-            Λ_2s_1s = 8.227 # 1/s
-            Λ_α = H(co,x) * (3*EH1ion/(ħ*c))^3 / ((8*π)^2 * n_1s) # 1/s
-            ϕ2 = 0.448 * log(EH1ion/(kB*Tb)) # dimensionless
-            α2 = 64*π / √(27*π) * (α/me)^2 * √(EH1ion/(kB*Tb)) * ϕ2 * ħ^2/c # m^3/s
-            λe = √(h^2 / (2*π*me*kB*Tb)) # thermal de Broglie wavelength
-            β  = α2 / λe^3 * exp(-EH1ion/(kB*Tb))
-            β2 = α2 / λe^3 * exp(-EH1ion/(4*kB*Tb)) # 1/s (compute this instead of β2 = β * exp(3*EH1ion/(4*kB*Tb)) to avoid exp overflow)
-            C_r = (Λ_2s_1s + Λ_α) / (Λ_2s_1s + Λ_α + β2)
-            return C_r / H(co,x) * (β*(1-Xe) - nH(co,x)*α2*Xe^2)
-        end
-        co.Xe_Peebles_spline = _spline_integral(dXe_dx, x1, +20.0, Xe1; abstol=1e-15, name="free electron fraction Xe")
+function Xe_Peebles_spline(co::ΛCDM, x1::Float64, Xe1::Float64)::Spline1D
+    function dXe_dx(x, Xe)
+        Tb = Tγ(co,x) # K # TODO: assumptions? separate baryon evolution?
+        n_1s = (1-Xe) * nH(co,x) # 1/m^3
+        Λ_2s_1s = 8.227 # 1/s
+        Λ_α = H(co,x) * (3*EH1ion/(ħ*c))^3 / ((8*π)^2 * n_1s) # 1/s
+        ϕ2 = 0.448 * log(EH1ion/(kB*Tb)) # dimensionless
+        α2 = 64*π / √(27*π) * (α/me)^2 * √(EH1ion/(kB*Tb)) * ϕ2 * ħ^2/c # m^3/s
+        λe = √(h^2 / (2*π*me*kB*Tb)) # thermal de Broglie wavelength
+        β  = α2 / λe^3 * exp(-EH1ion/(kB*Tb))
+        β2 = α2 / λe^3 * exp(-EH1ion/(4*kB*Tb)) # 1/s (compute this instead of β2 = β * exp(3*EH1ion/(4*kB*Tb)) to avoid exp overflow)
+        C_r = (Λ_2s_1s + Λ_α) / (Λ_2s_1s + Λ_α + β2)
+        return C_r / H(co,x) * (β*(1-Xe) - nH(co,x)*α2*Xe^2)
     end
-
-    return co.Xe_Peebles_spline(x) # TODO: spline the logarithm instead?
+    return _spline_integral(dXe_dx, x1, +20.0, Xe1; abstol=1e-15, name="free electron fraction Xe")
 end
 
 function time_switch_Peebles(co::ΛCDM)::Float64
@@ -94,20 +90,30 @@ function Xe_reionization(co::ΛCDM, x::Real)
     return Xe_reionization_total
 end
 
-# TODO: spline whole thing?
-function Xe(co::ΛCDM, x::Real)
-    xswitch = time_switch_Peebles(co) # TODO: this allocates for some strange reason
-    if x < xswitch
-        Xe_total = Xe_Saha_H_He(co, x)
-    else
-        x1 = xswitch
-        Xe1 = Xe_Saha_H_He(co, x1)
-        Xe_total = Xe_Peebles(co, x, x1, Xe1) # start Peebles from last value of Saha
+function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
+    if isnothing(co.Xe_spline)
+        xswitch = time_switch_Peebles(co) # TODO: why does this allocate?
+
+        # 1) Peebles equation points
+        Xe2spl = Xe_Peebles_spline(co, xswitch, Xe_Saha_H_He(co, xswitch)) # start Peebles from last value of Saha
+        x2 = unique(Xe2spl.t) # don't duplicate xswitch
+        Xe2 = Xe2spl.(x2)
+
+        # Saha equation points
+        x1 = range(x1, xswitch, length=length(x2))[1:end-1] # use as many points as Peebles; don't duplicate xswitch
+        Xe1 = Xe_Saha_H_He.(co, x1)
+
+        # concatenate
+        xs = vcat(x1, x2)
+        Xes = vcat(Xe1, Xe2)
+
+        # add reionization everywhere
+        Xes += Xe_reionization.(co, xs)
+
+        co.Xe_spline = Spline1D(xs, Xes)
     end
 
-    Xe_total += Xe_reionization(co, x)
-
-    return Xe_total
+    return co.Xe_spline(x)
 end
 
 ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
