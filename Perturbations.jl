@@ -191,7 +191,12 @@ function perturbations_splines(co::ΛCDM; lmax::Integer=6)
         # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
         # qty(x, k) spline requires 1D arrays for x and k,
         # so use the values x from the perturbation mode with the most values
-        spliness = [perturbations_mode(co, k, lmax) for k in ks]
+        spliness = Vector{Vector{Spline1D}}(undef, length(ks))
+        @threads for i_k in 1:length(ks) # 8 threads give a good speed-up
+            k = ks[i_k]
+            println("Splining perturbation mode k = $(k*Mpc) / Mpc")
+            spliness[i_k] = perturbations_mode(co, k, lmax)
+        end
         xs = splinex(spliness[argmax(length(splinex(splines[1])) for splines in spliness)][1])
 
         perturbs = Array{Float64, 3}(undef, length(spliness[1]), length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
@@ -207,7 +212,7 @@ function perturbations_splines(co::ΛCDM; lmax::Integer=6)
         end
 
         t2 = now()
-        println("Splined perturbations(x, k) on ($(length(xs)), $(length(ks))) grid in $(t2-t1)")
+        println("Splined perturbations(x,k) on ($(length(xs)),$(length(ks))) grid in $(t2-t1) with $(nthreads()) parallel threads")
     end
     return co.perturbation_splines
 end

@@ -7,6 +7,7 @@ using Roots # root finding
 #using OrdinaryDiffEq # ODE integration (instead of DifferentialEquations to reduce compile time)
 using DifferentialEquations
 using Dierckx # for splines
+using Base.Threads
 
 export a, z
 export ΛCDM
