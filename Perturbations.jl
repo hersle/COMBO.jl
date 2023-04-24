@@ -180,6 +180,8 @@ end
 
 function perturbations_splines(co::ΛCDM; lmax::Integer=6)
     if length(co.perturbation_splines) == 0
+        t1 = now()
+
         kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
         ks = kmin .+ (kmax-kmin) * range(0, 1; length=100) .^ 2 # TODO: what spacing? quadratic as in Callin?
         
@@ -201,6 +203,9 @@ function perturbations_splines(co::ΛCDM; lmax::Integer=6)
             qty = perturbs[i_qty, :, :]
             push!(co.perturbation_splines, Spline2D(xs, ks, qty)) # spline (x, k)
         end
+
+        t2 = now()
+        println("Splined perturbations(x, k) on ($(length(xs)), $(length(ks))) grid in $(t2-t1)")
     end
     return co.perturbation_splines
 end
