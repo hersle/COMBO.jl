@@ -180,7 +180,8 @@ function splined_perturbations(co::ΛCDM; lmax::Integer=30)
     if length(co.perturbation_splines) == 0
         # then make it
         kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
-        ks = range(kmin, kmax, 5) # TODO: what spacing?
+        ns = 0:100
+        ks = kmin .+ (kmax-kmin) * (ns/maximum(ns)).^2 # TODO: what spacing? quadratic as in Callin?
         
         # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
         perturbs_kmax = splined_perturbations_combined(co, kmax, lmax) # fill perturbations_untight_spline
