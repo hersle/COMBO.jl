@@ -98,9 +98,9 @@ function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real
     for i in 1:i_max(1)
         splines_ext[i] = splines[i]
     end
-    splines_ext[i_Θl(2)] = Spline1D(x, @. -20*c*k / (45*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(1)](x)) # TODO: polarization
+    splines_ext[i_Θl(2)] = Spline1D(x, @. -20*c*k / (45*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(1)](x), bc="error") # TODO: polarization
     for l in 3:lmax
-        splines_ext[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(l-1)](x)) # recursive relation
+        splines_ext[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(l-1)](x), bc="error") # recursive relation
     end
     return splines_ext
 end

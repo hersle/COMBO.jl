@@ -107,7 +107,7 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
         # add reionization everywhere
         Xes += Xe_reionization.(co, xs)
 
-        co.Xe_spline = Spline1D(xs, Xes)
+        co.Xe_spline = Spline1D(xs, Xes, bc="error")
     end
 
     return co.Xe_spline(x)
