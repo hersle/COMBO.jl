@@ -9,33 +9,23 @@ using .Constants
 using LaTeXStrings
 
 co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: change back
-k = 0.15 / Mpc
-xtce = time_tight_coupling(co, k)
-println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
+ks = [1e-3, 1e-2, 1e-1] / Mpc
+#println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
-if !isfile("plots/time_tight_coupling.pdf")
-    println("Plotting tight coupling end time")
-    log10ks = range(-3, +3, length=100)
-    ks = 10 .^ log10ks / Mpc
-    plot(xlabel=L"k / \textrm{Mpc}", ylabel=L"x")
-    plot!(log10ks, time_tight_coupling.(co, ks))
-    vline!([log10(0.15)])
-    savefig("plots/time_tight_coupling.pdf")
-end
-
-if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf")
-    k = 0.1 / Mpc
-    x = range(-18, 0, length=5000)
-    println("Using k = $k / Mpc")
-
-    println("Plotting temperature fluctuation")
-    plot(xlabel=L"x = \log a", ylabel=L"\Theta")
-    # TODO: wrong sign with l=1?
+if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf") # TODO: add more temperature fluctuations...
+    println("Plotting temperature fluctuations")
+    x = range(-20.0, 0.0, length=5000)
     for l in 0:3
-        plot!(x, Θl.(co, x, k, l), label=L"\Theta_%$(l)")
+        plot(xlabel=L"x = \log a", ylabel=L"\Theta_%$(l)")
+        for (i, k) in enumerate(ks)
+            label = L"k = %$(k*Mpc) / \textrm{Mpc}"
+            plot!(x, Θl.(co, x, k, l),                                                          color=i, alpha=2/6, linewidth=1.5, label=nothing)
+            plot!(x, Cosmology.perturbations_mode(co, k, 6; tight=false)[Cosmology.i_Θl(l)](x), color=i, alpha=4/6, linewidth=1.0, label=nothing)
+            plot!(x, Cosmology.perturbations_mode(co, k, 6; tight=false)[Cosmology.i_Θl(l)](x), color=i, alpha=6/6, linewidth=0.5, label=label)
+            vline!([time_tight_coupling(co, k)], color=i, linestyle=:dash, label=nothing)
+        end
+        savefig("plots/temperature_fluctuation_l$l.pdf")
     end
-    vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash)
-    savefig("plots/temperature_fluctuation.pdf")
 
     println("Plotting Θ0 + Ψ")
     plot(xlabel=L"x = \log a", ylabel=L"\Theta_0 + \Psi")
