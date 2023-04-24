@@ -12,17 +12,20 @@ co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: cha
 ks = [1e-3, 1e-2, 1e-1] / Mpc
 #println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
+function plot_quantity_with_all_methods!(co, x, k, i_qty::Integer; label=nothing, kwargs...)
+    plot!(x, Cosmology.perturbations_splines(co)[i_qty].(x, k),             alpha=2/6, linewidth=1.5, label=nothing; kwargs...)
+    plot!(x, Cosmology.perturbations_mode(co, k, 6; tight=true )[i_qty](x), alpha=4/6, linewidth=1.0, label=nothing; kwargs...)
+    plot!(x, Cosmology.perturbations_mode(co, k, 6; tight=false)[i_qty](x), alpha=6/6, linewidth=0.5, label=label; kwargs...)
+end
+
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf") # TODO: add more temperature fluctuations...
     println("Plotting temperature fluctuations")
     x = range(-20.0, 0.0, length=5000)
     for l in 0:3
         plot(xlabel=L"x = \log a", ylabel=L"\Theta_%$(l)")
         for (i, k) in enumerate(ks)
-            label = L"k = %$(k*Mpc) / \textrm{Mpc}"
-            plot!(x, Θl.(co, x, k, l),                                                          color=i, alpha=2/6, linewidth=1.5, label=nothing)
-            plot!(x, Cosmology.perturbations_mode(co, k, 6; tight=false)[Cosmology.i_Θl(l)](x), color=i, alpha=4/6, linewidth=1.0, label=nothing)
-            plot!(x, Cosmology.perturbations_mode(co, k, 6; tight=false)[Cosmology.i_Θl(l)](x), color=i, alpha=6/6, linewidth=0.5, label=label)
-            vline!([time_tight_coupling(co, k)], color=i, linestyle=:dash, label=nothing)
+            plot_quantity_with_all_methods!(co, x, k, Cosmology.i_Θl(0); label=L"k = %$(k*Mpc) / \textrm{Mpc}", color=i)
+            vline!([time_tight_coupling(co, k)], color=i, linestyle=:dash; label=nothing)
         end
         savefig("plots/temperature_fluctuation_l$l.pdf")
     end
