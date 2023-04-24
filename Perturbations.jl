@@ -183,15 +183,17 @@ function perturbations_splines(co::ΛCDM; lmax::Integer=6)
         kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
         ks = kmin .+ (kmax-kmin) * range(0, 1; length=100) .^ 2 # TODO: what spacing? quadratic as in Callin?
         
+        # TODO: first evaluate all splines, then choose the one with most x points
         # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
-        perturbs_kmax = perturbations_mode(co, kmax, lmax) # fill perturbations_untight_spline
-        xs = unique(perturbs_kmax[1].t) # unique values only
+        # qty(x, k) spline requires 1D arrays for x and k,
+        # so use the values x from the perturbation mode with the most values
+        spliness = [perturbations_mode(co, k, lmax) for k in ks]
+        xs = splinex(spliness[argmax(length(splinex(splines[1])) for splines in spliness)][1])
 
-        perturbs = Array{Float64, 3}(undef, length(perturbs_kmax), length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
+        perturbs = Array{Float64, 3}(undef, length(spliness[1]), length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
         for (i_k, k) in enumerate(ks)
-            p = perturbations_mode(co, k, lmax) # fill perturbations_untight_spline
-            for i_qty in 1:length(perturbs_kmax)
-                perturbs[i_qty, :, i_k] .= p[i_qty](xs)
+            for i_qty in 1:length(spliness[1])
+                perturbs[i_qty, :, i_k] .= spliness[i_k][i_qty](xs)
             end
         end
 
