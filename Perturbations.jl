@@ -14,7 +14,7 @@ const i_max(lmax::Integer) = i_Θl(lmax)
 function time_tight_coupling(co::ΛCDM, k::Real)
     x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
     x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
-    x3 = time_recombination(co) # TODO: -8.3? use something like time_recombination(co) or time_switch_Peebles(co) instead?
+    x3 = time_switch_Peebles(co) # TODO: -8.3? use something like time_recombination(co) or time_switch_Peebles(co) instead?
     return min(x1, x2, x3)
 end
 
