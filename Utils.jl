@@ -70,6 +70,17 @@ function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64
     return Spline1D(x, y, bc="error")
 end
 
+function splinex(spline::Spline1D)
+    return unique(spline.t)
+end
+
+function splinejoin(spl1::Spline1D, spl2::Spline1D)
+    x1, x2 = splinex(spl1), splinex(spl2)
+    x = vcat(x1, x2[2:end]) # don't duplicate midpoint
+    y = vcat(spl1.(x1), spl2.(x2)[2:end])
+    return Spline1D(x, y)
+end
+
 function multirange(posts, lengths)
     return vcat((range(posts[i], posts[i+1], length=lengths[i])[1:end-1] for i in range(1, length(lengths)))..., posts[end])
 end
