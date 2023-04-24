@@ -21,7 +21,7 @@ end
 # TODO: include neutrinos
 # TODO: include polarization
 # TODO: check units
-function initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
+function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     fν = 0 # TODO: neutrinos: co.Ων0 / co.Ωr0
     Ψ  = -1 / (3/2 + 2*fν/5)
 
@@ -39,7 +39,7 @@ function initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
 end
 
 # tight coupling is equivalent to lmax=2, then post-compute l>lmax
-function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-20.0, x2::Real=time_tight_coupling(co, k))
+function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-20.0, x2::Real=0.0) # TODO: x2 = 0.0 by default?
     function dy_dx!(x, y, dy)
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
@@ -89,7 +89,7 @@ function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real
         return nothing
     end
 
-    y1 = initial_conditions(co, x1, k, lmax)[1:i_Θl(1)]
+    y1 = perturbations_initial_conditions(co, x1, k, lmax)[1:i_Θl(1)]
     splines = _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-5, reltol=1e-5, name="perturbations tight (k=$(k*Mpc)/Mpc)")
 
     # extend Θl(l≤1) splines up to Θl(2≤l≤lmax)
@@ -98,14 +98,14 @@ function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real
     for i in 1:i_max(1)
         splines_ext[i] = splines[i]
     end
-    splines_ext[i_Θl(2)] = Spline1D(x, @. -20*c*k / (45*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(1)](x), bc="error") # TODO: polarization
+    splines_ext[i_Θl(2)] = Spline1D(x, @. -20*c*k / (45*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(1)](x); bc="error") # TODO: polarization
     for l in 3:lmax
-        splines_ext[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(l-1)](x), bc="error") # recursive relation
+        splines_ext[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(l-1)](x); bc="error") # recursive relation
     end
     return splines_ext
 end
 
-function splined_perturbations_untight(co::ΛCDM, k::Real, lmax::Integer, x1::Float64, y1::Vector{Float64}; x2::Real=0.0) :: Vector{Spline1D}# lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
+function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, x1::Real=-20.0, x2::Real=0.0) # TODO: lmax ≈ 30? (https://arxiv.org/pdf/1104.2933.pdf)
     function dy_dx!(x::Float64, y::Vector{Float64}, dy::Vector{Float64})
         #print("x = $x\r") # print progress
         # pre-compute some common combined quantities
@@ -158,45 +158,38 @@ function splined_perturbations_untight(co::ΛCDM, k::Real, lmax::Integer, x1::Fl
     # TODO: try to integrate with an explicit solver to a small time,
     # TODO: then plot all functions on a small interval around it to see if any of them behaves badly
     # TODO: specify stiff solver explicitly, or use an automatic one?
-    return _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-5, reltol=1e-5, name="perturbations untight (k=$(k*Mpc)/Mpc)")
+    if isnothing(y1)
+        y1 = perturbations_initial_conditions(co, x1, k, lmax)
+    end
+    return _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-5, reltol=1e-5, name="perturbations full (k=$(k*Mpc)/Mpc)")
 end
 
-# TODO: join them
-# TODO: if x_tight_latest = NaN, only integrate the full equations
-function splined_perturbations_combined(co::ΛCDM, k::Real, lmax::Integer)
+function perturbations_mode(co::ΛCDM, k::Real, lmax::Integer)
     if isnan(time_tight_coupling(co, k))
-        # only integrate full/untight equations
-        x0 = -20.0
-        y0 = initial_conditions(co, x0, k, lmax)
-        return splined_perturbations_untight(co, k, lmax, x0, y0)
+        # only integrate full equations
+        return perturbations_mode_full(co, k, lmax)
     else
         # merge tight + untight solutions
         x12 = time_tight_coupling(co, k)
-        spl1s = splined_perturbations_tight(co, k, lmax; x1=-20.0, x2=x12)
-        y12 = [spl1(x12) for spl1 in spl1s]
-        spl2s = splined_perturbations_untight(co, k, lmax, x12, y12)
-        spls = Vector{Spline1D}(undef, i_max(lmax))
-        for i in 1:i_max(lmax)
-            spls[i] = splinejoin(spl1s[i], spl2s[i])
-        end
-        return spls
+        spl1s = perturbations_mode_tight(co, k, lmax; x2=x12)
+        y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
+        spl2s = perturbations_mode_full(co, k, lmax; x1=x12, y1=y12)
+        return [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max(lmax)] # join splines
     end
 end
 
-# TODO: for tight and untight?
-function splined_perturbations(co::ΛCDM; lmax::Integer=6)
+function perturbations_splines(co::ΛCDM; lmax::Integer=6)
     if length(co.perturbation_splines) == 0
-        # then make it
         kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
         ks = kmin .+ (kmax-kmin) * range(0, 1; length=100) .^ 2 # TODO: what spacing? quadratic as in Callin?
         
         # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
-        perturbs_kmax = splined_perturbations_combined(co, kmax, lmax) # fill perturbations_untight_spline
+        perturbs_kmax = perturbations_mode(co, kmax, lmax) # fill perturbations_untight_spline
         xs = unique(perturbs_kmax[1].t) # unique values only
 
         perturbs = Array{Float64, 3}(undef, length(perturbs_kmax), length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
         for (i_k, k) in enumerate(ks)
-            p = splined_perturbations_combined(co, k, lmax) # fill perturbations_untight_spline
+            p = perturbations_mode(co, k, lmax) # fill perturbations_untight_spline
             for i_qty in 1:length(perturbs_kmax)
                 perturbs[i_qty, :, i_k] .= p[i_qty](xs)
             end
@@ -210,10 +203,10 @@ function splined_perturbations(co::ΛCDM; lmax::Integer=6)
     return co.perturbation_splines
 end
 
-δc(co::ΛCDM, x::Real, k::Real) = splined_perturbations(co)[i_δc](x, k)
-δb(co::ΛCDM, x::Real, k::Real) = splined_perturbations(co)[i_δb](x, k)
-vc(co::ΛCDM, x::Real, k::Real) = splined_perturbations(co)[i_vc](x, k)
-vb(co::ΛCDM, x::Real, k::Real) = splined_perturbations(co)[i_vb](x, k)
- Φ(co::ΛCDM, x::Real, k::Real) = splined_perturbations(co)[i_Φ](x, k)
+δc(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_δc](x, k)
+δb(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_δb](x, k)
+vc(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vc](x, k)
+vb(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vb](x, k)
+ Φ(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_Φ](x, k)
  Ψ(co::ΛCDM, x::Real, k::Real) = -Φ(co,x,k) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*Θl(co,x,k,2)) # TODO: neutrinos
-Θl(co::ΛCDM, x::Real, k::Real, l::Integer) = splined_perturbations(co)[i_Θl(l)](x, k)
+Θl(co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_Θl(l)](x, k)
