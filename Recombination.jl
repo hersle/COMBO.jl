@@ -67,10 +67,7 @@ function Xe_Peebles_spline(co::ΛCDM, x1::Float64, Xe1::Float64)
 end
 
 function time_switch_Peebles(co::ΛCDM)::Float64
-    if isnan(co.x_switch_Peebles)
-        co.x_switch_Peebles = find_zero(x -> Xe_Saha_H_He(co, x) - 0.999, (-20.0, +20.0), rtol=1e-20, atol=1e-20)
-    end
-    return co.x_switch_Peebles
+    return find_zero(x -> Xe_Saha_H_He(co, x) - 0.999, (-20.0, +20.0), rtol=1e-20, atol=1e-20)
 end
 
 time_reionization_H(co::ΛCDM)  = co.reionization ? -log(1 + co.z_reion_H)  : NaN
