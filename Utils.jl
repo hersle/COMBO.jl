@@ -73,6 +73,10 @@ end
 splinex(spline::Spline1D) = unique(spline.t)
 spliney(spline::Spline1D) = spline(splinex(spline))
 
+splinex(spline::Spline2D) = unique(spline.tx)
+spliney(spline::Spline2D) = unique(spline.ty)
+splinez(spline::Spline2D) = spline(splinex(spline), spliney(spline))
+
 function splinejoin(spl1::Spline1D, spl2::Spline1D)
     x1, x2 = splinex(spl1), splinex(spl2)
     x = vcat(x1, x2[2:end]) # don't duplicate midpoint

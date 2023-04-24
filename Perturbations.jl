@@ -1,7 +1,5 @@
-# TODO: assert lmax >= 2 in main perturbations function (?) (always use this?)
-
-# index map (1-based)
-# TODO: order so one can set some y_untight from y_tight
+# variable index map (1-based),
+# ordered so full system *extends* the tightly coupled one (useful for switching)
 const i_δc = 1
 const i_vc = 2
 const i_δb = 3
@@ -14,21 +12,20 @@ const i_max(lmax::Integer) = i_Θl(lmax)
 function time_tight_coupling(co::ΛCDM, k::Real)
     x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
     x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
-    x3 = time_switch_Peebles(co) # TODO: -8.3? use something like time_recombination(co) or time_switch_Peebles(co) instead?
+    x3 = time_switch_Peebles(co) # switch no later than when recombination begins (TODO: or -8.3?)
     return min(x1, x2, x3)
 end
 
 # TODO: include neutrinos
 # TODO: include polarization
-# TODO: check units
 function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     fν = 0 # TODO: neutrinos: co.Ων0 / co.Ωr0
     Ψ  = -1 / (3/2 + 2*fν/5)
 
     y = Vector{Float64}(undef, i_max(lmax))
     y[i_δc] = y[i_δb] = -3/2 * Ψ
-    y[i_vc] = y[i_vb] = -k*c/(2*aH(co,x0)) * Ψ # TODO: units?
-    y[i_Φ]            = -(1 + 2*fν/5) * Ψ # TODO: "acts as normalization" ?
+    y[i_vc] = y[i_vb] = -k*c/(2*aH(co,x0)) * Ψ
+    y[i_Φ]            = -(1 + 2*fν/5) * Ψ
     y[i_Θl(0)]        = -1/2 * Ψ
     y[i_Θl(1)]        = -c*k / (3*aH(co,x0)) * y[i_Θl(0)]
     y[i_Θl(2)]        = -20*c*k / (45*aH(co,x0)*dτ(co,x0)) * y[i_Θl(1)] # TODO: polarization
@@ -38,8 +35,7 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::In
     return y
 end
 
-# tight coupling is equivalent to lmax=2, then post-compute l>lmax
-function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-20.0, x2::Real=0.0, stiff=false) # TODO: x2 = 0.0 by default?
+function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-20.0, x2::Real=0.0, stiff=false)
     function dy_dx!(x, y, dy)
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
@@ -64,7 +60,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-2
         dvc = -vc - ck_aH*Ψ
         dΘ0 = -ck_aH*Θ1 - dΦ
 
-        # calculate (dΘ1, dΘ2) (and dvb) with fixed-point iteration
+        # calculate (dΘ1, dΘ2) (and dvb) with fixed-point iteration, as suggested by Callin
         d_aHdτ = daH(co,x)*dτ(co,x) + aH(co,x)*d2τ(co,x) # needed in fixed-point iteration
         function dvb_dΘ1_dΘ2_fixed_point(dvb_dΘ1_dΘ2)
             _, dΘ1, dΘ2 = dvb_dΘ1_dΘ2 # ignore dvb; it's in the tuple just so it is available after the fixed-point iteration
@@ -89,16 +85,14 @@ function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-2
         return nothing
     end
 
-    y1 = perturbations_initial_conditions(co, x1, k, lmax)[1:i_Θl(1)]
+    y1 = perturbations_initial_conditions(co, x1, k, lmax)[1:i_Θl(1)] # cut away Θ(l≥2)
     alg_hints = [stiff ? :auto : :nonstiff]
     splines = _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, abstol=1e-5, reltol=1e-5, name="perturbations tight (k=$(k*Mpc)/Mpc)")
 
     # extend Θl(l≤1) splines up to Θl(2≤l≤lmax)
     x = splinex(splines[1])
     splines_ext = Vector{Spline1D}(undef, i_max(lmax))
-    for i in 1:i_max(1)
-        splines_ext[i] = splines[i]
-    end
+    splines_ext[1:i_max(1)] .= splines # rely on that full system *extends* tight system (TODO: change?)
     splines_ext[i_Θl(2)] = Spline1D(x, @. -20*c*k / (45*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(1)](x); bc="error") # TODO: polarization
     for l in 3:lmax
         splines_ext[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(l-1)](x); bc="error") # recursive relation
@@ -107,8 +101,9 @@ function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-2
 end
 
 function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, x1::Real=-20.0, x2::Real=0.0, stiff=true) # TODO: lmax ≈ 30? (https://arxiv.org/pdf/1104.2933.pdf)
+    @assert lmax >= 4 # equations for Θl are ambiguous with lmax <= 3
+
     function dy_dx!(x::Float64, y::Vector{Float64}, dy::Vector{Float64})
-        #print("x = $x\r") # print progress
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
         R = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
@@ -125,20 +120,18 @@ function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, 
 
         # 2) compute derivatives
         Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θl[2]) # TODO: Ωγ0 (Hans) or Ωr (Callin)? TODO: neutrinos
-        Π   = Θl[2] + 0 # TODO: include or not? # TODO: polarization
+        Π   = Θl[2] + 0 # TODO: polarization
         dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0) # TODO: neutrinos
         dδc = ck_aH*vc - 3*dΦ
         dδb = ck_aH*vb - 3*dΦ
         dvc = -vc - ck_aH*Ψ
         dvb = -vb - ck_aH*Ψ + τ′*R*(3*Θl[1]+vb)
-        @assert lmax != 3 # TODO: how to calculate dΘl with lmax = 3?
         dΘl0   = -ck_aH*Θl[1] - dΦ
         dΘl1   =  ck_aH/3 * (Θ0-2*Θl[2]+Ψ) + τ′*(Θl[1]+vb/3)
         dΘl2   =  ck_aH/(2*2+1) * (2*Θl[2-1] - (2+1)*Θl[2+1]) + τ′*(Θl[2]-Π/10)
         dΘlmax = ck_aH*Θl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + τ′*Θl[lmax] # 2nd term: their η is my c*η
 
         # re-pack variables into vector
-        # TODO: pack and assign simultaneously?
         dy[i_δc]    = dδc
         dy[i_vc]    = dvc
         dy[i_δb]    = dδb
@@ -148,17 +141,12 @@ function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, 
         dy[i_Θl(1)] = dΘl1
         dy[i_Θl(2)] = dΘl2
         for l in 3:lmax-1
-            dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + τ′*(Θl[l]-0) # probably inlined? TODO: reduce allocation?
+            dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + τ′*(Θl[l]-0) # probably inlined?
         end
         dy[i_Θl(lmax)] = dΘlmax
         return nothing # dy is in-place
     end
 
-    # TODO: why do explicit methods take small steps when x ≈ -7.4 or so?
-    # TODO: which quantity behaves weirdly here?
-    # TODO: try to integrate with an explicit solver to a small time,
-    # TODO: then plot all functions on a small interval around it to see if any of them behaves badly
-    # TODO: specify stiff solver explicitly, or use an automatic one?
     if isnothing(y1)
         y1 = perturbations_initial_conditions(co, x1, k, lmax)
     end
@@ -168,14 +156,16 @@ end
 
 function perturbations_mode(co::ΛCDM, k::Real, lmax::Integer; tight::Bool=false)
     if tight
-        # merge tight + untight solutions
+        # 1) use tight coupling approximation at early times to avoid stiff equations,
+        # 2) then integrate the full equations from when the approximation breaks down,
+        # 3) merge 1+2
         x12 = time_tight_coupling(co, k)
         spl1s = perturbations_mode_tight(co, k, lmax; x2=x12, stiff=false)
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
         spl2s = perturbations_mode_full(co, k, lmax; x1=x12, y1=y12, stiff=false)
         return [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max(lmax)] # join splines
     else
-        # only integrate full equations
+        # only integrate the full (stiff) equations using an appropriate solver
         return perturbations_mode_full(co, k, lmax; stiff=true)
     end
 end
@@ -187,14 +177,11 @@ function perturbations_splines(co::ΛCDM; lmax::Integer=6)
         kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
         ks = kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 2 # TODO: what spacing? quadratic as in Callin?
         
-        # TODO: first evaluate all splines, then choose the one with most x points
-        # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
-        # qty(x, k) spline requires 1D arrays for x and k,
-        # so use the values x from the perturbation mode with the most values
+        # (x,k) spline requires 1D arrays for x and k (and does not accept a fully irregular 2D grid)
+        # use the x-values from the mode that has the most (not necessarily k=kmax)
         spliness = Vector{Vector{Spline1D}}(undef, length(ks))
-        @threads for i_k in 1:length(ks) # 8 threads give a good speed-up
+        @threads for i_k in 1:length(ks) # call julia with --threads=8 to get a decent speed-up
             k = ks[i_k]
-            println("Splining perturbation mode k = $(k*Mpc) / Mpc")
             spliness[i_k] = perturbations_mode(co, k, lmax)
         end
         xs = splinex(spliness[argmax(length(splinex(splines[1])) for splines in spliness)][1])
@@ -207,7 +194,7 @@ function perturbations_splines(co::ΛCDM; lmax::Integer=6)
         end
 
         for i_qty in 1:i_max(lmax)
-            qty = perturbs[i_qty, :, :]
+            qty = @view perturbs[i_qty, :, :]
             push!(co.perturbation_splines, Spline2D(xs, ks, qty)) # spline (x, k)
         end
 

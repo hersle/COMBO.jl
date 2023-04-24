@@ -2,12 +2,11 @@ module Cosmology
 
 include("Constants.jl")
 
-using .Constants
+using .Constants # physical constants
 using Roots # root finding
-#using OrdinaryDiffEq # ODE integration (instead of DifferentialEquations to reduce compile time)
-using DifferentialEquations
-using Dierckx # for splines
-using Base.Threads
+using DifferentialEquations # ODE integration
+using Dierckx # splines
+using Base.Threads # parallelization
 
 export a, z
 export ΛCDM
