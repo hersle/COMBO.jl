@@ -12,15 +12,25 @@ co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: cha
 ks = [1e-3, 1e-2, 1e-1] / Mpc
 #println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
-function plot_quantity_with_all_methods!(co, x, k, i_qty::Integer; func=y->y, label=nothing, kwargs...)
-    plot!(x, func.(Cosmology.perturbations_splines(co)[i_qty].(x, k)),             alpha=2/6, linewidth=1.5, label=nothing; kwargs...)
-    plot!(x, func.(Cosmology.perturbations_mode(co, k, 6; tight=true )[i_qty](x)), alpha=4/6, linewidth=1.0, label=nothing; kwargs...)
-    plot!(x, func.(Cosmology.perturbations_mode(co, k, 6; tight=false)[i_qty](x)), alpha=6/6, linewidth=0.5, label=label; kwargs...)
+function plot_quantity_with_all_methods!(co, k, i_qty::Integer; func=y->y, label=nothing, kwargs...)
+    y1 = x -> Cosmology.perturbations_splines(co)[i_qty].(x, k)
+    y2 = Cosmology.perturbations_mode(co, k, 6; tight=true )[i_qty] # callable spline
+    y3 = Cosmology.perturbations_mode(co, k, 6; tight=false)[i_qty] # callable spline
+
+    # use spline points for plotting,
+    # but add nextra points between each of them
+    # TODO: make accessible to plotter?
+    x = Cosmology.splinex(y3)
+    nextra = 3
+    dx = diff(x)
+    x = sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 0:nextra)...))
+
+    plot!(x, func.(y1.(x)), alpha=2/6, linewidth=1.5, label=nothing; kwargs...)
+    plot!(x, func.(y2.(x)), alpha=4/6, linewidth=1.0, label=nothing; kwargs...)
+    plot!(x, func.(y3.(x)), alpha=6/6, linewidth=0.5, label=label;   kwargs...)
 end
 
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf") # TODO: add more temperature fluctuations...
-    x = range(-20.0, 0.0, length=5000)
-
     settings = [
         ("plots/temperature_fluctuation_l0.pdf", L"\Theta_0", [(Cosmology.i_Θl(0), identity, :solid)]),
         ("plots/temperature_fluctuation_l1.pdf", L"\Theta_1", [(Cosmology.i_Θl(1), identity, :solid)]),
@@ -35,7 +45,7 @@ if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || 
         plot(xlabel=L"x = \log a", ylabel=ylabel, xticks=-25:5:5)
         for (i, k) in enumerate(ks)
             for (i_qty, func, linestyle) in iqty_func_linestyles
-                plot_quantity_with_all_methods!(co, x, k, i_qty; func=func, label=L"k = %$(k*Mpc) / \textrm{Mpc}", color=i, linestyle=linestyle)
+                plot_quantity_with_all_methods!(co, k, i_qty; func=func, label=L"k = %$(k*Mpc) / \textrm{Mpc}", color=i, linestyle=linestyle)
             end
             vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
         end
