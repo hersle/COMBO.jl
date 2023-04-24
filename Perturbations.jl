@@ -14,7 +14,7 @@ const i_max(lmax::Integer) = i_Θl(lmax)
 function time_tight_coupling(co::ΛCDM, k::Real)
     x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
     x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
-    x3 = co.x_tight_latest # TODO: -8.3? use something like time_recombination(co) or time_switch_Peebles(co) instead?
+    x3 = time_recombination(co) # TODO: -8.3? use something like time_recombination(co) or time_switch_Peebles(co) instead?
     return min(x1, x2, x3)
 end
 
@@ -164,17 +164,17 @@ function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, 
     return _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-5, reltol=1e-5, name="perturbations full (k=$(k*Mpc)/Mpc)")
 end
 
-function perturbations_mode(co::ΛCDM, k::Real, lmax::Integer)
-    if isnan(time_tight_coupling(co, k))
-        # only integrate full equations
-        return perturbations_mode_full(co, k, lmax)
-    else
+function perturbations_mode(co::ΛCDM, k::Real, lmax::Integer; tight::Bool=true)
+    if tight
         # merge tight + untight solutions
         x12 = time_tight_coupling(co, k)
         spl1s = perturbations_mode_tight(co, k, lmax; x2=x12)
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
         spl2s = perturbations_mode_full(co, k, lmax; x1=x12, y1=y12)
         return [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max(lmax)] # join splines
+    else
+        # only integrate full equations
+        return perturbations_mode_full(co, k, lmax)
     end
 end
 
