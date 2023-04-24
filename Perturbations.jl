@@ -11,38 +11,6 @@ const i_Θ0 = 6
 const i_Θl(l::Integer) = i_Θ0 + l
 const i_max(lmax::Integer) = i_Θl(lmax)
 
-# TODO: include neutrinos
-# TODO: include polarization
-# TODO: check units
-# TODO: set all Θl, remove _tight suffix, then just remove them during tight coupling
-function initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
-    aH0 = aH(co, x0)
-    dτ0 = dτ(co, x0)
-
-    fν = 0 # TODO: neutrinos: co.Ων0 / co.Ωr0
-    Ψ  = -1 / (3/2 + 2*fν/5)
-    Φ  = -(1 + 2*fν/5) * Ψ # TODO: "acts as normalization" ?
-    δb = δc = -3/2 * Ψ
-    vb = vc = -k*c/(2*aH0) * Ψ # TODO: units?
-    Θ0 = -1/2 * Ψ
-    Θ1 = -c*k / (3*aH0) * Θ0
-
-    # integration always begins with tight coupling, during which Θ(l>1) follows directly from Θ(l<=1)
-    y = Vector{Float64}(undef, i_max(lmax))
-    y[i_δc]    = δc
-    y[i_vc]    = vc
-    y[i_δb]    = δb
-    y[i_vb]    = vb
-    y[i_Φ]     = Φ
-    y[i_Θl(0)] = Θ0
-    y[i_Θl(1)] = Θ1
-    y[i_Θl(2)] = -20*c*k / (45*aH0*dτ0) * y[i_Θl(1)] # TODO: polarization
-    for l in 3:lmax
-        y[i_Θl(3)] = -l/(2*l+1) * c*k/(aH0*dτ0) * y[i_Θl(l-1)] # recursive relation
-    end
-    return y
-end
-
 function time_tight_coupling(co::ΛCDM, k::Real)
     x1 = find_zero(x -> abs(dτ(co,x)) - 10,                (-20, +20))
     x2 = find_zero(x -> abs(dτ(co,x)) - 10 * c*k/aH(co,x), (-20, +20))
@@ -50,8 +18,27 @@ function time_tight_coupling(co::ΛCDM, k::Real)
     return min(x1, x2, x3)
 end
 
+# TODO: include neutrinos
+# TODO: include polarization
+# TODO: check units
+function initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
+    fν = 0 # TODO: neutrinos: co.Ων0 / co.Ωr0
+    Ψ  = -1 / (3/2 + 2*fν/5)
+
+    y = Vector{Float64}(undef, i_max(lmax))
+    y[i_δc] = y[i_δb] = -3/2 * Ψ
+    y[i_vc] = y[i_vb] = -k*c/(2*aH(co,x0)) * Ψ # TODO: units?
+    y[i_Φ]            = -(1 + 2*fν/5) * Ψ # TODO: "acts as normalization" ?
+    y[i_Θl(0)]        = -1/2 * Ψ
+    y[i_Θl(1)]        = -c*k / (3*aH(co,x0)) * y[i_Θl(0)]
+    y[i_Θl(2)]        = -20*c*k / (45*aH(co,x0)*dτ(co,x0)) * y[i_Θl(1)] # TODO: polarization
+    for l in 3:lmax
+        y[i_Θl(l)]    = -l/(2*l+1) * c*k/(aH(co,x0)*dτ(co,x0)) * y[i_Θl(l-1)] # recursive relation
+    end
+    return y
+end
+
 # tight coupling is equivalent to lmax=2, then post-compute l>lmax
-# TODO: store splines for each requested k-value?
 function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-20.0, x2::Real=time_tight_coupling(co, k))
     function dy_dx!(x, y, dy)
         # pre-compute some common combined quantities
@@ -102,12 +89,11 @@ function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real
         return nothing
     end
 
-    # TODO: spline perturb(x, k)
     y1 = initial_conditions(co, x1, k, lmax)[1:i_Θl(1)]
-    splines = _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-9, reltol=1e-9, name="perturbations tight (k=$(k*Mpc)/Mpc)")
-    x = splinex(splines[1])
+    splines = _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-5, reltol=1e-5, name="perturbations tight (k=$(k*Mpc)/Mpc)")
 
-    # extend Θl splines up to lmax
+    # extend Θl(l≤1) splines up to Θl(2≤l≤lmax)
+    x = splinex(splines[1])
     splines_ext = Vector{Spline1D}(undef, i_max(lmax))
     for i in 1:i_max(1)
         splines_ext[i] = splines[i]
@@ -204,8 +190,8 @@ function splined_perturbations(co::ΛCDM; lmax::Integer=30)
         for (i_k, k) in enumerate(ks)
             println("k = $(k*Mpc) / Mpc")
             p = splined_perturbations_combined(co, k, lmax) # fill perturbations_untight_spline
-            for i_q in 1:length(perturbs_kmax)
-                perturbs[i_q, :, i_k] .= p[i_q].(xs)
+            for i_qty in 1:length(perturbs_kmax)
+                perturbs[i_qty, :, i_k] .= p[i_qty].(xs)
             end
         end
 
