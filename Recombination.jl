@@ -49,7 +49,7 @@ end
 
 # @code_warntype on Xe(co,x) says that this can return Any, unless its return type is explicitly stated (due to Union{...., Nothing}?)
 # TODO: handle in a better way?
-function Xe_Peebles_spline(co::ΛCDM, x1::Float64, Xe1::Float64)::Spline1D
+function Xe_Peebles_spline(co::ΛCDM, x1::Float64, Xe1::Float64)
     function dXe_dx(x, Xe)
         Tb = Tγ(co,x) # K # TODO: assumptions? separate baryon evolution?
         n_1s = (1-Xe) * nH(co,x) # 1/m^3
@@ -96,7 +96,7 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
 
         # 1) Peebles equation points
         Xe2spl = Xe_Peebles_spline(co, xswitch, Xe_Saha_H_He(co, xswitch)) # start Peebles from last value of Saha
-        x2 = unique(Xe2spl.t) # don't duplicate xswitch
+        x2 = splinex(Xe2spl) # don't duplicate xswitch
         Xe2 = Xe2spl.(x2)
 
         # Saha equation points

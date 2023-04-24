@@ -75,7 +75,7 @@ function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real
             dΘ2 = -20/45*ck_aH * (dΘ1/dτ(co,x) - Θ1*d_aHdτ / (aH(co,x)*dτ(co,x)^2)) # anal Θ2′(x) # TODO: or from q?
             return (dvb, dΘ1, dΘ2)
         end
-        dvb, dΘ1, dΘ2 = fixed_point_iterate(dvb_dΘ1_dΘ2_fixed_point, (NaN, 0.0, 0.0); tol=1e-30)
+        dvb, dΘ1, dΘ2 = fixed_point_iterate(dvb_dΘ1_dΘ2_fixed_point, (NaN, 0.0, 0.0); tol=1e-10)
 
         # re-pack variables into vector
         #lmax = 1 # tight coupling: only need to integrate Θ(l<=2) (see above comment)
@@ -158,30 +158,37 @@ function splined_perturbations_untight(co::ΛCDM, k::Real, lmax::Integer, x1::Fl
     # TODO: try to integrate with an explicit solver to a small time,
     # TODO: then plot all functions on a small interval around it to see if any of them behaves badly
     # TODO: specify stiff solver explicitly, or use an automatic one?
-    return _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-9, reltol=1e-9, name="perturbations untight (k=$(k*Mpc)/Mpc)")
+    return _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-5, reltol=1e-5, name="perturbations untight (k=$(k*Mpc)/Mpc)")
 end
 
 # TODO: join them
 # TODO: if x_tight_latest = NaN, only integrate the full equations
 function splined_perturbations_combined(co::ΛCDM, k::Real, lmax::Integer)
-    x12 = time_tight_coupling(co, k)
-    spl1s = splined_perturbations_tight(co, k, lmax; x1=-20.0, x2=x12)
-    y12 = [spl1(x12) for spl1 in spl1s]
-    spl2s = splined_perturbations_untight(co, k, lmax, x12, y12)
-    spls = Vector{Spline1D}(undef, i_max(lmax))
-    for i in 1:i_max(lmax)
-        spls[i] = splinejoin(spl1s[i], spl2s[i])
+    if isnan(time_tight_coupling(co, k))
+        # only integrate full/untight equations
+        x0 = -20.0
+        y0 = initial_conditions(co, x0, k, lmax)
+        return splined_perturbations_untight(co, k, lmax, x0, y0)
+    else
+        # merge tight + untight solutions
+        x12 = time_tight_coupling(co, k)
+        spl1s = splined_perturbations_tight(co, k, lmax; x1=-20.0, x2=x12)
+        y12 = [spl1(x12) for spl1 in spl1s]
+        spl2s = splined_perturbations_untight(co, k, lmax, x12, y12)
+        spls = Vector{Spline1D}(undef, i_max(lmax))
+        for i in 1:i_max(lmax)
+            spls[i] = splinejoin(spl1s[i], spl2s[i])
+        end
+        return spls
     end
-    return spls
 end
 
 # TODO: for tight and untight?
-function splined_perturbations(co::ΛCDM; lmax::Integer=30)
+function splined_perturbations(co::ΛCDM; lmax::Integer=6)
     if length(co.perturbation_splines) == 0
         # then make it
         kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
-        ns = 0:100
-        ks = kmin .+ (kmax-kmin) * (ns/maximum(ns)).^2 # TODO: what spacing? quadratic as in Callin?
+        ks = kmin .+ (kmax-kmin) * range(0, 1; length=100) .^ 2 # TODO: what spacing? quadratic as in Callin?
         
         # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
         perturbs_kmax = splined_perturbations_combined(co, kmax, lmax) # fill perturbations_untight_spline
@@ -189,10 +196,9 @@ function splined_perturbations(co::ΛCDM; lmax::Integer=30)
 
         perturbs = Array{Float64, 3}(undef, length(perturbs_kmax), length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
         for (i_k, k) in enumerate(ks)
-            println("k = $(k*Mpc) / Mpc")
             p = splined_perturbations_combined(co, k, lmax) # fill perturbations_untight_spline
             for i_qty in 1:length(perturbs_kmax)
-                perturbs[i_qty, :, i_k] .= p[i_qty].(xs)
+                perturbs[i_qty, :, i_k] .= p[i_qty](xs)
             end
         end
 
