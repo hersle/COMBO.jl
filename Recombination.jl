@@ -91,23 +91,22 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
     if isnothing(co.Xe_spline)
         xswitch = time_switch_Peebles(co) # TODO: why does this allocate?
 
-        # 1) Peebles equation points
+        # Peebles equation points
         Xe2spl = Xe_Peebles_spline(co, xswitch, Xe_Saha_H_He(co, xswitch)) # start Peebles from last value of Saha
         x2 = splinex(Xe2spl) # don't duplicate xswitch
-        Xe2 = Xe2spl.(x2)
 
         # Saha equation points
-        x1 = range(x1, xswitch, length=length(x2))[1:end-1] # use as many points as Peebles; don't duplicate xswitch
-        Xe1 = Xe_Saha_H_He.(co, x1)
+        x1 = range(x1, xswitch, length=length(x2)) # use as many points as Peebles; don't duplicate xswitch
+        Xe1spl = Spline1D(x1, Xe_Saha_H_He.(co, x1))
 
-        # concatenate
-        xs = vcat(x1, x2)
-        Xes = vcat(Xe1, Xe2)
+        # merge splines
+        Xespl = splinejoin(Xe1spl, Xe2spl)
+        xs = splinex(Xespl)
 
         # add reionization everywhere
-        Xes += Xe_reionization.(co, xs)
+        Xespl = Spline1D(xs, spliney(Xespl) .+ Xe_reionization.(co, xs))
 
-        co.Xe_spline = Spline1D(xs, Xes, bc="error")
+        co.Xe_spline = Xespl
     end
 
     return co.Xe_spline(x)
