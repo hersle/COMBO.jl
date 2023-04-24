@@ -15,7 +15,7 @@ const i_max(lmax::Integer) = i_Θl(lmax)
 # TODO: include polarization
 # TODO: check units
 # TODO: set all Θl, remove _tight suffix, then just remove them during tight coupling
-function initial_conditions_tight(co::ΛCDM, x0::Real, k::Real)
+function initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
     aH0 = aH(co, x0)
     dτ0 = dτ(co, x0)
 
@@ -28,7 +28,6 @@ function initial_conditions_tight(co::ΛCDM, x0::Real, k::Real)
     Θ1 = -c*k / (3*aH0) * Θ0
 
     # integration always begins with tight coupling, during which Θ(l>1) follows directly from Θ(l<=1)
-    lmax = 1
     y = Vector{Float64}(undef, i_max(lmax))
     y[i_δc]    = δc
     y[i_vc]    = vc
@@ -37,6 +36,10 @@ function initial_conditions_tight(co::ΛCDM, x0::Real, k::Real)
     y[i_Φ]     = Φ
     y[i_Θl(0)] = Θ0
     y[i_Θl(1)] = Θ1
+    y[i_Θl(2)] = -20*c*k / (45*aH0*dτ0) * y[i_Θl(1)] # TODO: polarization
+    for l in 3:lmax
+        y[i_Θl(3)] = -l/(2*l+1) * c*k/(aH0*dτ0) * y[i_Θl(l-1)] # recursive relation
+    end
     return y
 end
 
@@ -49,7 +52,7 @@ end
 
 # tight coupling is equivalent to lmax=2, then post-compute l>lmax
 # TODO: store splines for each requested k-value?
-function splined_perturbations_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=time_tight_coupling(co, k), lmax::Integer=30)
+function splined_perturbations_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-20.0, x2::Real=time_tight_coupling(co, k))
     function dy_dx!(x, y, dy)
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
@@ -100,7 +103,7 @@ function splined_perturbations_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Rea
     end
 
     # TODO: spline perturb(x, k)
-    y1 = initial_conditions_tight(co, x1, k)
+    y1 = initial_conditions(co, x1, k, lmax)[1:i_Θl(1)]
     splines = _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-9, reltol=1e-9, name="perturbations tight (k=$(k*Mpc)/Mpc)")
     x = splinex(splines[1])
 
@@ -116,14 +119,7 @@ function splined_perturbations_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Rea
     return splines_ext
 end
 
-function initial_conditions_untight(co::ΛCDM, x0::Real, k::Real, lmax::Integer)
-    # TODO: order indices so this can simply "return perturbations_tight(co, x0, k), then set the additional l>1
-    return [spline(x0) for spline in splined_perturbations_tight(co, k)]
-end
-
-function splined_perturbations_untight(co::ΛCDM, k::Real; x2::Real=0.0, lmax::Integer=30) :: Vector{Spline1D}# lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
-    x1 = time_tight_coupling(co, k)
-
+function splined_perturbations_untight(co::ΛCDM, k::Real, lmax::Integer, x1::Float64, y1::Vector{Float64}; x2::Real=0.0) :: Vector{Spline1D}# lmax ≈ 30 (https://arxiv.org/pdf/1104.2933.pdf)
     function dy_dx!(x::Float64, y::Vector{Float64}, dy::Vector{Float64})
         #print("x = $x\r") # print progress
         # pre-compute some common combined quantities
@@ -176,15 +172,16 @@ function splined_perturbations_untight(co::ΛCDM, k::Real; x2::Real=0.0, lmax::I
     # TODO: try to integrate with an explicit solver to a small time,
     # TODO: then plot all functions on a small interval around it to see if any of them behaves badly
     # TODO: specify stiff solver explicitly, or use an automatic one?
-    y1 = initial_conditions_untight(co, x1, k, lmax)
     return _spline_integral(dy_dx!, x1, x2, y1; abstol=1e-9, reltol=1e-9, name="perturbations untight (k=$(k*Mpc)/Mpc)")
 end
 
 # TODO: join them
 # TODO: if x_tight_latest = NaN, only integrate the full equations
-function splined_perturbations_combined(co::ΛCDM, k::Real; lmax::Integer=30)
-    spl1s = splined_perturbations_tight(co, k; lmax=lmax)
-    spl2s = splined_perturbations_untight(co, k; lmax=lmax)
+function splined_perturbations_combined(co::ΛCDM, k::Real, lmax::Integer)
+    x12 = time_tight_coupling(co, k)
+    spl1s = splined_perturbations_tight(co, k, lmax; x1=-20.0, x2=x12)
+    y12 = [spl1(x12) for spl1 in spl1s]
+    spl2s = splined_perturbations_untight(co, k, lmax, x12, y12)
     spls = Vector{Spline1D}(undef, i_max(lmax))
     for i in 1:i_max(lmax)
         spls[i] = splinejoin(spl1s[i], spl2s[i])
@@ -200,13 +197,13 @@ function splined_perturbations(co::ΛCDM; lmax::Integer=30)
         ks = range(kmin, kmax, 5) # TODO: what spacing?
         
         # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
-        perturbs_kmax = splined_perturbations_combined(co, kmax; lmax=lmax) # fill perturbations_untight_spline
+        perturbs_kmax = splined_perturbations_combined(co, kmax, lmax) # fill perturbations_untight_spline
         xs = unique(perturbs_kmax[1].t) # unique values only
 
         perturbs = Array{Float64, 3}(undef, length(perturbs_kmax), length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
         for (i_k, k) in enumerate(ks)
             println("k = $(k*Mpc) / Mpc")
-            p = splined_perturbations_combined(co, k; lmax=lmax) # fill perturbations_untight_spline
+            p = splined_perturbations_combined(co, k, lmax) # fill perturbations_untight_spline
             for i_q in 1:length(perturbs_kmax)
                 perturbs[i_q, :, i_k] .= p[i_q].(xs)
             end
