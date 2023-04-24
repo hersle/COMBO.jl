@@ -185,7 +185,7 @@ function perturbations_splines(co::ΛCDM; lmax::Integer=6)
         t1 = now()
 
         kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
-        ks = kmin .+ (kmax-kmin) * range(0, 1; length=100) .^ 2 # TODO: what spacing? quadratic as in Callin?
+        ks = kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 2 # TODO: what spacing? quadratic as in Callin?
         
         # TODO: first evaluate all splines, then choose the one with most x points
         # take x values from most rapidly oscillating smallest-scale solution (k = kmax)
