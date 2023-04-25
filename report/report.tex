@@ -850,6 +850,40 @@ For example, this agrees with the famous acoustic peak around $s \approx 105\,\m
 \end{tabular}
 \end{table}
 
+
+
+\clearpage
+\section{Perturbations}
+
+\newcommand\N{\mathcal{N}}
+
+\subsection{Theory}
+
+Initial conditions
+\begin{subequations}
+\begin{align}
+	\Psi &= -\frac{1}{\frac32 + \frac25 f_\nu}, \\
+	\Phi &= -\left( 1 + \frac25 f_\nu \right) \Psi, \\
+	\delta_c = \delta_b &= -\frac32 \Psi, \\
+	v_c = v_b &= -\frac{ck}{2\mathcal{H}} \Psi, \\
+	\Theta_0 &= -\frac12 \Psi, \\
+	\Theta_1 &= +\frac{ck}{6\mathcal{H}} \Psi, \\
+	\Theta_2 &= \begin{cases} -\frac{8}{15} \frac{ck}{\mathcal{H} \tau\prime} & \text{(polarization)}, \\ -\frac{20}{45} \frac{ck}{\mathcal{H} \tau\prime} & \text{(polarizatioff),} \end{cases} \\
+	\Theta_{l \geq 3} &= -\frac{l}{2l+1} \frac{ck}{\mathcal{H} \tau\prime} \Theta_{l-1}, \\
+	\Theta^P_0 &= \frac54 \Theta_2, \\
+	\Theta^P_1 &= -\frac{ck}{4\mathcal{H}\tau\prime} \Theta_2, \\
+	\Theta^P_2 &= \frac14 \Theta_2, \\
+	\Theta^P_{l \geq 3} &= -\frac{l}{2l+1} \frac{ck}{\mathcal{H}\tau\prime} \Theta^P_{l-1}, \\
+	\N_0 &= -\frac12 \Psi, \\
+	\N_1 &= +\frac{ck}{6\mathcal{H}} \Psi, \\
+	\N_2 &= -\frac{c^2 k^2 a^2}{12 H_0^2 \Omega_{\nu0}} (\Psi + \Phi) = \frac{c^2 k^2 a^2}{30 H_0^2 \Omega_{r0}} \Psi,\\
+	\N_{l \geq 3} &= \frac{ck}{(2l+1)\mathcal{H}} \N_{l-1},
+\end{align}
+\end{subequations}
+
+\subsection{Implementation}
+\subsection{Results}
+
 \clearpage
 \section{Conclusions}
 
