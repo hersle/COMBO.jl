@@ -35,7 +35,7 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real, lmax::In
     return y
 end
 
-function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-20.0, x2::Real=0.0, stiff=false)
+function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0.0, stiff=false, kwargs...)
     function dy_dx!(x, y, dy)
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
@@ -87,7 +87,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-2
 
     y1 = perturbations_initial_conditions(co, x1, k, lmax)[1:i_Θl(1)] # cut away Θ(l≥2)
     alg_hints = [stiff ? :auto : :nonstiff]
-    splines = _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, abstol=1e-5, reltol=1e-5, name="perturbations tight (k=$(k*Mpc)/Mpc)")
+    splines = _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations tight (k=$(k*Mpc)/Mpc)", kwargs...)
 
     # extend Θl(l≤1) splines up to Θl(2≤l≤lmax)
     x = splinex(splines[1])
@@ -100,7 +100,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real, lmax::Integer; x1::Real=-2
     return splines_ext
 end
 
-function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, x1::Real=-20.0, x2::Real=0.0, stiff=true) # TODO: lmax ≈ 30? (https://arxiv.org/pdf/1104.2933.pdf)
+function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0, x2::Real=0.0, stiff=true, kwargs...) # TODO: online notes say lmax=6, lmax ≈ 30? but need 10 with neutrinos? (https://arxiv.org/pdf/1104.2933.pdf)
     @assert lmax >= 4 # equations for Θl are ambiguous with lmax <= 3
 
     function dy_dx!(x::Float64, y::Vector{Float64}, dy::Vector{Float64})
@@ -149,7 +149,7 @@ function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, 
         y1 = perturbations_initial_conditions(co, x1, k, lmax)
     end
     alg_hints = [stiff ? :auto : :nonstiff]
-    return _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, abstol=1e-5, reltol=1e-5, name="perturbations full (k=$(k*Mpc)/Mpc)")
+    return _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations full (k=$(k*Mpc)/Mpc)", kwargs...)
 end
 
 function perturbations_mode(co::ΛCDM, k::Real, lmax::Integer; tight::Bool=false)
@@ -158,13 +158,14 @@ function perturbations_mode(co::ΛCDM, k::Real, lmax::Integer; tight::Bool=false
         # 2) then integrate the full equations from when the approximation breaks down,
         # 3) merge 1+2
         x12 = time_tight_coupling(co, k)
-        spl1s = perturbations_mode_tight(co, k, lmax; x2=x12, stiff=false)
+        spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9)
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
-        spl2s = perturbations_mode_full(co, k, lmax; x1=x12, y1=y12, stiff=false)
-        return [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max(lmax)] # join splines
+        spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9)
+        return [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max] # join splines
     else
         # only integrate the full (stiff) equations using an appropriate solver
-        return perturbations_mode_full(co, k, lmax; stiff=true)
+        # TODO: use lower tolerance (seems to give good results)
+        return perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9)
     end
 end
 
