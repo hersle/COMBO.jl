@@ -24,11 +24,14 @@ end
 
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf") # TODO: add more temperature fluctuations...
     settings = [
-        ("plots/temperature_fluctuation_l0.pdf", L"\Theta_0", [(Cosmology.i_Θl(0), identity, :solid)]),
-        ("plots/temperature_fluctuation_l1.pdf", L"\Theta_1", [(Cosmology.i_Θl(1), identity, :solid)]),
-        ("plots/temperature_fluctuation_l2.pdf", L"\Theta_2", [(Cosmology.i_Θl(2), identity, :solid)]),
-        ("plots/overdensity.pdf", L"\delta", [(Cosmology.i_δc, log10, :solid), (Cosmology.i_δb, log10∘abs, :dash)]),
         ("plots/velocity.pdf", L"v", [(Cosmology.i_vc, log10, :solid), (Cosmology.i_vb, log10∘abs, :dash)]),
+        ("plots/ThetaPl0.pdf", L"\Theta_0", [(Cosmology.i_ΘPl(0), identity, :solid)]),
+        ("plots/ThetaPl1.pdf", L"\Theta_1", [(Cosmology.i_ΘPl(1), identity, :solid)]),
+        ("plots/ThetaPl2.pdf", L"\Theta_2", [(Cosmology.i_ΘPl(2), identity, :solid)]),
+        ("plots/Thetal0.pdf", L"\Theta_0", [(Cosmology.i_Θl(0), identity, :solid)]),
+        ("plots/Thetal1.pdf", L"\Theta_1", [(Cosmology.i_Θl(1), identity, :solid)]),
+        ("plots/Thetal2.pdf", L"\Theta_2", [(Cosmology.i_Θl(2), identity, :solid)]),
+        ("plots/overdensity.pdf", L"\delta", [(Cosmology.i_δc, log10, :solid), (Cosmology.i_δb, log10∘abs, :dash)]),
         ("plots/potential.pdf", L"\Phi", [(Cosmology.i_Φ, identity, :solid)])
     ]
 
