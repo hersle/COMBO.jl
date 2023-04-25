@@ -12,22 +12,14 @@ co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: cha
 ks = [1e-3, 1e-2, 1e-1] / Mpc
 #println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
-function plot_quantity_with_all_methods!(co, k, i_qty::Integer; func=y->y, label=nothing, kwargs...)
-    y1 = x -> Cosmology.perturbations_splines(co)[i_qty].(x, k)
-    y2 = Cosmology.perturbations_mode(co, k, 6; tight=true )[i_qty] # callable spline
-    y3 = Cosmology.perturbations_mode(co, k, 6; tight=false)[i_qty] # callable spline
-
-    # use spline points for plotting,
-    # but add nextra points between each of them
-    # TODO: make accessible to plotter?
-    x = Cosmology.splinex(y3)
-    nextra = 3
+# use spline points for plotting,
+# but add nextra points between each of them
+# TODO: make accessible to plotter?
+# take an array of x values (e.g. spline points),
+# then add nextra points between each of them
+function extendx(x::Vector{Float64}, nextra::Integer)
     dx = diff(x)
-    x = sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 0:nextra)...))
-
-    plot!(x, func.(y1.(x)), alpha=2/6, linewidth=1.5, label=nothing; kwargs...)
-    plot!(x, func.(y2.(x)), alpha=4/6, linewidth=1.0, label=nothing; kwargs...)
-    plot!(x, func.(y3.(x)), alpha=6/6, linewidth=0.5, label=label;   kwargs...)
+    return sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 0:nextra)...))
 end
 
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf") # TODO: add more temperature fluctuations...
@@ -40,12 +32,21 @@ if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || 
         ("plots/potential.pdf", L"\Phi", [(Cosmology.i_Φ, identity, :solid)])
     ]
 
+    # pre-compute callable splines once and for all (index and call as y1s[i_k][i_qty](x))
+    y1s = [[x -> spline(x, k) for spline in Cosmology.perturbations_splines(co; tight=false)] for k in ks] # 2D (x, k) splines for full system
+    y2s = [Cosmology.perturbations_mode(co, k; tight=true ) for k in ks] # 1D (x) splines for each "exact" k for tight+full system
+    y3s = [Cosmology.perturbations_mode(co, k; tight=false) for k in ks] # 1D (x) splines for each "exact" k for       full system
+
     for (filename, ylabel, iqty_func_linestyles) in settings
         println("Plotting ", filename)
         plot(xlabel=L"x = \log a", ylabel=ylabel, xticks=-25:5:5)
         for (i, k) in enumerate(ks)
+            label = L"k = %$(k*Mpc) / \textrm{Mpc}"
+            x = extendx(Cosmology.splinex(y3s[i][1]), 0) # plot with extra points between every spline point for more smoothness
             for (i_qty, func, linestyle) in iqty_func_linestyles
-                plot_quantity_with_all_methods!(co, k, i_qty; func=func, label=L"k = %$(k*Mpc) / \textrm{Mpc}", color=i, linestyle=linestyle)
+                plot!(x, func.(y1s[i][i_qty].(x)), alpha=2/6, linewidth=1.5, label=nothing, color=i, linestyle=linestyle)
+                plot!(x, func.(y2s[i][i_qty].(x)), alpha=4/6, linewidth=1.0, label=nothing, color=i, linestyle=linestyle)
+                plot!(x, func.(y3s[i][i_qty].(x)), alpha=6/6, linewidth=0.5, label=label,   color=i, linestyle=linestyle)
             end
             vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
         end
