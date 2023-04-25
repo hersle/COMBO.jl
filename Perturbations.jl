@@ -1,5 +1,5 @@
 const polarization = true
-# TODO: const neutrinos = true
+const neutrinos = true
 const lmax = 10 # TODO: lmax = 10 with neutrinos?
 # variable index map (1-based),
 # ordered so full system *extends* the tightly coupled one (useful for switching)
@@ -52,11 +52,15 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
         y[i_ΘPl(0):i_ΘPl(lmax)] .= 0.0
     end
 
-    y[i_Nl(0)] = -1/2 * Ψ
-    y[i_Nl(1)] = +c*k/(6*aH(co,x0)) * Ψ
-    y[i_Nl(2)] = +(c*k*a(x0)/co.H0)^2 / (30*co.Ωr0) * Ψ # expand to avoid 1/Ων0 with Ων0=0
-    for l in 3:lmax
-        y[i_Nl(l)] = c*k/((2*l+1)*aH(co,x0)) * y[i_Nl(l-1)]
+    if neutrinos
+        y[i_Nl(0)] = -1/2 * Ψ
+        y[i_Nl(1)] = +c*k/(6*aH(co,x0)) * Ψ
+        y[i_Nl(2)] = +(c*k*a(x0)/co.H0)^2 / (30*co.Ωr0) * Ψ # expand to avoid 1/Ων0 with Ων0=0
+        for l in 3:lmax
+            y[i_Nl(l)] = c*k/((2*l+1)*aH(co,x0)) * y[i_Nl(l-1)]
+        end
+    else
+        y[i_Nl(0):i_Nl(lmax)] .= 0.0
     end
 
     return y
@@ -112,12 +116,17 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
         dy[i_Θl(1)] = dΘ1
 
         # neutrinos
-        dy[i_Nl(0)] = -ck_aH*Nl[1] - dΦ
-        dy[i_Nl(1)] =  ck_aH/3 * (N0 - 2*Nl[2] + Ψ)
-        for l in 2:lmax-1
-            dy[i_Nl(l)] = ck_aH/(2*l+1) * (l*Nl[l-1] - (l+1)*Nl[l+1])
+        # TODO: don't duplicate code with full system?
+        if neutrinos
+            dy[i_Nl(0)] = -ck_aH*Nl[1] - dΦ
+            dy[i_Nl(1)] =  ck_aH/3 * (N0 - 2*Nl[2] + Ψ)
+            for l in 2:lmax-1
+                dy[i_Nl(l)] = ck_aH/(2*l+1) * (l*Nl[l-1] - (l+1)*Nl[l+1])
+            end
+            dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x)) * Nl[lmax]
+        else
+            dy[i_Nl(0):i_Nl(lmax)] .= 0.0
         end
-        dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x)) * Nl[lmax]
 
         return nothing
     end
@@ -209,12 +218,16 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
         end
 
         # neutrinos
-        dy[i_Nl(0)] = -ck_aH*Nl[1] - dΦ
-        dy[i_Nl(1)] =  ck_aH/3 * (N0 - 2*Nl[2] + Ψ)
-        for l in 2:lmax-1
-            dy[i_Nl(l)] = ck_aH/(2*l+1) * (l*Nl[l-1] - (l+1)*Nl[l+1])
+        if neutrinos
+            dy[i_Nl(0)] = -ck_aH*Nl[1] - dΦ
+            dy[i_Nl(1)] =  ck_aH/3 * (N0 - 2*Nl[2] + Ψ)
+            for l in 2:lmax-1
+                dy[i_Nl(l)] = ck_aH/(2*l+1) * (l*Nl[l-1] - (l+1)*Nl[l+1])
+            end
+            dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x)) * Nl[lmax]
+        else
+            dy[i_Nl(0):i_Nl(lmax)] .= 0.0
         end
-        dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x)) * Nl[lmax]
 
         return nothing # dy is in-place
     end
