@@ -99,17 +99,11 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
         x1 = range(x1, xswitch, length=length(x2)) # use as many points as Peebles; don't duplicate xswitch
         Xe1spl = Spline1D(x1, Xe_Saha_H_He.(co, x1))
 
-        # merge splines
-        Xespl = splinejoin(Xe1spl, Xe2spl)
-        xs = splinex(Xespl)
-
-        # add reionization everywhere
-        Xespl = Spline1D(xs, spliney(Xespl) .+ Xe_reionization.(co, xs))
-
-        co.Xe_spline = Xespl
+        # merge splines and save
+        co.Xe_spline = splinejoin(Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
     end
 
-    return co.Xe_spline(x)
+    return co.Xe_spline(x) + Xe_reionization(co, x) # add reionization here instead
 end
 
 ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
