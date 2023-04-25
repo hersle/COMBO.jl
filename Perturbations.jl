@@ -1,4 +1,5 @@
-const polarization = false
+const polarization = true
+# TODO: const neutrinos = true
 const lmax = 10 # TODO: lmax = 10 with neutrinos?
 # variable index map (1-based),
 # ordered so full system *extends* the tightly coupled one (useful for switching)
@@ -8,7 +9,9 @@ const i_vc = 2
 const i_δb = 3
 const i_vb = 4
 const i_Φ  = 5
-const i_Θ0 = 6
+const i_N0 = 6
+const i_Nl(l::Integer) = i_N0 + l
+const i_Θ0 = i_Nl(lmax) + 1
 const i_Θl(l::Integer) = i_Θ0 + l
 const i_max_tight = i_Θl(1)  # last variable of tight system
 const i_ΘP0 = i_Θl(lmax) + 1 # variables here and below are only part of the full system
@@ -23,9 +26,8 @@ function time_tight_coupling(co::ΛCDM, k::Real)
     return min(x1, x2, x3, x4)
 end
 
-# TODO: include neutrinos
 function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
-    fν = 0 # TODO: neutrinos: co.Ων0 / co.Ωr0
+    fν = co.Ων0 / co.Ωr0
     Ψ  = -1 / (3/2 + 2*fν/5)
 
     y = Vector{Float64}(undef, i_max)
@@ -50,6 +52,13 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
         y[i_ΘPl(0):i_ΘPl(lmax)] .= 0.0
     end
 
+    y[i_Nl(0)] = -1/2 * Ψ
+    y[i_Nl(1)] = +c*k/(6*aH(co,x0)) * Ψ
+    y[i_Nl(2)] = +(c*k*a(x0)/co.H0)^2 / (30*co.Ωr0) * Ψ # expand to avoid 1/Ων0 with Ων0=0
+    for l in 3:lmax
+        y[i_Nl(l)] = c*k/((2*l+1)*aH(co,x0)) * y[i_Nl(l-1)]
+    end
+
     return y
 end
 
@@ -66,13 +75,15 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
         δb = y[i_δb]
         vb = y[i_vb]
         Φ  = y[i_Φ]
+        N0 = y[i_Nl(0)]
+        Nl = @view y[i_Nl(1):i_Nl(lmax)]
         Θ0 = y[i_Θl(0)]
         Θ1 = y[i_Θl(1)]
         Θ2 = (polarization ? -8/15 : -20/45) * ck_aH * Θ1/dτ(co,x)
 
         # 2) compute derivatives
-        Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θ2) # TODO: neutrinos
-        dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0) # TODO: neutrinos
+        Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θ2 + co.Ων0*Nl[2])
+        dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0 + 4*co.Ων0/a(x)^2*N0)
         dδc = ck_aH*vc - 3*dΦ
         dδb = ck_aH*vb - 3*dΦ
         dvc = -vc - ck_aH*Ψ
@@ -99,6 +110,15 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
         dy[i_Φ]     = dΦ
         dy[i_Θl(0)] = dΘ0
         dy[i_Θl(1)] = dΘ1
+
+        # neutrinos
+        dy[i_Nl(0)] = -ck_aH*Nl[1] - dΦ
+        dy[i_Nl(1)] =  ck_aH/3 * (N0 - 2*Nl[2] + Ψ)
+        for l in 2:lmax-1
+            dy[i_Nl(l)] = ck_aH/(2*l+1) * (l*Nl[l-1] - (l+1)*Nl[l+1])
+        end
+        dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x)) * Nl[lmax]
+
         return nothing
     end
 
@@ -144,15 +164,17 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
         δb = y[i_δb]
         vb = y[i_vb]
         Φ  = y[i_Φ]
+        N0 = y[i_Nl(0)]
+        Nl = @view y[i_Nl(1):i_Nl(lmax)]
         Θ0 = y[i_Θl(0)]
         Θl = @view y[i_Θl(1):i_Θl(lmax)] # for l ≥ 1 (since Julia is 1-indexed) # TODO: use OffsetArrays?
         ΘP0 = y[i_ΘPl(0)]
         ΘPl = @view y[i_ΘPl(1):i_ΘPl(lmax)]
 
         # 2) compute derivatives
-        Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θl[2]) # TODO: Ωγ0 (Hans) or Ωr (Callin)? TODO: neutrinos
+        Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θl[2]+co.Ων0*Nl[2]) # TODO: Ωγ0 (Hans) or Ωr (Callin)?
         Π   = Θl[2] + ΘP0 + ΘPl[2]
-        dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0) # TODO: neutrinos
+        dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0 + 4*co.Ων0/a(x)^2*N0)
         dδc = ck_aH*vc - 3*dΦ
         dδb = ck_aH*vb - 3*dΦ
         dvc = -vc - ck_aH*Ψ
@@ -185,6 +207,15 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
         else
             dy[i_ΘPl(0):i_ΘPl(lmax)] .= 0.0
         end
+
+        # neutrinos
+        dy[i_Nl(0)] = -ck_aH*Nl[1] - dΦ
+        dy[i_Nl(1)] =  ck_aH/3 * (N0 - 2*Nl[2] + Ψ)
+        for l in 2:lmax-1
+            dy[i_Nl(l)] = ck_aH/(2*l+1) * (l*Nl[l-1] - (l+1)*Nl[l+1])
+        end
+        dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x)) * Nl[lmax]
+
         return nothing # dy is in-place
     end
 
@@ -253,6 +284,7 @@ end
 vc(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vc](x, k)
 vb(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vb](x, k)
  Φ(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_Φ](x, k)
- Ψ(co::ΛCDM, x::Real, k::Real) = -Φ(co,x,k) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*Θl(co,x,k,2)) # TODO: neutrinos
+ Ψ(co::ΛCDM, x::Real, k::Real) = -Φ(co,x,k) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*Θl(co,x,k,2) + co.Ων0*Nl(co,x,k,2))
 Θl(co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_Θl(l)](x, k)
 ΘPl(co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_ΘPl(l)](x, k)
+Nl(co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_Nl(l)](x, k)

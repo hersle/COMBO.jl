@@ -8,7 +8,8 @@ using .Cosmology
 using .Constants
 using LaTeXStrings
 
-co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: change back
+#co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: change back
+co = ΛCDM()
 ks = [1e-3, 1e-2, 1e-1] / Mpc
 #println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
@@ -25,6 +26,9 @@ end
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf") # TODO: add more temperature fluctuations...
     settings = [
         ("plots/velocity.pdf", L"v", [(Cosmology.i_vc, log10, :solid), (Cosmology.i_vb, log10∘abs, :dash)]),
+        ("plots/N0.pdf", L"N_0", [(Cosmology.i_Nl(0), identity, :solid)]),
+        ("plots/N1.pdf", L"N_1", [(Cosmology.i_Nl(1), identity, :solid)]),
+        ("plots/N2.pdf", L"N_2", [(Cosmology.i_Nl(2), identity, :solid)]),
         ("plots/ThetaPl0.pdf", L"\Theta_0", [(Cosmology.i_ΘPl(0), identity, :solid)]),
         ("plots/ThetaPl1.pdf", L"\Theta_1", [(Cosmology.i_ΘPl(1), identity, :solid)]),
         ("plots/ThetaPl2.pdf", L"\Theta_2", [(Cosmology.i_ΘPl(2), identity, :solid)]),
