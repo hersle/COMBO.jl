@@ -2,8 +2,7 @@ const polarization = true
 const neutrinos = true
 const lγmax = 6  # recommended by notes
 const lνmax = 10 # recommended by Callin
-#const lmax = max(lγmax, lνmax) # operate with only one lmax # TODO: keep lmax a function variable, then construct an object i with fields like i.δc, i.Θl(1), etc.
-const lmax = 10
+const lmax = max(lγmax, lνmax) # operate with only one lmax # TODO: keep lmax a function variable, then construct an object i with fields like i.δc, i.Θl(1), etc.
 @assert lmax >= 4 # equations are ambiguous with lmax <= 3 (how to handle l<2, l=2 and l=lmax?
 
 # variable index map (1-based),
@@ -254,8 +253,9 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
         return [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max] # join splines
     else
         # only integrate the full (stiff) equations using an appropriate solver
-        # TODO: use lower tolerance at later times (when system is not stiff) to speed up?
-        return perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9)
+        # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
+        # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
+        return perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=radau()) # radau is much faster than alternatives!
     end
 end
 
@@ -274,7 +274,6 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false)
             spliness[i_k] = perturbations_mode(co, k; tight=tight)
         end
         xs = splinex(spliness[argmax(length(splinex(splines[1])) for splines in spliness)][1])
-        #xs = xs[1:4:end] # TODO: reduce memory usage here or in perturbation_mode?
 
         perturbs = Array{Float64, 3}(undef, i_max, length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
         for i_k in 1:length(ks)

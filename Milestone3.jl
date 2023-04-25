@@ -8,8 +8,8 @@ using .Cosmology
 using .Constants
 using LaTeXStrings
 
-#co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: change back
-co = ΛCDM()
+co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: change back
+#co = ΛCDM()
 ks = [1e-3, 1e-2, 1e-1] / Mpc
 #println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
@@ -49,7 +49,7 @@ if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || 
         plot(xlabel=L"x = \log a", ylabel=ylabel, xticks=-25:5:5)
         for (i, k) in enumerate(ks)
             label = L"k = %$(k*Mpc) / \textrm{Mpc}"
-            x = extendx(Cosmology.splinex(y3s[i][1]), 0) # plot with extra points between every spline point for more smoothness
+            x = extendx(Cosmology.splinex(y3s[i][1]), 3) # plot with extra points between every spline point for more smoothness
             for (i_qty, func, linestyle) in iqty_func_linestyles
                 plot!(x, func.(y1s[i][i_qty].(x)), alpha=2/6, linewidth=1.5, label=nothing, color=i, linestyle=linestyle)
                 plot!(x, func.(y2s[i][i_qty].(x)), alpha=4/6, linewidth=1.0, label=nothing, color=i, linestyle=linestyle)

@@ -5,6 +5,7 @@ include("Constants.jl")
 using .Constants # physical constants
 using Roots # root finding
 using DifferentialEquations # ODE integration
+using ODEInterfaceDiffEq # fast & stiff "radau" ODE integrator (for perturbations)
 using Dierckx # splines
 using Base.Threads # parallelization
 
