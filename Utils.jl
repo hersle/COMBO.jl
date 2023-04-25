@@ -25,8 +25,7 @@ end
 # TODO: autodiff?
 #
 
-#function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, reltol::Float64=1e-8, abstol::Float64=1e-8, name="unnamed quantity")
-function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, benchmark=false, verbose=false, kwargs...)
+function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, xskip=1, benchmark=false, verbose=true, kwargs...)
     if benchmark
         sol = solve(ODEProblem(f, y1, (x1, x2)), solver; kwargs..., abstol=abstol, reltol=reltol) # pre-compile before measuring
     end
@@ -53,6 +52,14 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
     sortinds = sortperm(sol.t)
     x = sol.t[sortinds]
     y = sol.u[sortinds]
+
+    # let caller skip points before splining (to save memory)
+    filter = 1:xskip:length(x)
+    if filter[end] != length(x)
+        filter = vcat(filter, length(x)) # include endpoint regardless of "xskip divisibility"
+    end
+    x = x[filter]
+    y = y[filter]
 
     return x, y
 end
