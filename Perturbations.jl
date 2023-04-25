@@ -128,7 +128,6 @@ function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, 
         dvb = -vb - ck_aH*Ψ + τ′*R*(3*Θl[1]+vb)
         dΘl0   = -ck_aH*Θl[1] - dΦ
         dΘl1   =  ck_aH/3 * (Θ0-2*Θl[2]+Ψ) + τ′*(Θl[1]+vb/3)
-        dΘl2   =  ck_aH/(2*2+1) * (2*Θl[2-1] - (2+1)*Θl[2+1]) + τ′*(Θl[2]-Π/10)
         dΘlmax = ck_aH*Θl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + τ′*Θl[lmax] # 2nd term: their η is my c*η
 
         # re-pack variables into vector
@@ -139,9 +138,8 @@ function perturbations_mode_full(co::ΛCDM, k::Real, lmax::Integer; y1=nothing, 
         dy[i_Φ]     = dΦ
         dy[i_Θl(0)] = dΘl0
         dy[i_Θl(1)] = dΘl1
-        dy[i_Θl(2)] = dΘl2
-        for l in 3:lmax-1
-            dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + τ′*(Θl[l]-0) # probably inlined?
+        for l in 2:lmax-1
+            dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + τ′*(Θl[l]-Π/10*δ(l,2)) # probably inlined?
         end
         dy[i_Θl(lmax)] = dΘlmax
         return nothing # dy is in-place

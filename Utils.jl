@@ -1,6 +1,8 @@
 using Printf
 using Dates
 
+δ(i::Integer, j::Integer) = i == j ? 1 : 0
+
 function quadroots(a::Real, b::Real, c::Real)
     d = b^2 - 4*a*c
     if d >= 0
