@@ -1,3 +1,4 @@
+const polarization = false
 const lmax = 10 # TODO: lmax = 10 with neutrinos?
 # variable index map (1-based),
 # ordered so full system *extends* the tightly coupled one (useful for switching)
@@ -23,7 +24,6 @@ function time_tight_coupling(co::ΛCDM, k::Real)
 end
 
 # TODO: include neutrinos
-# TODO: include polarization
 function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
     fν = 0 # TODO: neutrinos: co.Ων0 / co.Ωr0
     Ψ  = -1 / (3/2 + 2*fν/5)
@@ -34,16 +34,22 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
     y[i_Φ]            = -(1 + 2*fν/5) * Ψ
     y[i_Θl(0)]        = -1/2 * Ψ
     y[i_Θl(1)]        = -c*k / (3*aH(co,x0)) * y[i_Θl(0)]
-    y[i_Θl(2)]        = -8*c*k / (15*aH(co,x0)*dτ(co,x0)) * y[i_Θl(1)] # TODO: ternary switch with polarization/off
+    y[i_Θl(2)]        = (polarization ? -8/15 : -20/45) * c*k / (aH(co,x0)*dτ(co,x0)) * y[i_Θl(1)] # TODO: ternary switch with polarization/off
     for l in 3:lmax
         y[i_Θl(l)]    = -l/(2*l+1) * c*k/(aH(co,x0)*dτ(co,x0)) * y[i_Θl(l-1)] # recursive relation
     end
-    y[i_ΘPl(0)]       = 5/4 * y[i_Θl(2)]
-    y[i_ΘPl(1)]       = -c*k/(4*aH(co,x0)*dτ(co,x0)) * y[i_Θl(2)]
-    y[i_ΘPl(2)]       = 1/4 * y[i_Θl(2)]
-    for l in 3:lmax
-        y[i_ΘPl(l)]    = -l/(2*l+1) * c*k/(aH(co,x0)*dτ(co,x0)) * y[i_ΘPl(l-1)] # recursive relation
+
+    if polarization
+        y[i_ΘPl(0)]       = 5/4 * y[i_Θl(2)]
+        y[i_ΘPl(1)]       = -c*k/(4*aH(co,x0)*dτ(co,x0)) * y[i_Θl(2)]
+        y[i_ΘPl(2)]       = 1/4 * y[i_Θl(2)]
+        for l in 3:lmax
+            y[i_ΘPl(l)]    = -l/(2*l+1) * c*k/(aH(co,x0)*dτ(co,x0)) * y[i_ΘPl(l-1)] # recursive relation
+        end
+    else
+        y[i_ΘPl(0):i_ΘPl(lmax)] .= 0.0
     end
+
     return y
 end
 
@@ -62,7 +68,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
         Φ  = y[i_Φ]
         Θ0 = y[i_Θl(0)]
         Θ1 = y[i_Θl(1)]
-        Θ2 = -8/15 * ck_aH * Θ1/dτ(co,x)
+        Θ2 = (polarization ? -8/15 : -20/45) * ck_aH * Θ1/dτ(co,x)
 
         # 2) compute derivatives
         Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θ2) # TODO: neutrinos
@@ -80,7 +86,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
                             ((1+R)*dτ(co,x) + daH_aH - 1) # Callin's 3*Θ1′ + vb′ = Hans' q
             dvb = 1/(1+R) * (-vb - ck_aH*Ψ + R*(d_3Θ1_plus_vb+ck_aH*(-Θ0+2*Θ2) - ck_aH*Ψ))
             dΘ1 = (d_3Θ1_plus_vb - dvb) / 3
-            dΘ2 = -8/15*ck_aH * (dΘ1/dτ(co,x) - Θ1*d_aHdτ / (aH(co,x)*dτ(co,x)^2)) # anal Θ2′(x) # TODO: or from q?
+            dΘ2 = (polarization ? -8/15 : -20/45) * ck_aH * (dΘ1/dτ(co,x) - Θ1*d_aHdτ / (aH(co,x)*dτ(co,x)^2)) # anal Θ2′(x) # TODO: or from q?
             return (dvb, dΘ1, dΘ2)
         end
         dvb, dΘ1, dΘ2 = fixed_point_iterate(dvb_dΘ1_dΘ2_fixed_point, (NaN, 0.0, 0.0); tol=1e-10)
@@ -104,15 +110,21 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
     x = splinex(splines[1])
     splines_ext = Vector{Spline1D}(undef, i_max)
     splines_ext[1:i_max_tight] .= splines # rely on that full system *extends* tight system (TODO: change?)
-    splines_ext[i_Θl(2)] = Spline1D(x, @. -8*c*k / (15*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(1)](x); bc="error") # TODO: switch with polarization/off?
+    splines_ext[i_Θl(2)] = Spline1D(x, @. (polarization ? -8/15 : -20/45) * c*k / (aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(1)](x); bc="error") # TODO: switch with polarization/off?
     for l in 3:lmax
         splines_ext[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(l-1)](x); bc="error") # recursive relation
     end
-    splines_ext[i_ΘPl(0)] = Spline1D(x, @. 5/4 * splines_ext[i_Θl(2)](x); bc="error")
-    splines_ext[i_ΘPl(1)] = Spline1D(x, @. -c*k/(4*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(2)](x); bc="error")
-    splines_ext[i_ΘPl(2)] = Spline1D(x, @. 1/4 * splines_ext[i_Θl(2)](x); bc="error")
-    for l in 3:lmax
-        splines_ext[i_ΘPl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_ΘPl(l-1)](x); bc="error")
+    if polarization
+        splines_ext[i_ΘPl(0)] = Spline1D(x, @. 5/4 * splines_ext[i_Θl(2)](x); bc="error")
+        splines_ext[i_ΘPl(1)] = Spline1D(x, @. -c*k/(4*aH(co,x)*dτ(co,x)) * splines_ext[i_Θl(2)](x); bc="error")
+        splines_ext[i_ΘPl(2)] = Spline1D(x, @. 1/4 * splines_ext[i_Θl(2)](x); bc="error")
+        for l in 3:lmax
+            splines_ext[i_ΘPl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines_ext[i_ΘPl(l-1)](x); bc="error")
+        end
+    else
+        for l in 0:lmax
+            splines_ext[i_ΘPl(l)] = Spline1D(x, 0 .* x)
+        end
     end
     return splines_ext
 end
@@ -163,12 +175,16 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
             dy[i_Θl(l)] = ck_aH/(2*l+1) * (l*Θl[l-1] - (l+1)*Θl[l+1]) + τ′*(Θl[l]-Π/10*δ(l,2)) # probably inlined?
         end
         dy[i_Θl(lmax)] = dΘlmax
-        dy[i_ΘPl(0)] = dΘPl0
-        dy[i_ΘPl(1)] = ck_aH/(2*1+1) * (1*ΘP0 - (1+1)*ΘPl[1+1]) + τ′*(ΘPl[1]-Π/10*δ(1,2))
-        for l in 2:lmax-1
-            dy[i_ΘPl(l)] = ck_aH/(2*l+1) * (l*ΘPl[l-1] - (l+1)*ΘPl[l+1]) + τ′*(ΘPl[l]-Π/10*δ(l,2))
+        if polarization
+            dy[i_ΘPl(0)] = dΘPl0
+            dy[i_ΘPl(1)] = ck_aH/(2*1+1) * (1*ΘP0 - (1+1)*ΘPl[1+1]) + τ′*(ΘPl[1]-Π/10*δ(1,2))
+            for l in 2:lmax-1
+                dy[i_ΘPl(l)] = ck_aH/(2*l+1) * (l*ΘPl[l-1] - (l+1)*ΘPl[l+1]) + τ′*(ΘPl[l]-Π/10*δ(l,2))
+            end
+            dy[i_ΘPl(lmax)] = dΘPlmax
+        else
+            dy[i_ΘPl(0):i_ΘPl(lmax)] .= 0.0
         end
-        dy[i_ΘPl(lmax)] = dΘPlmax
         return nothing # dy is in-place
     end
 
