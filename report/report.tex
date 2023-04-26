@@ -20,6 +20,7 @@
 \usepackage{tensor}
 \usepackage{derivative}
 \usepackage{booktabs}
+\usepackage{mathtools}
 
 \usepackage{biblatex}
 %\bibliographystyle{plainnat}
@@ -856,6 +857,7 @@ For example, this agrees with the famous acoustic peak around $s \approx 105\,\m
 \section{Perturbations}
 
 \newcommand\N{\mathcal{N}}
+\newcommand\aH{\mathcal{H}}
 
 \subsection{Theory}
 
@@ -878,6 +880,29 @@ Initial conditions
 	\N_1 &= +\frac{ck}{6\mathcal{H}} \Psi, \\
 	\N_2 &= -\frac{c^2 k^2 a^2}{12 H_0^2 \Omega_{\nu0}} (\Psi + \Phi) = \frac{c^2 k^2 a^2}{30 H_0^2 \Omega_{r0}} \Psi,\\
 	\N_{l \geq 3} &= \frac{ck}{(2l+1)\mathcal{H}} \N_{l-1},
+\end{align}
+\end{subequations}
+
+Full system
+\begin{subequations}
+\begin{align}
+	{\Theta_0}^\prime   &= -\frac{ck}{\aH} \Theta_1 - \Phi^\prime , \\
+	{\Theta_1}^\prime   &=  \frac{ck}{3\aH} \bigg[ \Theta_0 - 2 \Theta_2 + \Psi \bigg] + \tau^\prime \bigg[ \Theta_1 + \frac{v_b}{3} \bigg] , \\
+	{\Theta_l}^\prime   &= \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta_{l-1} - (l+1) \Theta_{l+1} \bigg] + \tau^\prime \bigg[ \Theta_l - \frac{\Pi}{10} \delta_{l,2} \bigg] , \\
+	{\Theta_l}^\prime   &= \frac{ck}{\aH} \Theta_{l-1} - \frac{l+1}{\aH \eta} \Theta_l + \tau^\prime \Theta_l, \\
+	{\Theta^P_0}^\prime &= -\frac{ck}{\aH} \Theta^P_1 + \tau^\prime \bigg[ \Theta^P_0 - \frac{\Pi}{2} \bigg], \\
+	{\Theta^P_l}^\prime &= \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta^P_{l-1} - (l+1) \Theta^P_{l+1} \bigg] + \tau^\prime \bigg[ \Theta^P_l - \frac{\Pi}{10} \delta_{l,2} \bigg] , \\
+	{\Theta^P_l}^\prime &= \frac{ck}{\aH} \Theta^P_{l-1} - \frac{l+1}{\aH \eta} \Theta^P_l + \tau^\prime \Theta^P_l, \\
+	{\N_0}^\prime       &= -\frac{ck}{\aH} \N_1 - \Phi^\prime , \\
+	{\N_1}^\prime       &=  \frac{ck}{3\aH} \bigg[ \N_0 - 2 \N_2 + \Psi \bigg] , \\
+	{\N_l}^\prime       &= \frac{ck}{(2l+1)\aH} \bigg[ l \, \N_{l-1} - (l+1) \N_{l+1} \bigg] , \\
+	{\N_l}^\prime       &= \frac{ck}{\aH} \N_{l-1} - \frac{l+1}{\aH \eta} \N_l , \\
+	{\delta_c}^\prime   &= \frac{ck}{\aH} v_c - 3 \Phi^\prime , \\
+	{\delta_b}^\prime   &= \frac{ck}{\aH} v_b - 3 \Phi^\prime , \\
+	{v_c}^\prime        &= -v_c - \frac{ck}{\aH} \Psi , \\
+	{v_b}^\prime        &= -v_b - \frac{ck}{\aH} \Psi + \tau^\prime R (3\Theta_1 + v_b), \\
+	{\Phi}^\prime       &= \Psi - \frac{c^2 k^2}{3 \aH^2} \Phi + \frac{H_0^2}{2 \aH^2} \bigg[ \Omega_{c0} \delta_c a^{-1} + \Omega_{b0} \delta_b a^{-1} + 4 \Omega_{\gamma 0} \Theta_0 a^{-2} + 4 \Omega_{\nu 0} \N_0 a^{-2} \bigg] , \\
+	{\Psi}^\prime       &= -\Phi - \frac{12 H_0^2}{c^2 k^2 a^2} \bigg[ \Omega_{\gamma 0} \Theta_2 + \Omega_{\nu 0} \N_2 \bigg] ,
 \end{align}
 \end{subequations}
 
