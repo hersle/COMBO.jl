@@ -947,7 +947,7 @@ Tight coupling:
 \includegraphics[height=5cm,right]{../plots/Nl0.pdf} \\
 \includegraphics[height=5cm,right]{../plots/Nl1.pdf} \\
 \end{minipage}
-\caption{Raw quantities \TODO{}}
+\caption{(continued on next page).}
 \end{figure}%
 \begin{figure}[ht!]
 \ContinuedFloat
@@ -962,7 +962,15 @@ Tight coupling:
 \includegraphics[height=5cm,right]{../plots/overdensity1.pdf} \\
 \includegraphics[height=5cm,right]{../plots/overdensity2.pdf} \\
 \end{minipage}
-\caption{(continued) Raw quantities \TODO{} \TODO{align better}}
+\caption{%
+	Three different perturbation $k$-modes for the Planck cosmology \eqref{eq_planck2018} and $l_\text{max}=10$.
+	Zoom in to see that \textit{each curve consists of three overlapping sub-curves}:
+	the innermost integrates the full system with the \texttt{KenCarp4} method and interpolates across $x$;
+	the middle integrates the tight and full system with the \texttt{Vern9} method and interpolates across $x$; and
+	the outermost is identical to the innermost, but interpolates across both $x$ and $k$ after solving the system for $200$ quadratically spaced $k$-values.
+	All integrators use the absolute and relative error tolerance $10^{-9}$.
+	This is the reason for the ``blurry'' curves.
+}
 \end{figure}
 
 \clearpage
