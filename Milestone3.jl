@@ -25,6 +25,7 @@ end
 
 if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || !isfile("plots/potential.pdf") || !isfile("plots/temperature_fluctuation.pdf") # TODO: add more temperature fluctuations...
     settings = [
+        ("plots/potential.pdf", L"\{\Phi,\Psi\}", [(Cosmology.i_Φ, identity, :solid, L"\Phi"), (Cosmology.i_Ψ, identity, :dash, L"\Psi")]),
         ("plots/velocity.pdf",  L"\log_{10}|v|", [(Cosmology.i_vc, log10, :solid, L"v=v_c"), (Cosmology.i_vb, log10∘abs, :dash, L"v=v_b")]),
         ("plots/velocity2.pdf", L"\log_{10}|v|", [(Cosmology.i_Θl(1), Θ1 -> log10(abs(-3*Θ1)), :solid, L"v=v_\gamma=-3\Theta_1"), (Cosmology.i_Nl(1), N1 -> log10(abs(-3*N1)), :dash, L"v=v_\nu=-3\mathcal{N}_1")]),
         ("plots/overdensity.pdf",  L"\log_{10}|\delta|", [(Cosmology.i_δc, log10, :solid, L"\delta=\delta_c"), (Cosmology.i_δb, log10∘abs, :dash, L"\delta=\delta_b")]),
@@ -38,7 +39,6 @@ if true || !isfile("plots/overdensity.pdf") || !isfile("plots/velocity.pdf") || 
         ("plots/Thetal0.pdf", L"\Theta_0", [(Cosmology.i_Θl(0), identity, :solid, "")]),
         ("plots/Thetal1.pdf", L"\Theta_1", [(Cosmology.i_Θl(1), identity, :solid, "")]),
         ("plots/Thetal2.pdf", L"\Theta_2", [(Cosmology.i_Θl(2), identity, :solid, "")]),
-        ("plots/potential.pdf", L"\Phi", [(Cosmology.i_Φ, identity, :solid, "")])
     ]
 
     # pre-compute callable splines once and for all (index and call as y1s[i_k][i_qty](x))

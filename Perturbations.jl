@@ -1,5 +1,6 @@
 const polarization = true
 const neutrinos = true
+
 const lγmax = 6  # recommended by notes
 const lνmax = 10 # recommended by Callin
 const lmax = max(lγmax, lνmax) # operate with only one lmax # TODO: keep lmax a function variable, then construct an object i with fields like i.δc, i.Θl(1), etc.
@@ -12,14 +13,14 @@ const i_vc = 2
 const i_δb = 3
 const i_vb = 4
 const i_Φ  = 5
-const i_N0 = 6
-const i_Nl(l::Integer) = i_N0 + l
-const i_Θ0 = i_Nl(lmax) + 1
-const i_Θl(l::Integer) = i_Θ0 + l
-const i_max_tight = i_Θl(1)  # last variable of tight system
-const i_ΘP0 = i_Θl(lmax) + 1 # variables here and below are only part of the full system
-const i_ΘPl(l::Integer) = i_ΘP0 + l
-const i_max = i_ΘPl(lmax)
+const i_Nl(l::Integer) = 6 + l
+const i_Θl(l::Integer) = i_Nl(lmax) + 1 + l
+const i_ΘPl(l::Integer) = i_Θl(lmax) + 1 + l # variables here and below are only part of the full system
+const i_Ψ = i_ΘPl(lmax) + 1
+
+const i_max_tight = i_Θl(1)     # last variable of tight system
+const i_max_full  = i_ΘPl(lmax) # last variable of full system
+const i_max_ext   = i_Ψ         # last variable of extended system (with Ψ)
 
 function time_tight_coupling(co::ΛCDM, k::Real; tol::Float64=10.0)
     x1 = find_zero(x -> abs(dτ(co,x)) - tol,                (-20.0, +20.0)) # tight coupling assumes     1/τ′ << 1
@@ -33,7 +34,7 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
     fν = co.Ων0 / co.Ωr0
     Ψ  = -1 / (3/2 + 2*fν/5)
 
-    y = Vector{Float64}(undef, i_max)
+    y = Vector{Float64}(undef, i_max_full)
     y[i_δc] = y[i_δb] = -3/2 * Ψ
     y[i_vc] = y[i_vb] = -k*c/(2*aH(co,x0)) * Ψ
     y[i_Φ]            = -(1 + 2*fν/5) * Ψ
@@ -133,7 +134,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
         return nothing
     end
 
-    splines = Vector{Spline1D}(undef, i_max)
+    splines = Vector{Spline1D}(undef, i_max_full)
     alg_hints = [stiff ? :auto : :nonstiff]
     y1 = perturbations_initial_conditions(co, x1, k)[1:i_max_tight] # cut away variables not in the tight system
     splines[1:i_max_tight] .= _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations tight (k=$(k*Mpc)/Mpc)", kwargs...)
@@ -237,11 +238,12 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
     if isnothing(y1)
         y1 = perturbations_initial_conditions(co, x1, k)
     end
-    alg_hints = [stiff ? :auto : :nonstiff]
+    alg_hints = [stiff ? :auto : :nonstiff] # TODO: can remove this now
     return _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations full (k=$(k*Mpc)/Mpc)", kwargs...)
 end
 
 function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
+    splines = Vector{Spline1D}(undef, i_max_ext)
     if tight
         # 1) use tight coupling approximation at early times to avoid stiff equations,
         # 2) then integrate the full equations from when the approximation breaks down,
@@ -250,13 +252,18 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
         spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9)
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
         spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9)
-        return [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max] # join splines
+        splines[1:i_max_full] .= [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max_full] # join splines
     else
         # only integrate the full (stiff) equations using an appropriate solver
         # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
         # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
-        return perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=KenCarp4(autodiff=false)) # KenCarp4(autodiff=false) and radau() work well!
+        splines[1:i_max_full] .= perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=KenCarp4(autodiff=false)) # KenCarp4(autodiff=false) and radau() work well!
     end
+
+    # extend with variables given in terms of the integrated ones (like Ψ)
+    x = splinex(splines[1])
+    splines[i_Ψ] = Spline1D(x, @. -splines[i_Φ](x) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*splines[i_Θl(2)](x) + co.Ων0*splines[i_Nl(2)](x)); bc="error")
+    return splines
 end
 
 function perturbations_splines(co::ΛCDM; tight::Bool=false)
@@ -275,14 +282,14 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false)
         end
         xs = splinex(spliness[argmax(length(splinex(splines[1])) for splines in spliness)][1])
 
-        perturbs = Array{Float64, 3}(undef, i_max, length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
+        perturbs = Array{Float64, 3}(undef, i_max_ext, length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
         for i_k in 1:length(ks)
-            for i_qty in 1:i_max
+            for i_qty in 1:i_max_ext
                 perturbs[i_qty, :, i_k] .= spliness[i_k][i_qty](xs)
             end
         end
 
-        for i_qty in 1:i_max
+        for i_qty in 1:i_max_ext
             qty = @view perturbs[i_qty, :, :]
             push!(co.perturbation_splines, Spline2D(xs, ks, qty)) # spline (x, k)
         end
@@ -294,10 +301,9 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false)
 end
 
 Φ(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_Φ](x, k)
-Ψ(co::ΛCDM, x::Real, k::Real) = -Φ(co,x,k) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*Θl(co,x,k,2) + co.Ων0*Nl(co,x,k,2))
+Ψ(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_Ψ](x, k)
 δc(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_δc](x, k)
 δb(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_δb](x, k)
-δγ(co::ΛCDM, x::Real, k::Real) = 0 # TODO
 vc(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vc](x, k)
 vb(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vb](x, k)
 Θl( co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_Θl(l)](x, k)
