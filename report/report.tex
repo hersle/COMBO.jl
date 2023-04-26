@@ -886,17 +886,23 @@ Initial conditions
 Full system
 \begin{subequations}
 \begin{align}
-	{\Theta_0}^\prime   &= -\frac{ck}{\aH} \Theta_1 - \Phi^\prime , \\
-	{\Theta_1}^\prime   &=  \frac{ck}{3\aH} \bigg[ \Theta_0 - 2 \Theta_2 + \Psi \bigg] + \tau^\prime \bigg[ \Theta_1 + \frac{v_b}{3} \bigg] , \\
-	{\Theta_l}^\prime   &= \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta_{l-1} - (l+1) \Theta_{l+1} \bigg] + \tau^\prime \bigg[ \Theta_l - \frac{\Pi}{10} \delta_{l,2} \bigg] , \\
-	{\Theta_l}^\prime   &= \frac{ck}{\aH} \Theta_{l-1} - \frac{l+1}{\aH \eta} \Theta_l + \tau^\prime \Theta_l, \\
-	{\Theta^P_0}^\prime &= -\frac{ck}{\aH} \Theta^P_1 + \tau^\prime \bigg[ \Theta^P_0 - \frac{\Pi}{2} \bigg], \\
-	{\Theta^P_l}^\prime &= \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta^P_{l-1} - (l+1) \Theta^P_{l+1} \bigg] + \tau^\prime \bigg[ \Theta^P_l - \frac{\Pi}{10} \delta_{l,2} \bigg] , \\
-	{\Theta^P_l}^\prime &= \frac{ck}{\aH} \Theta^P_{l-1} - \frac{l+1}{\aH \eta} \Theta^P_l + \tau^\prime \Theta^P_l, \\
-	{\N_0}^\prime       &= -\frac{ck}{\aH} \N_1 - \Phi^\prime , \\
-	{\N_1}^\prime       &=  \frac{ck}{3\aH} \bigg[ \N_0 - 2 \N_2 + \Psi \bigg] , \\
-	{\N_l}^\prime       &= \frac{ck}{(2l+1)\aH} \bigg[ l \, \N_{l-1} - (l+1) \N_{l+1} \bigg] , \\
-	{\N_l}^\prime       &= \frac{ck}{\aH} \N_{l-1} - \frac{l+1}{\aH \eta} \N_l , \\
+	{\Theta_l}^\prime   &= \begin{dcases}
+	                       -\frac{ck}{\aH} \Theta_1 - \Phi^\prime & (l=0), \\
+	                       \frac{ck}{3\aH} \bigg[ \Theta_0 - 2 \Theta_2 + \Psi \bigg] + \tau^\prime \bigg[ \Theta_1 + \frac{v_b}{3} \bigg] & (l=1), \\
+	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta_{l-1} - (l+1) \Theta_{l+1} \bigg] + \tau^\prime \bigg[ \Theta_l - \frac{\Pi}{10} \delta_{l,2} \bigg] & (l = 2, 3, \ldots, l_\text{max}-1), \\
+	                       \frac{ck}{\aH} \Theta_{l-1} - \frac{l+1}{\aH \eta} \Theta_l + \tau^\prime \Theta_l & (l=l_\text{max}), \\
+	                       \end{dcases} \\
+	{\Theta^P_l}^\prime &= \begin{dcases}
+	                       -\frac{ck}{\aH} \Theta^P_1 + \tau^\prime \bigg[ \Theta^P_0 - \frac{\Pi}{2} \bigg] & (l=0), \\
+	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta^P_{l-1} - (l+1) \Theta^P_{l+1} \bigg] + \tau^\prime \bigg[ \Theta^P_l - \frac{\Pi}{10} \delta_{l,2} \bigg] & (l = 1, 2, \ldots, l_\text{max}-1), \\
+	                       \frac{ck}{\aH} \Theta^P_{l-1} - \frac{l+1}{\aH \eta} \Theta^P_l + \tau^\prime \Theta^P_l & (l=l_\text{max}), \\
+	                       \end{dcases} \\
+	{\N_l}^\prime       &= \begin{dcases}
+	                       -\frac{ck}{\aH} \N_1 - \Phi^\prime & (l=0), \\
+	                       \frac{ck}{3\aH} \bigg[ \N_0 - 2 \N_2 + \Psi \bigg] & (l=1) , \\
+	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \N_{l-1} - (l+1) \N_{l+1} \bigg] & (l=2,3,\ldots,l_\text{max}-1), \\
+	                       \frac{ck}{\aH} \N_{l-1} - \frac{l+1}{\aH \eta} \N_l & (l=l_\text{max}), \\
+	                       \end{dcases} \\
 	{\delta_c}^\prime   &= \frac{ck}{\aH} v_c - 3 \Phi^\prime , \\
 	{\delta_b}^\prime   &= \frac{ck}{\aH} v_b - 3 \Phi^\prime , \\
 	{v_c}^\prime        &= -v_c - \frac{ck}{\aH} \Psi , \\
