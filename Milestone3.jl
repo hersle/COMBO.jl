@@ -8,8 +8,8 @@ using .Cosmology
 using .Constants
 using LaTeXStrings
 
-co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # TODO: change back
-#co = ΛCDM()
+co = ΛCDM()
+#co = ΛCDM(h=0.7, Neff=0, Ωb0=0.05, Ωc0=0.45, Yp=0, z_reion_H=NaN) # to compare with Hans
 ks = [1e-3, 1e-2, 1e-1] / Mpc
 #println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
