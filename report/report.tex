@@ -1028,15 +1028,23 @@ forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they ar
 	the outermost is identical to the innermost, but interpolates across both $x$ and $k$ after solving the system for $200$ quadratically spaced $k$-values.
 	All integrators use the absolute and relative error tolerance $10^{-9}$.
 	This is the reason for the ``blurry'' curves.
-	\label{fig_perturb_all}
 }
+\label{fig_perturb_all}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[scale=0.7]{../plots/Thetal0_zoom.pdf}
 \caption{Zoom-in on $\Theta_0$ in \cref{fig_perturb_all}, showing its most rapid oscillations at the latest times.}
+\label{fig_perturb_zoom}
 \end{figure}
+
+\Cref{fig_perturb_all} shows three integrated perturbation modes.
+
+First, note that stiff solver's solution of the full system
+agrees perfectly with the non-stiff solver's solution of the hybrid tight and full system.
+As shown in \cref{fig_perturb_zoom}, a discrepancy between the two appears only at very late times, as the oscillations become extremely rapid.
+The $k$-splined solutions also agrees well.
 
 \clearpage
 \section{Conclusions}
