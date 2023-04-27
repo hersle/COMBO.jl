@@ -884,6 +884,7 @@ Initial conditions
 	\N_2 &= -\frac{c^2 k^2 a^2}{12 H_0^2 \Omega_{\nu0}} (\Psi + \Phi) = \frac{c^2 k^2 a^2}{30 H_0^2 \Omega_{r0}} \Psi,\\
 	\N_{l \geq 3} &= \frac{ck}{(2l+1)\mathcal{H}} \N_{l-1},
 \end{align}
+\label{eq_perturb_ic}
 \end{subequations}
 
 Full system
@@ -913,6 +914,7 @@ Full system
 	{\Phi}^\prime       &= \Psi - \frac{c^2 k^2}{3 \aH^2} \Phi + \frac{H_0^2}{2 \aH^2} \bigg[ \Omega_{c0} \delta_c a^{-1} + \Omega_{b0} \delta_b a^{-1} + 4 \Omega_{\gamma 0} \Theta_0 a^{-2} + 4 \Omega_{\nu 0} \N_0 a^{-2} \bigg] , \\
 	{\Psi}^\prime       &= -\Phi - \frac{12 H_0^2}{c^2 k^2 a^2} \bigg[ \Omega_{\gamma 0} \Theta_2 + \Omega_{\nu 0} \N_2 \bigg] ,
 \end{align}
+\label{eq_perturb_full}
 \end{subequations}
 
 Tight coupling:
@@ -928,9 +930,65 @@ Tight coupling:
 	v_b^\prime &= \frac{1}{1+R} \bigg[ -v_b - \frac{ck}{\aH} \Psi + R \Big( q - \frac{ck}{\aH} \big(\Psi + \Theta_0 - 2 \Theta_2 \big) \Big) \bigg], \\
 	\Theta_1^\prime &= \frac{q - v_b^\prime}{3},
 \end{align}
+\label{eq_perturb_tight}
 \end{subequations}
 
 \subsection{Implementation}
+
+\begin{itemize}
+\item
+However messy,
+both the full system \eqref{eq_perturb_full} and the tight system \eqref{eq_perturb_tight} simply specify derivatives of (big) systems of differential equations
+that can be integrated from the initial conditions \eqref{eq_perturb_ic} with Runge-Kutta methods.
+We do this both with and without the tight coupling approximation.
+
+\item
+There is only one ambiguous/non-obvious calculation in the tight system:
+$\Theta_1^\prime$ depends on $\Theta_2^\prime$ (through $q$),
+but $\Theta_2$ depends on $\Theta_1$,
+so $\Theta_2^\prime$ also depends on $\Theta_1^\prime$, making the calculation ``circular''.
+We resolve this with fixed-point iteration.
+This converges with a very small $\Theta_2^\prime$ in very few steps, so it is also a good approximation to simply neglect $\Theta_2^\prime$ in $q$.
+
+\item
+With the tight coupling approximation,
+we integrate the tight system from the initial conditions while
+$|1/\tau^\prime| < 0.1 \ll 1$,
+$|ck/\aH\tau^\prime| < 0.1 \ll 1$ (both assumed in tight coupling),
+$X_e > 0.999$ (before recombination really sets in)
+or $x = -10$ (to avoid a kink in a polarization $\Theta^P$, as determined by trial and error).
+Then we switch to integrating the full system, using the tight system's last values as its initial conditions, and finally combine and spline the results.
+We integrate both regimes with the explicit \texttt{Vern9} method with absolute and relative error tolerance $10^{-9}$.
+\textbf{This is inefficient}, as the integration chickens out and takes extremely small steps during the rapid oscillations following recombination.
+
+\item
+Without the tight coupling approximation,
+we \textit{always} integrate the full system from the initial conditions using the \textbf{e}xplicit \textbf{s}ingly \textbf{d}iagonal \textbf{i}mplicit \textbf{R}unge-\textbf{K}utta method (ESDIRK) \texttt{KenCarp4} method, also with error tolerance $10^{-9}$.
+This method is recommended for solving stiff problems with medium error tolerances \TODO{cite?},
+and also used by \texttt{Bolt.jl}.
+The \texttt{radau} algorithm also works well, but is not quite as fast.
+This is the most natural, elegant and our preferred method for integrating the perturbation equations,
+and we will see in our comparison below that we can \textbf{simply forget about the tight coupling approximation}.
+
+\item
+In addition to a function that integrates the perturbations over $x$ for a fixed mode $k$ and splines over $x$,
+we implement a function that does so for multiple $k$ and splines over \emph{both} $x$ and $k$.
+This will come in use later, when we need to evaluate the perturbations for many $k$.
+Here we use a grid with 200 $k$-values in $0.0005 / \textrm{Mpc} \leq k \leq 0.3 / \textrm{Mpc}$, spaced quadratically with finer resolution for the larger-scale modes.
+We take the $x$-values from the perturbation mode that requires the most integration points (instead of using different $x$ for each $k$, which is not supported by the spline library we use).
+
+\item
+On an expensive modern laptop,
+integrating and splining the smallest-scale $k=0.3/\textrm{Mpc}$ perturbation mode
+takes around $85 \textrm{ ms}$ with $1614$ $x$-values with our preferred \texttt{KenCarp4} method on only the full system.
+In contrast, integrating the tight and full systems with an explicit method takes up to one second and uses $10000$s of steps.
+With our preferred method, the $(x,k)$-splining process takes around (with $200$ $k$-values and 1625 $x$-values) takes around $16 \textrm{ s}$.
+
+\item
+We add compile-time flags for polarization and neutrinos,
+forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they are disabled.
+\end{itemize}
+
 \subsection{Results}
 
 \begin{figure}[b]
@@ -972,6 +1030,8 @@ Tight coupling:
 	This is the reason for the ``blurry'' curves.
 }
 \end{figure}
+
+\TODO{check that oscillations of most rapidly oscillating quantity are captured}
 
 \clearpage
 \section{Conclusions}
