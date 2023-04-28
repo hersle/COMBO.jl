@@ -991,6 +991,18 @@ forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they ar
 
 \subsection{Results}
 
+\begin{figure}
+\includegraphics[height=5cm]{../plots/perturbation_methods.pdf}
+\hfill
+\includegraphics[height=5cm]{../plots/Thetal0_zoom.pdf}
+\caption{To compare the \texttt{KenCarp4} (\texttt{KC4}, without tight coupling) and \texttt{Tsit5} (\texttt{T5}, with tight coupling) integration methods,
+we integrate the perturbations $y_i(x)$ with both methods,
+normalize each quantity $\hat{y}_i(x) = y_i(x) / \max_x |y_i(x)|$, so they all lie on a common scale $[-1, +1]$,
+and plot the greatest discrepancy $\max_i |y^\text{KC4}_i(x) - y^\text{T5}_i(x)|$ at each time $x$ (left plot).
+The greatest differences occur during late-time oscillations of small-scale modes, when the integration methods grow out of phase (right plot).}
+\label{fig_perturb_methods}
+\end{figure}
+
 \begin{figure}[b]
 \begin{minipage}{0.49\textwidth}
 \includegraphics[height=5cm,right]{../plots/Thetal0.pdf} \\
@@ -1022,6 +1034,7 @@ forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they ar
 \end{minipage}
 \caption{%
 	Three different perturbation $k$-modes for the Planck cosmology \eqref{eq_planck2018} and $l_\text{max}=10$.
+	The circles mark each mode's horizon entry, where $k c \eta = 1$.
 	Zoom in to see that \textit{each curve consists of three overlapping sub-curves}:
 	the innermost integrates the full system with the \texttt{KenCarp4} method and interpolates across $x$;
 	the middle integrates the tight and full system with the \texttt{Vern9} method and interpolates across $x$; and
@@ -1030,13 +1043,6 @@ forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they ar
 	This is the reason for the ``blurry'' curves.
 }
 \label{fig_perturb_all}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[scale=0.7]{../plots/Thetal0_zoom.pdf}
-\caption{Zoom-in on $\Theta_0$ in \cref{fig_perturb_all}, showing its most rapid oscillations at the latest times.}
-\label{fig_perturb_zoom}
 \end{figure}
 
 \Cref{fig_perturb_all} shows three integrated perturbation modes.

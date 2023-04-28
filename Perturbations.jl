@@ -30,6 +30,10 @@ function time_tight_coupling(co::ΛCDM, k::Real; tol::Float64=10.0)
     return min(x1, x2, x3, x4) # take the earliest of these times
 end
 
+function time_horizon_entry(co::ΛCDM, k::Real)
+    return find_zero(x -> k * c*η(co,x) - 1, (-20.0, +20.0))
+end
+
 function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
     fν = co.Ων0 / co.Ωr0
     Ψ  = -1 / (3/2 + 2*fν/5)
@@ -249,9 +253,9 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
         # 2) then integrate the full equations from when the approximation breaks down,
         # 3) merge 1+2
         x12 = time_tight_coupling(co, k)
-        spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9)
+        spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
-        spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9)
+        spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
         splines[1:i_max_full] .= [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max_full] # join splines
     else
         # only integrate the full (stiff) equations using an appropriate solver
@@ -261,7 +265,7 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
     end
 
     # extend with variables given in terms of the integrated ones (like Ψ)
-    x = splinex(splines[1])
+    x = splinex(splines[1]) # TODO: should really use integration points for operations like this?
     splines[i_Ψ] = Spline1D(x, @. -splines[i_Φ](x) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*splines[i_Θl(2)](x) + co.Ων0*splines[i_Nl(2)](x)); bc="error")
     return splines
 end
@@ -270,8 +274,10 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false)
     if length(co.perturbation_splines) == 0
         t1 = now()
 
-        kmin, kmax = 0.00005 / Mpc, 0.3 / Mpc
+        kmin, kmax = 0.00005 / Mpc, 1.0 / Mpc
         ks = kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 2 # quadratic spacing
+        #log10ks = log10(kmin) .+ (log10(kmax)-log10(kmin)) * range(0, 1; length=200)
+        #ks = 10 .^ log10ks
         
         # (x,k) spline requires 1D arrays for x and k (and does not accept a fully irregular 2D grid)
         # use the x-values from the mode that has the most (not necessarily k=kmax)

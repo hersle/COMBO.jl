@@ -25,12 +25,12 @@ end
 # TODO: autodiff?
 #
 
-function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, xskip=1, benchmark=false, verbose=true, kwargs...)
+function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, maxiters=1e7, xskip=1, benchmark=false, verbose=true, kwargs...)
     if benchmark
-        sol = solve(ODEProblem(f, y1, (x1, x2)), solver; kwargs..., abstol=abstol, reltol=reltol) # pre-compile before measuring
+        sol = solve(ODEProblem(f, y1, (x1, x2)), solver; maxiters=maxiters, kwargs..., abstol=abstol, reltol=reltol) # pre-compile before measuring
     end
     t1 = now()
-    sol = solve(ODEProblem(f, y1, (x1, x2)), solver; kwargs..., abstol=abstol, reltol=reltol)
+    sol = solve(ODEProblem(f, y1, (x1, x2)), solver; maxiters=maxiters, kwargs..., abstol=abstol, reltol=reltol)
     t2 = now()
     dt = t2 - t1
 
@@ -79,7 +79,7 @@ function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64
     return Spline1D(x, y, bc="error")
 end
 
-splinex(spline::Spline1D) = unique(spline.t)
+splinex(spline::Spline1D) = unique(spline.t) # TODO: does this make sense to use?
 spliney(spline::Spline1D) = spline(splinex(spline))
 
 splinex(spline::Spline2D) = unique(spline.tx)

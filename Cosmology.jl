@@ -22,7 +22,7 @@ export time_reionization_H, time_reionization_He
 export multirange
 export format_time_variations
 
-export time_tight_coupling
+export time_tight_coupling, time_horizon_entry
 export δc, δb, vc, vb, Φ, Ψ, Θl
 
 mutable struct ΛCDM
