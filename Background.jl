@@ -27,7 +27,7 @@ function η(co::ΛCDM, x::Real)
         else
             η1 = 1 / aH(co, x1) # anal expr with Ωm=Ωk=ΩΛ=0
         end
-        co.η_spline = _spline_integral(dη_dx, x1, x2, η1; name="conformal time η")
+        _, co.η_spline = _spline_integral(dη_dx, x1, x2, η1; name="conformal time η")
     end
     return co.η_spline(x)
 end
@@ -44,7 +44,7 @@ function t(co::ΛCDM, x::Real)
         else
             t1 = 1 / (2*H(co, x1)) # anal expr with Ωm=Ωk=ΩΛ=0
         end
-        co.t_spline = _spline_integral(dt_dx, x1, x2, t1; name="cosmic time t")
+        _, co.t_spline = _spline_integral(dt_dx, x1, x2, t1; name="cosmic time t")
     end
     return co.t_spline(x)
 end

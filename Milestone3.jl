@@ -26,7 +26,7 @@ function extendx(x::Vector{Float64}, nextra::Integer)
     return sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 0:nextra)...))
 end
 
-if false
+if true
     series = [
         ("plots/Thetal0.pdf", Dict(:ylabel => L"\Theta_0"), [((x,y) -> y[Cosmology.i_Θl(0)](x), Dict(:linestyle => :solid, :label => nothing))]),
         ("plots/Thetal1.pdf", Dict(:ylabel => L"\Theta_1"), [((x,y) -> y[Cosmology.i_Θl(1)](x), Dict(:linestyle => :solid, :label => nothing))]),
@@ -49,19 +49,25 @@ if false
     ]
 
     # pre-compute callable splines once and for all (index and call as y1s[i_k][i_qty](x))
-    y1s = [[x -> spline(x, k) for spline in Cosmology.perturbations_splines(co; tight=false)] for k in ks] # 2D (x, k) splines for full system
-    y2s = [Cosmology.perturbations_mode(co, k; tight=false) for k in ks] # 1D (x) splines for each "exact" k for       full system
+    xs, y1s, y2s = [], [], []
+    for k in ks
+        y1 = [x -> spline(x, k) for spline in Cosmology.perturbations_splines(co; tight=false)]
+        x, y2 = Cosmology.perturbations_mode(co, k; tight=false)
+        push!(xs, x)
+        push!(y1s, y1)
+        push!(y2s, y2)
+    end
 
     for (filename, plotsettings, func_linesettings) in series
         println("Plotting $filename")
         plot(xlabel=L"x = \log a", xlims=(-15, 0), xticks=-25:1:5, legend_position=:topleft; plotsettings...)
         for (i, k) in enumerate(ks)
             xhor = time_horizon_entry(co, k)
-            x = extendx(Cosmology.splinex(y2s[i][1]), 7) # plot with extra points between every spline point for more smoothness
+            x = extendx(xs[i], 5) # plot with extra points between every spline point for more smoothness
             for (func, linesettings) in func_linesettings
                 plot!(x, func.(x, Ref(y1s[i])), alpha=0.5, linewidth=1.0, color=i; linesettings..., label=nothing)
                 plot!(x, func.(x, Ref(y2s[i])), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
-                plot!([xhor], [func(xhor, y2s[i])], color=i, markerstrokecolor=i, markersize=1.0, markershape=:circle, label=nothing)
+                plot!([xhor], [func(xhor, y2s[i])], color=i, markerstrokecolor=i, markersize=2, markershape=:circle, label=nothing)
             end
             vline!([-21], color=i, label=L"k=10^{%$(Int(round(log10(k*Mpc))))}/\textrm{Mpc}") # label each k-value once
             #vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
@@ -77,19 +83,17 @@ if false
     end
 end
 
-if false
+if true
     # plot Θ0 zoomed in (to check whether we capture the most rapid oscillations)
     filename = "plots/Thetal0_zoom.pdf"
     println("Plotting $filename")
     k = ks[2]
-    y = Cosmology.perturbations_mode(co, k; tight=false)
-    x = Cosmology.splinex(y[1])
+    _, y1 = Cosmology.perturbations_mode(co, k; tight=true ) # 1D (x) splines for each "exact" k for tight+full system
+    x, y2 = Cosmology.perturbations_mode(co, k; tight=false) # 1D (x) splines for each "exact" k for       full system
     x = x[x .> -1.1]
     x = extendx(x, 20)
     func(x, y) = y[Cosmology.i_Θl(0)](x)
     plot(xlabel=L"x = \log a", ylabel=L"\Theta_0", xlims=(-1.0, 0), xticks=-5.0:1:0, legend_position=:topright)
-    y1 = Cosmology.perturbations_mode(co, k; tight=true ) # 1D (x) splines for each "exact" k for tight+full system
-    y2 = Cosmology.perturbations_mode(co, k; tight=false) # 1D (x) splines for each "exact" k for       full system
     plot!(x, func.(x, Ref(y1)), label=L"\texttt{ Tsit5}    \textrm{ method with tight coupling}")
     plot!(x, func.(x, Ref(y2)), label=L"\texttt{ KenCarp4} \textrm{ method without tight coupling}")
     savefig(filename)
@@ -102,9 +106,9 @@ if true
     println("Plotting $filename")
     plot(xlabel=L"x = \log a", ylabel=L"\log_{10} \Big( \max_i{|\hat{y}^{\tiny{\textrm{KC4}}}_i-\hat{y}^{\tiny{\textrm{T5}}}_i|} \Big)", xlims=(-15, 0), xticks=-25:5:5, legend_position=:topleft)
     for (i_k, k) in enumerate(ks)
-        y1s  = Cosmology.perturbations_mode(co, k; tight=true )
-        y2s  = Cosmology.perturbations_mode(co, k; tight=false)
-        x = extendx(Cosmology.splinex(y2s[1]), 20) # plot with extra points between every spline point for more smoothness
+        _, y1s  = Cosmology.perturbations_mode(co, k; tight=true )
+        x, y2s  = Cosmology.perturbations_mode(co, k; tight=false)
+        x = extendx(x, 5) # plot with extra points between every spline point for more smoothness
         y1s = [y1.(x) / maximum(abs.(y1.(x))) for y1 in y1s] # [i_q, i_x]
         y2s = [y2.(x) / maximum(abs.(y2.(x))) for y2 in y2s] # [i_q, i_x]
         dy = [abs.(y1 .- y2) for (y1, y2) in zip(y1s, y2s)]

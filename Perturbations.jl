@@ -141,10 +141,10 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
     splines = Vector{Spline1D}(undef, i_max_full)
     alg_hints = [stiff ? :auto : :nonstiff]
     y1 = perturbations_initial_conditions(co, x1, k)[1:i_max_tight] # cut away variables not in the tight system
-    splines[1:i_max_tight] .= _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations tight (k=$(k*Mpc)/Mpc)", kwargs...)
+    x, splines_tight = _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations tight (k=$(k*Mpc)/Mpc)", kwargs...)
+    splines[1:i_max_tight] .= splines_tight
 
     # extend tight splines to full system
-    x = splinex(splines[1])
     splines[i_Θl(2)] = Spline1D(x, @. (polarization ? -8/15 : -20/45) * c*k / (aH(co,x)*dτ(co,x)) * splines[i_Θl(1)](x); bc="error")
     for l in 3:lmax
         splines[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines[i_Θl(l-1)](x); bc="error")
@@ -163,7 +163,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
         end
     end
 
-    return splines
+    return x, splines
 end
 
 function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0, x2::Real=0.0, stiff=true, kwargs...)
@@ -253,21 +253,22 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
         # 2) then integrate the full equations from when the approximation breaks down,
         # 3) merge 1+2
         x12 = time_tight_coupling(co, k)
-        spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
+        x1, spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
-        spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
-        splines[1:i_max_full] .= [splinejoin(spl1s[i], spl2s[i]) for i in 1:i_max_full] # join splines
+        x2, spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
+        x, spls = splinejoin(x1, x2, spl1s, spl2s)
+        splines[1:i_max_full] .= spls
     else
         # only integrate the full (stiff) equations using an appropriate solver
         # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
         # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
-        splines[1:i_max_full] .= perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=KenCarp4(autodiff=false)) # KenCarp4(autodiff=false) and radau() work well!
+        x, splines_full = perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=KenCarp4(autodiff=false)) # KenCarp4(autodiff=false) and radau() work well!
+        splines[1:i_max_full] .= splines_full
     end
 
     # extend with variables given in terms of the integrated ones (like Ψ)
-    x = splinex(splines[1]) # TODO: should really use integration points for operations like this?
     splines[i_Ψ] = Spline1D(x, @. -splines[i_Φ](x) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*splines[i_Θl(2)](x) + co.Ων0*splines[i_Nl(2)](x)); bc="error")
-    return splines
+    return x, splines
 end
 
 function perturbations_splines(co::ΛCDM; tight::Bool=false)
@@ -282,11 +283,14 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false)
         # (x,k) spline requires 1D arrays for x and k (and does not accept a fully irregular 2D grid)
         # use the x-values from the mode that has the most (not necessarily k=kmax)
         spliness = Vector{Vector{Spline1D}}(undef, length(ks))
+        xs = nothing
         @threads for i_k in 1:length(ks) # call julia with --threads=8 to get a decent speed-up
             k = ks[i_k]
-            spliness[i_k] = perturbations_mode(co, k; tight=tight)
+            x, spliness[i_k] = perturbations_mode(co, k; tight=tight)
+            if isnothing(xs) || length(x) > length(xs)
+                xs = x
+            end
         end
-        xs = splinex(spliness[argmax(length(splinex(splines[1])) for splines in spliness)][1])
 
         perturbs = Array{Float64, 3}(undef, i_max_ext, length(xs), length(ks)) # indexed as [i_quantity, i_x, i_k]
         for i_k in 1:length(ks)

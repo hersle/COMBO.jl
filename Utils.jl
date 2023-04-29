@@ -69,14 +69,14 @@ function _spline_integral(dy_dx!::Function, x1::Float64, x2::Float64, y1::Vector
     f!(dy, y, p, x) = dy_dx!(x, y, dy)
     x, y = _spline_integral_generic(f!, x1, x2, y1; kwargs...)
     y = [y[ix][iy] for iy in 1:length(y1), ix in 1:length(x)] # convert vector of vectors to 2D matrix
-    return [Spline1D(x, y[i,:], k=3, bc="error") for i in 1:length(y1)]
+    return x, [Spline1D(x, y[i,:], k=3, bc="error") for i in 1:length(y1)]
 end
 
 # integrate scalar equations with out-of-place (scalar) RHS
 function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; kwargs...)
     f(y, p, x) = dy_dx(x, y)
     x, y = _spline_integral_generic(f, x1, x2, y1; kwargs...)
-    return Spline1D(x, y, bc="error")
+    return x, Spline1D(x, y, bc="error")
 end
 
 splinex(spline::Spline1D) = unique(spline.t) # TODO: does this make sense to use?
@@ -86,11 +86,19 @@ splinex(spline::Spline2D) = unique(spline.tx)
 spliney(spline::Spline2D) = unique(spline.ty)
 splinez(spline::Spline2D) = spline(splinex(spline), spliney(spline))
 
-function splinejoin(spl1::Spline1D, spl2::Spline1D)
-    x1, x2 = splinex(spl1), splinex(spl2)
-    x = vcat(x1, x2[2:end]) # don't duplicate midpoint
+function splinejoin(x1, x2, spl1::Spline1D, spl2::Spline1D)
+    x = unique(vcat(x1, x2)) # don't duplicate midpoint
     y = vcat(spl1.(x1), spl2.(x2)[2:end])
-    return Spline1D(x, y; bc="error")
+    return x, Spline1D(x, y; bc="error")
+end
+
+function splinejoin(x1, x2, spl1s::Vector{Spline1D}, spl2s::Vector{Spline1D})
+    x, spls = [], []
+    for (spl1, spl2) in zip(spl1s, spl2s)
+        x, spl = splinejoin(x1, x2, spl1, spl2)
+        push!(spls, spl)
+    end
+    return x, spls
 end
 
 function multirange(posts, lengths)

@@ -92,15 +92,14 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
         xswitch = time_switch_Peebles(co) # TODO: why does this allocate?
 
         # Peebles equation points
-        Xe2spl = Xe_Peebles_spline(co, xswitch, Xe_Saha_H_He(co, xswitch)) # start Peebles from last value of Saha
-        x2 = splinex(Xe2spl) # don't duplicate xswitch
+        x2, Xe2spl = Xe_Peebles_spline(co, xswitch, Xe_Saha_H_He(co, xswitch)) # start Peebles from last value of Saha
 
         # Saha equation points
         x1 = range(x1, xswitch, length=length(x2)) # use as many points as Peebles; don't duplicate xswitch
         Xe1spl = Spline1D(x1, Xe_Saha_H_He.(co, x1))
 
         # merge splines and save
-        co.Xe_spline = splinejoin(Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
+        _, co.Xe_spline = splinejoin(x1, x2, Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
     end
 
     return co.Xe_spline(x) + Xe_reionization(co, x) # add reionization here instead
@@ -112,7 +111,7 @@ dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
 
 function τ(co::ΛCDM, x::Real; deriv::Integer=0)
     if isnothing(co.τ_spline)
-        co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0; reltol=1e-15, abstol=1e-15, name="optical depth τ")
+        _, co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0; reltol=1e-15, abstol=1e-15, name="optical depth τ")
     end
     return deriv == 0 ? co.τ_spline(x) : derivative(co.τ_spline, x; nu=deriv)
 end
@@ -133,5 +132,6 @@ function sound_horizon(co::ΛCDM, x::Real)
     ds_dx(x, s) = cs(x) / aH(co, x)
     x0 = -20.0
     s0 = cs(x0) / aH(co, x0)
-    return _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s")(x) # TODO: save spline?
+    _, spline = _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s")(x) # TODO: save spline?
+    return spline
 end
