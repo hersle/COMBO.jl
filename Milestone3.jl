@@ -47,10 +47,10 @@ if true
     # pre-compute callable splines once and for all (index and call as y1s[i_k][i_qty](x))
     xs, y1s, y2s = [], [], []
     for k in ks
-        y1 = [x -> spline(x, k) for spline in Cosmology.perturbations_splines(co; tight=false)]
+        #y1 = [x -> spline(x, k) for spline in Cosmology.perturbations_splines(co; tight=false)]
         x, y2 = Cosmology.perturbations_mode(co, k; tight=false)
         push!(xs, x)
-        push!(y1s, y1)
+        #push!(y1s, y1)
         push!(y2s, y2)
     end
 
@@ -61,7 +61,7 @@ if true
             xhor = time_horizon_entry(co, k)
             x = extendx(xs[i], 5) # plot with extra points between every spline point for more smoothness
             for (func, linesettings) in func_linesettings
-                plot!(x, func.(x, Ref(y1s[i])), alpha=0.5, linewidth=1.0, color=i; linesettings..., label=nothing)
+                #plot!(x, func.(x, Ref(y1s[i])), alpha=0.5, linewidth=1.0, color=i; linesettings..., label=nothing)
                 plot!(x, func.(x, Ref(y2s[i])), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
                 plot!([xhor], [func(xhor, y2s[i])], color=i, markerstrokecolor=i, markersize=2, markershape=:circle, label=nothing)
             end
