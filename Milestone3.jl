@@ -58,7 +58,7 @@ if true
         push!(y2s, y2)
     end
 
-    for (filename, plotsettings, func_linesettings) in series
+    for (ploti, (filename, plotsettings, func_linesettings)) in enumerate(series)
         println("Plotting $filename")
         plot(xlabel=L"x = \log a", xlims=(-15, 0), xticks=-25:1:5, legend_position=:topleft; plotsettings...)
         for (i, k) in enumerate(ks)
@@ -69,7 +69,10 @@ if true
                 plot!(x, func.(x, Ref(y2s[i])), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
                 plot!([xhor], [func(xhor, y2s[i])], color=i, markerstrokecolor=i, markersize=2, markershape=:circle, label=nothing)
             end
-            vline!([-21], color=i, label=L"k=10^{%$(Int(round(log10(k*Mpc))))}/\textrm{Mpc}") # label each k-value once
+            if ploti == 1
+                # put k-labels on first plot only
+                vline!([-21], color=i, label=L"k=10^{%$(Int(round(log10(k*Mpc))))}/\textrm{Mpc}") # label each k-value once
+            end
             #vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
             vline!([xrm, xmΛ], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
             vline!([xrec], color=:gray, linestyle=:dot; linewidth=0.5, label=nothing)
