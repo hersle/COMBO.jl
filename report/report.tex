@@ -1035,6 +1035,98 @@ agrees perfectly with the non-stiff solver's solution of the hybrid tight and fu
 As shown in \cref{fig_perturb_zoom}, a discrepancy between the two appears only at very late times, as the oscillations become extremely rapid.
 The $k$-splined solutions also agrees well.
 
+Let us physically interpret the evolution of the perturbation modes:
+\begin{itemize}
+
+\item
+Before a mode enters the horizon,
+there is no causal contact between two point separated by its wavelength,
+so there is very little structure growth ($\delta = \textrm{const}$), and the potentials change little with time.
+
+\item
+Small-scale modes enter the horizon during radiation domination.
+The high pressure of radiation prevents it from clustering and forming spatial curvature and potential wells,
+so the potentials $\Phi$ and $\Psi$ plummet and are suppressed before radiation-matter equality.
+Meanwhile, the tightly coupled baryon-photon fluid oscillates acoustically, as seen from $v$ and $\delta$ (absolute values!).
+These acoustic oscillations are caused by the fight between the pull of gravity versus the push of the strong radiation pressure gives rise to sound waves.
+The oscillations are damped due to diffusion (spreading) of photons (``Silk damping'') as they random walk through the fluid and Thomson scatter, and cooling from expansion, causing the pressure to decay with time.
+After recombination, the baryon-photon fluid decouples, terminating the oscillations,
+and the photons stream freely, while the baryons fall into the dark matter's potential wells.
+
+\item
+Large-scale modes, in contrast, enter the horizon during matter domination, and evolve in a qualitatively different way.
+Baryonic and dark matter has low and zero pressure,
+so gravity pulls it together and creates potential wells that maintain significant values of the potentials.
+As the baryon-photon fluid decouples, these modes do not oscillate.
+Intuitively, there is nothing stopping matter from accreting more matter during this time (until dark energy takes over).
+
+\item
+Medium-scale modes with wavenumber $k \approx 0.1 / \textrm{Mpc}$ enter the horizon \emph{at} radiation-matter equality.
+We have seen that modes of smaller or larger scales behave differently,
+and it is, for example, precisely this wavenumber which locates the peak of the matter power spectrum.
+
+\item
+The increasing diffusion of photons with smaller-scale modes
+causes them to relocate
+from hot regions (with high density and frequent scattering)
+to cold regions (with low density and rare scattering),
+equalizing the temperature and sending the $l \geq 1$-multipoles $\Theta_l(x) \rightarrow 0$ (increasingly for smaller $k$).
+
+\item
+As dark energy takes over and the expansion of space accelerates,
+we see that structure growth begins to slow due to the inevitable dilution.
+
+\item
+During matter domination,
+structure grows at the same rate for all modes that have entered the horizon,
+regardless of when they did so.
+Negligible pressure means that gravity wins; matter accretes more matter, and the overdensity increases.
+
+\item
+We see that the onset of polarization ($\Theta^P_l$) occurs at the same time as the photons develop a quadrupole $\Theta_2 \neq 0$.
+Indeed, polarized photons are produced by Thomson scattering when light from two angles separated by $90^\circ$ collide with an electron \TODO{cite Dodelson},
+so it is naturally connected with the presence of a quadrupole.
+For modes that enter the horizon after recombination,
+the photons are free-streaming and almost never collide with electrons,
+so no polarization is produced at these scales.
+
+\item
+Meszaros effect point.
+Only modes entering the horizon during radiation domination have the ``kink''.
+
+\item
+Neutrinos interact weakly, in contrast to the ``strong'' Thomson scattering in the coupled baryon-photon fluid.
+Therefore, the neutrinos do not follow the oscillations of $\delta_b$ and $\delta_\gamma$.
+As they are massless and relativistic here, they stream free like the photons after decoupling,
+instead of ending up with the baryons in the potential wells.
+
+\item
+Neutrinos develop a significant anisotropy with $\N_2$ \TODO{why? see Dodelson below eq. (5.65)}, compared to photons with small $\Theta_2$.
+This is because neutrinos have momentum dispersion (a range of different momenta) \TODO{why/cite?}.
+This causes anisotropic shear stress in the potentials $\Phi \neq -\Psi$,
+where equality would hold if $\Theta_2=\N_2=0$ \TODO{physical meaning of this?}.
+Anisotropic shear stress is caused by neighboring regions expanding at differing rates,
+inducing a shear stress,
+and by its very nature requires a quadrupole or higher.
+
+\item
+We see a subtle signature of reionization in $v_\gamma$,
+whose velocity decreases again (plot shows $|v|$) as electrons become free.
+This does not have any implications for $\delta_\gamma$, however,
+as the photons are still unable to become trapped in potential wells.
+
+\item
+Radiation driving?
+Diffusion damping?
+Baryon loading: increasing baryons lowers sound speed (and pressure) in baryon-photon fluid (compared to relativistic photon gas),
+and shifts oscillations so they are not centered around $0$.
+
+\item
+\TODO{argument after eq (5.22) in Dodelson: why $\Theta_{l \geq 1} \rightarrow 0$?}
+So photon quadrupole is very smal during radiation domination / before decoupling
+Why not neutrinos?
+\end{itemize}
+
 \clearpage
 \section{Conclusions}
 
