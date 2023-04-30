@@ -35,13 +35,9 @@ if true
         ("plots/potentials.pdf", Dict(:ylabel => L"\{\Phi,\Psi\}"), [((x,y) -> y[Cosmology.i_Φ](x), Dict(:linestyle => :dash, :label => L"\Phi")), ((x,y) -> y[Cosmology.i_Ψ](x), Dict(:linestyle => :dot, :label => L"\Psi")), ((x,y) -> y[Cosmology.i_Φ](x) + y[Cosmology.i_Ψ](x), Dict(:linestyle => :solid, :label => L"\Phi+\Psi"))]),
 
         ("plots/velocity1.pdf",    Dict(:ylabel => L"\log_{10}|v|"),      [((x,y) -> log10(abs(   y[Cosmology.i_vc   ](x))), Dict(:linestyle => :solid, :label => L"v=v_c")),                          ((x,y) -> log10(abs(   y[Cosmology.i_vb   ](x))), Dict(:linestyle => :dash, :label => L"v=v_b"                           ))]),
-        ("plots/velocity2.pdf",    Dict(:ylabel => L"\log_{10}|v|"),      [((x,y) -> log10(abs(-3*y[Cosmology.i_Θl(1)](x))), Dict(:linestyle => :solid, :label => L"v=v_\gamma=-3\Theta_1")),          ((x,y) -> log10(abs(-3*y[Cosmology.i_Nl(1)](x))), Dict(:linestyle => :dash, :label => L"v=v_\nu=-3\mathcal{N}_1"         ))]),
+        ("plots/velocity2.pdf",    Dict(:ylabel => L"          v "),      [((x,y) ->           -3*y[Cosmology.i_Θl(1)](x)  , Dict(:linestyle => :solid, :label => L"v=v_\gamma=-3\Theta_1")),          ((x,y) ->           -3*y[Cosmology.i_Nl(1)](x)  , Dict(:linestyle => :dash, :label => L"v=v_\nu=-3\mathcal{N}_1"         ))]),
         ("plots/overdensity1.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [((x,y) -> log10(abs(   y[Cosmology.i_δc   ](x))), Dict(:linestyle => :solid, :label => L"\delta=\delta_c")),                ((x,y) -> log10(abs(   y[Cosmology.i_δb   ](x))), Dict(:linestyle => :dash, :label => L"\delta=\delta_b"                 ))]),
-        ("plots/overdensity2.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [((x,y) -> log10(abs(+4*y[Cosmology.i_Θl(0)](x))), Dict(:linestyle => :solid, :label => L"\delta=\delta_\gamma=4\Theta_0")), ((x,y) -> log10(abs(+4*y[Cosmology.i_Nl(0)](x))), Dict(:linestyle => :dash, :label => L"\delta=\delta_\nu=4\mathcal{N}_0"))]),
-
-        ("plots/Nl0.pdf", Dict(:ylabel => L"\mathcal{N}_0"), [((x,y) -> y[Cosmology.i_Nl(0)](x), Dict(:linestyle => :solid, :label => nothing))]),
-        ("plots/Nl1.pdf", Dict(:ylabel => L"\mathcal{N}_1"), [((x,y) -> y[Cosmology.i_Nl(1)](x), Dict(:linestyle => :solid, :label => nothing))]),
-        ("plots/Nl2.pdf", Dict(:ylabel => L"\mathcal{N}_2"), [((x,y) -> y[Cosmology.i_Nl(2)](x), Dict(:linestyle => :solid, :label => nothing))]),
+        ("plots/overdensity2.pdf", Dict(:ylabel => L"          \delta "), [((x,y) ->           +4*y[Cosmology.i_Θl(0)](x)  , Dict(:linestyle => :solid, :label => L"\delta=\delta_\gamma=4\Theta_0")), ((x,y) ->           +4*y[Cosmology.i_Nl(0)](x)  , Dict(:linestyle => :dash, :label => L"\delta=\delta_\nu=4\mathcal{N}_0"))]),
 
         ("plots/ThetaPl0.pdf", Dict(:ylabel => L"\Theta^P_0"), [((x,y) -> y[Cosmology.i_ΘPl(0)](x), Dict(:linestyle => :solid, :label => nothing))]),
         ("plots/ThetaPl1.pdf", Dict(:ylabel => L"\Theta^P_1"), [((x,y) -> y[Cosmology.i_ΘPl(1)](x), Dict(:linestyle => :solid, :label => nothing))]),
