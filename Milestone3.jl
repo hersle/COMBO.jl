@@ -28,20 +28,33 @@ end
 
 if true
     series = [
+        ("plots/overdensity.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [
+            ((x,y) -> log10(abs(y[Cosmology.i_δc](x))), Dict(:linestyle => :solid, :label => L"\delta=\delta_c")),
+            ((x,y) -> log10(abs(y[Cosmology.i_δb](x))), Dict(:linestyle => :dash,  :label => L"\delta=\delta_b")),
+            ((x,y) -> log10(abs(4*y[Cosmology.i_Θl(0)](x))), Dict(:linestyle => :dashdot,  :label => L"\delta=\delta_\gamma=4\Theta_0")),
+            ((x,y) -> log10(abs(4*y[Cosmology.i_Nl(0)](x))), Dict(:linestyle => :dot,      :label => L"\delta=\delta_\nu=4\mathcal{N}_0")),
+        ]),
+
+        ("plots/velocity.pdf", Dict(:ylabel => L"\log_{10}|v|"), [
+            ((x,y) -> log10(abs(y[Cosmology.i_vc](x))), Dict(:linestyle => :solid, :label => L"v=v_c")),
+            ((x,y) -> log10(abs(y[Cosmology.i_vb](x))), Dict(:linestyle => :dash, :label => L"v=v_b")),
+            ((x,y) -> log10(abs(-3*y[Cosmology.i_Θl(1)](x))), Dict(:linestyle => :dashdot, :label => L"v=v_\gamma=-3\Theta_1")),
+            ((x,y) -> log10(abs(-3*y[Cosmology.i_Nl(1)](x))), Dict(:linestyle => :dot,     :label => L"v=v_\gamma=-3\mathcal{N}_1")),
+        ]),
+
+        ("plots/overdensity1.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [((x,y) -> log10(abs(   y[Cosmology.i_δc   ](x))), Dict(:linestyle => :solid, :label => L"\delta=\delta_c")),                ((x,y) -> log10(abs(   y[Cosmology.i_δb   ](x))), Dict(:linestyle => :dash, :label => L"\delta=\delta_b"                 ))]),
+        ("plots/overdensity2.pdf", Dict(:ylabel => L"          \delta "), [((x,y) ->           +4*y[Cosmology.i_Θl(0)](x)  , Dict(:linestyle => :solid, :label => L"\delta=\delta_\gamma=4\Theta_0")), ((x,y) ->           +4*y[Cosmology.i_Nl(0)](x)  , Dict(:linestyle => :dash, :label => L"\delta=\delta_\nu=4\mathcal{N}_0"))]),
+
+        ("plots/velocity1.pdf",    Dict(:ylabel => L"\log_{10}|v|"),      [((x,y) -> log10(abs(   y[Cosmology.i_vc   ](x))), Dict(:linestyle => :solid, :label => L"v=v_c")),                          ((x,y) -> log10(abs(   y[Cosmology.i_vb   ](x))), Dict(:linestyle => :dash, :label => L"v=v_b"                           ))]),
+        ("plots/velocity2.pdf",    Dict(:ylabel => L"          v "),      [((x,y) ->           -3*y[Cosmology.i_Θl(1)](x)  , Dict(:linestyle => :solid, :label => L"v=v_\gamma=-3\Theta_1")),          ((x,y) ->           -3*y[Cosmology.i_Nl(1)](x)  , Dict(:linestyle => :dash, :label => L"v=v_\nu=-3\mathcal{N}_1"         ))]),
+
         ("plots/ThetalN0.pdf", Dict(:ylabel => L"\{\Theta_0,\mathcal{N}_0\}"), [((x,y) -> y[Cosmology.i_Θl(0)](x), Dict(:linestyle => :solid, :label => L"\Theta_0")), ((x,y) -> y[Cosmology.i_Nl(0)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_0"))]),
         ("plots/ThetalN1.pdf", Dict(:ylabel => L"\{\Theta_1,\mathcal{N}_1\}"), [((x,y) -> y[Cosmology.i_Θl(1)](x), Dict(:linestyle => :solid, :label => L"\Theta_1")), ((x,y) -> y[Cosmology.i_Nl(1)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_1"))]),
         ("plots/ThetalN2.pdf", Dict(:ylabel => L"\{\Theta_2,\mathcal{N}_2\}"), [((x,y) -> y[Cosmology.i_Θl(2)](x), Dict(:linestyle => :solid, :label => L"\Theta_2")), ((x,y) -> y[Cosmology.i_Nl(2)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_2"))]),
 
+        ("plots/ThetaP.pdf", Dict(:ylabel => L"\Theta^P_l"), [((x,y) -> y[Cosmology.i_ΘPl(0)](x), Dict(:linestyle => :solid, :label => L"l=0")), ((x,y) -> y[Cosmology.i_ΘPl(1)](x), Dict(:linestyle => :dash, :label => L"l=1")), ((x,y) -> y[Cosmology.i_ΘPl(2)](x), Dict(:linestyle => :dot, :label => L"l=2"))]),
+
         ("plots/potentials.pdf", Dict(:ylabel => L"\{\Phi,\Psi\}"), [((x,y) -> y[Cosmology.i_Φ](x), Dict(:linestyle => :dash, :label => L"\Phi")), ((x,y) -> y[Cosmology.i_Ψ](x), Dict(:linestyle => :dot, :label => L"\Psi")), ((x,y) -> y[Cosmology.i_Φ](x) + y[Cosmology.i_Ψ](x), Dict(:linestyle => :solid, :label => L"\Phi+\Psi"))]),
-
-        ("plots/velocity1.pdf",    Dict(:ylabel => L"\log_{10}|v|"),      [((x,y) -> log10(abs(   y[Cosmology.i_vc   ](x))), Dict(:linestyle => :solid, :label => L"v=v_c")),                          ((x,y) -> log10(abs(   y[Cosmology.i_vb   ](x))), Dict(:linestyle => :dash, :label => L"v=v_b"                           ))]),
-        ("plots/velocity2.pdf",    Dict(:ylabel => L"          v "),      [((x,y) ->           -3*y[Cosmology.i_Θl(1)](x)  , Dict(:linestyle => :solid, :label => L"v=v_\gamma=-3\Theta_1")),          ((x,y) ->           -3*y[Cosmology.i_Nl(1)](x)  , Dict(:linestyle => :dash, :label => L"v=v_\nu=-3\mathcal{N}_1"         ))]),
-        ("plots/overdensity1.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [((x,y) -> log10(abs(   y[Cosmology.i_δc   ](x))), Dict(:linestyle => :solid, :label => L"\delta=\delta_c")),                ((x,y) -> log10(abs(   y[Cosmology.i_δb   ](x))), Dict(:linestyle => :dash, :label => L"\delta=\delta_b"                 ))]),
-        ("plots/overdensity2.pdf", Dict(:ylabel => L"          \delta "), [((x,y) ->           +4*y[Cosmology.i_Θl(0)](x)  , Dict(:linestyle => :solid, :label => L"\delta=\delta_\gamma=4\Theta_0")), ((x,y) ->           +4*y[Cosmology.i_Nl(0)](x)  , Dict(:linestyle => :dash, :label => L"\delta=\delta_\nu=4\mathcal{N}_0"))]),
-
-        ("plots/ThetaPl0.pdf", Dict(:ylabel => L"\Theta^P_0"), [((x,y) -> y[Cosmology.i_ΘPl(0)](x), Dict(:linestyle => :solid, :label => nothing))]),
-        ("plots/ThetaPl1.pdf", Dict(:ylabel => L"\Theta^P_1"), [((x,y) -> y[Cosmology.i_ΘPl(1)](x), Dict(:linestyle => :solid, :label => nothing))]),
-        ("plots/ThetaPl2.pdf", Dict(:ylabel => L"\Theta^P_2"), [((x,y) -> y[Cosmology.i_ΘPl(2)](x), Dict(:linestyle => :solid, :label => nothing))]),
     ]
 
     # pre-compute callable splines once and for all (index and call as y1s[i_k][i_qty](x))
@@ -56,22 +69,23 @@ if true
 
     for (ploti, (filename, plotsettings, func_linesettings)) in enumerate(series)
         println("Plotting $filename")
-        plot(xlabel=L"x = \log a", xlims=(-15, 0), xticks=-25:1:5, legend_position=:topleft; plotsettings...)
+        plot(xlabel=L"x = \log a", xlims=(-15, 0), xticks=-25:1:5, legend_position=:bottomleft; plotsettings...)
         for (i, k) in enumerate(ks)
             xhor = time_horizon_entry(co, k)
             x = extendx(xs[i], 5) # plot with extra points between every spline point for more smoothness
             for (func, linesettings) in func_linesettings
                 #plot!(x, func.(x, Ref(y1s[i])), alpha=0.5, linewidth=1.0, color=i; linesettings..., label=nothing)
                 plot!(x, func.(x, Ref(y2s[i])), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
-                plot!([xhor], [func(xhor, y2s[i])], color=i, markerstrokecolor=i, markersize=2, markershape=:circle, label=nothing)
+                #plot!([xhor], [func(xhor, y2s[i])], color=i, markerstrokecolor=i, markersize=2, markershape=:circle, label=nothing)
             end
             if ploti == 1
                 # put k-labels on first plot only
                 vline!([-21], color=i, label=L"k=10^{%$(Int(round(log10(k*Mpc))))}/\textrm{Mpc}") # label each k-value once
             end
             #vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
-            vline!([xrm, xmΛ], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
-            vline!([xrec], color=:gray, linestyle=:dot; linewidth=0.5, label=nothing)
+            vline!([xrm, xmΛ], color=:gray, linestyle=:solid; alpha=0.3, linewidth=3.0, label=nothing)
+            vline!([xrec], color=:gray, linestyle=:solid; alpha=0.3, linewidth=3.0, label=nothing)
+            vline!([xhor], color=i, linestyle=:solid; alpha=0.3, linewidth=3.0, label=nothing)
         end
 
         # add quantity (if more than one so ambiguous) to legend with a black dummy plot
