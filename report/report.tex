@@ -903,7 +903,9 @@ so $v_s$ is the speed-of-light-normalized velocity of the different species on t
 The photon's polarization strength is denoted by $\Theta_P$,
 and denotes the amplitude of $E$-mode (curl-free gradient-like polarization sourced by scalar perturbations) polarization.
 
-As we want to study the directional dependence of photons and neutrinos,
+Instead of their real-space versions,
+we will work with the Fourier space $k$-modes of the perturbations.
+Moreover, as we want to study the directional dependence of photons and neutrinos,
 we decompose the temperature fluctuations and polarization strength into multipole moments like
 \begin{equation}
 	\Theta_l(k,\eta) = \frac{1}{(-i)^l} \int_{-1}^{+1} \frac{d\mu}{2} P_l(\mu) \, \Theta(\mu,k,\eta),
@@ -911,17 +913,58 @@ we decompose the temperature fluctuations and polarization strength into multipo
 and similarly for $\N_l$ and $\Theta^P_l$,
 where $P_l$ are the Legendre polynomials.
 
-The photon and neutrino temperature monopole and dipole determine their overdensities and velocities
-\TODO{after the big system}
+The perturbation $k$-modes evolve independently and according to the system of differential equations
+\TODO{write about the $l$-truncation}
+\begin{subequations}
+\allowdisplaybreaks
+\begin{align}
+	{\Theta_l}^\prime   &= \begin{dcases}
+	                       -\frac{ck}{\aH} \Theta_1 - \Phi^\prime & (l=0), \\
+	                       \frac{ck}{3\aH} \bigg[ \Theta_0 - 2 \Theta_2 + \Psi \bigg] + \tau^\prime \bigg[ \Theta_1 + \frac{v_b}{3} \bigg] & (l=1), \\
+	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta_{l-1} - (l+1) \Theta_{l+1} \bigg] + \tau^\prime \bigg[ \Theta^{\phantom{P}}_l - \frac{\Pi}{10} \delta_{l,2} \bigg] & (l = 2,\, \ldots,\, l_\text{max}-1), \\
+	                       \frac{ck}{\aH} \Theta_{l-1} - \frac{l+1}{\aH \eta} \Theta_l + \tau^\prime \Theta_l & (l=l_\text{max}), \\
+	                       \end{dcases} \\
+	{\Theta^P_l}^\prime &= \begin{dcases}
+	                       -\frac{ck}{\aH} \Theta^P_1 + \tau^\prime \bigg[ \Theta^P_0 - \frac{\Pi}{2} \bigg] & (l=0), \\
+	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta^P_{l-1} - (l+1) \Theta^P_{l+1} \bigg] + \tau^\prime \bigg[ \Theta^P_l - \frac{\Pi}{10} \delta_{l,2} \bigg] & (l = 1,\, \ldots,\, l_\text{max}-1), \\
+	                       \frac{ck}{\aH} \Theta^P_{l-1} - \frac{l+1}{\aH \eta} \Theta^P_l + \tau^\prime \Theta^P_l & (l=l_\text{max}), \\
+	                       \end{dcases} \\
+	{\N_l}^\prime       &= \begin{dcases}
+	                       -\frac{ck}{\aH} \N_1 - \Phi^\prime & (l=0), \\
+	                       \frac{ck}{3\aH} \bigg[ \N_0 - 2 \N_2 + \Psi \bigg] & (l=1) , \\
+	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \N_{l-1} - (l+1) \N_{l+1} \bigg] \phantom{ {} + \tau^\prime \bigg[ \Theta^P_l - \frac{\Pi}{10} \delta_{l,2} \bigg]} & (l=2,\, \ldots,\, l_\text{max}-1), \\
+	                       \frac{ck}{\aH} \N_{l-1} - \frac{l+1}{\aH \eta} \N_l & (l=l_\text{max}),
+	                       \end{dcases} \\
+	{\delta_c}^\prime   &= \frac{ck}{\aH} v_c - 3 \Phi^\prime , \\
+	{\delta_b}^\prime   &= \frac{ck}{\aH} v_b - 3 \Phi^\prime , \\
+	{v_c}^\prime        &= -v_c - \frac{ck}{\aH} \Psi , \\
+	{v_b}^\prime        &= -v_b - \frac{ck}{\aH} \Psi + \tau^\prime R (3\Theta_1 + v_b), \\
+	{\Phi}^\prime       &= \Psi - \frac{c^2 k^2}{3 \aH^2} \Phi + \frac{H_0^2}{2 \aH^2} \bigg[ \Omega_{c0} \delta_c a^{-1} + \Omega_{b0} \delta_b a^{-1} + 4 \Omega_{\gamma 0} \Theta_0 a^{-2} + 4 \Omega_{\nu 0} \N_0 a^{-2} \bigg] .
+\end{align}
+\label{eq_perturb_full}
+\end{subequations}
+In addition, at any time, the metric perturbations are related by
+\begin{equation}
+	{\Psi}  = -\Phi - \frac{12 H_0^2}{c^2 k^2 a^2} \bigg[ \Omega_{\gamma 0} \Theta_2 + \Omega_{\nu 0} \N_2 \bigg] .
+\end{equation}
+The presence of anisotropy through the quadrupoles $\Theta_2$ and $\N_2$ introduces cosmological shear stress,
+where $\Psi \neq -\Phi$ and neighboring spacetime regions expand at different rates.
+Moreover, the photon and neutrino temperature monopole and dipole determine their overdensities and velocities
 \begin{equation}
 	v_\gamma = -3\Theta_1, \qquad
 	v_\nu = -3\N_1, \qquad
 	\delta_\gamma = 4\Theta_0 \qquad \text{and} \qquad
 	\delta_\nu = 4\N_0.
 \end{equation}
+Together with these relations, the differential equations determines the evolution of all the perturbations we have introduced from some given initial conditions.
 
-Initial conditions
+To find the initial conditions for the perturbations,
+we go to early times when all modes were outside the horizon with $ck/\mathcal{H} \eqsim ck\eta \ll 1$,
+meaning the derivative of all perturbations were tiny.
+In addition, we must assume either adiabaticity or isocurvature; observations point towards the former.
+The initial conditions are then
 \begin{subequations}
+\allowdisplaybreaks
 \begin{align}
 	\Psi &= -\frac{1}{\frac32 + \frac25 f_\nu}, \\
 	\Phi &= -\left( 1 + \frac25 f_\nu \right) \Psi, \\
@@ -943,37 +986,11 @@ Initial conditions
 \label{eq_perturb_ic}
 \end{subequations}
 
-Full system
-\begin{subequations}
-\begin{align}
-	{\Theta_l}^\prime   &= \begin{dcases}
-	                       -\frac{ck}{\aH} \Theta_1 - \Phi^\prime & (l=0), \\
-	                       \frac{ck}{3\aH} \bigg[ \Theta_0 - 2 \Theta_2 + \Psi \bigg] + \tau^\prime \bigg[ \Theta_1 + \frac{v_b}{3} \bigg] & (l=1), \\
-	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta_{l-1} - (l+1) \Theta_{l+1} \bigg] + \tau^\prime \bigg[ \Theta_l - \frac{\Pi}{10} \delta_{l,2} \bigg] & (l = 2, 3, \ldots, l_\text{max}-1), \\
-	                       \frac{ck}{\aH} \Theta_{l-1} - \frac{l+1}{\aH \eta} \Theta_l + \tau^\prime \Theta_l & (l=l_\text{max}), \\
-	                       \end{dcases} \\
-	{\Theta^P_l}^\prime &= \begin{dcases}
-	                       -\frac{ck}{\aH} \Theta^P_1 + \tau^\prime \bigg[ \Theta^P_0 - \frac{\Pi}{2} \bigg] & (l=0), \\
-	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \Theta^P_{l-1} - (l+1) \Theta^P_{l+1} \bigg] + \tau^\prime \bigg[ \Theta^P_l - \frac{\Pi}{10} \delta_{l,2} \bigg] & (l = 1, 2, \ldots, l_\text{max}-1), \\
-	                       \frac{ck}{\aH} \Theta^P_{l-1} - \frac{l+1}{\aH \eta} \Theta^P_l + \tau^\prime \Theta^P_l & (l=l_\text{max}), \\
-	                       \end{dcases} \\
-	{\N_l}^\prime       &= \begin{dcases}
-	                       -\frac{ck}{\aH} \N_1 - \Phi^\prime & (l=0), \\
-	                       \frac{ck}{3\aH} \bigg[ \N_0 - 2 \N_2 + \Psi \bigg] & (l=1) , \\
-	                       \frac{ck}{(2l+1)\aH} \bigg[ l \, \N_{l-1} - (l+1) \N_{l+1} \bigg] & (l=2,3,\ldots,l_\text{max}-1), \\
-	                       \frac{ck}{\aH} \N_{l-1} - \frac{l+1}{\aH \eta} \N_l & (l=l_\text{max}), \\
-	                       \end{dcases} \\
-	{\delta_c}^\prime   &= \frac{ck}{\aH} v_c - 3 \Phi^\prime , \\
-	{\delta_b}^\prime   &= \frac{ck}{\aH} v_b - 3 \Phi^\prime , \\
-	{v_c}^\prime        &= -v_c - \frac{ck}{\aH} \Psi , \\
-	{v_b}^\prime        &= -v_b - \frac{ck}{\aH} \Psi + \tau^\prime R (3\Theta_1 + v_b), \\
-	{\Phi}^\prime       &= \Psi - \frac{c^2 k^2}{3 \aH^2} \Phi + \frac{H_0^2}{2 \aH^2} \bigg[ \Omega_{c0} \delta_c a^{-1} + \Omega_{b0} \delta_b a^{-1} + 4 \Omega_{\gamma 0} \Theta_0 a^{-2} + 4 \Omega_{\nu 0} \N_0 a^{-2} \bigg] , \\
-	{\Psi}^\prime       &= -\Phi - \frac{12 H_0^2}{c^2 k^2 a^2} \bigg[ \Omega_{\gamma 0} \Theta_2 + \Omega_{\nu 0} \N_2 \bigg] ,
-\end{align}
-\label{eq_perturb_full}
-\end{subequations}
 
-Tight coupling:
+At early times, when baryons and photons are tightly coupled,
+the full system \eqref{eq_perturb_full} is stiff and numerically unstable when integrated with explicit Runge-Kutta methods.
+To circumvent this, it can be approximated by the non-stiff \emph{tightly coupling system},
+consisting of the original system with the replacements
 \begin{subequations}
 \begin{align}
 	\Theta_2   &= \begin{cases} -\frac{8}{15} \frac{ck}{\mathcal{H} \tau\prime} & \text{(polarization)}, \\ -\frac{20}{45} \frac{ck}{\mathcal{H} \tau\prime} & \text{(polarizatioff),} \end{cases} \\
@@ -984,10 +1001,13 @@ Tight coupling:
 	\Theta^P_l &= -\frac{l}{2l+1} \frac{ck}{\mathcal{H} \tau\prime} \Theta_{l-1}, \\
 	q &= - \frac{\Big[\big(1-R\big)\tau^\prime+\big(1+R\big)\tau^{\prime\prime}\Big] \Big[ 3\Theta_1+v_b \Big] + \frac{ck}{\aH} \Big[ \Psi + \big(1-\frac{\aH^\prime}{\aH}\big)\big(\Theta_0-2\Theta_2\big) + \big(\Theta_0^\prime - 2 \Theta_2^\prime\big) \Big]}{\big(1+R\big)\tau^\prime + \frac{\aH^\prime}{\aH}-1}, \\
 	v_b^\prime &= \frac{1}{1+R} \bigg[ -v_b - \frac{ck}{\aH} \Psi + R \Big( q - \frac{ck}{\aH} \big(\Psi + \Theta_0 - 2 \Theta_2 \big) \Big) \bigg], \\
-	\Theta_1^\prime &= \frac{q - v_b^\prime}{3},
+	\Theta_1^\prime &= \frac{q - v_b^\prime}{3}.
 \end{align}
 \label{eq_perturb_tight}
 \end{subequations}
+We will implement and compare the full and tightly coupled systems
+and show that one can, in fact,
+\textbf{use the full system at all times with sufficiently low error tolerance and stiffly-accurate Runge-Kutta methods}.
 
 \subsection{Implementation}
 
