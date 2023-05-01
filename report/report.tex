@@ -864,7 +864,7 @@ For example, this agrees with the famous acoustic peak around $s \approx 105\,\m
 
 In the last sections, we have determined the background evolution of the universe,
 or formally the zeroth-order solution to its governing equations in perturbation theory.
-We are now ready to tackle first-order perturbations to the background.
+We are now ready to tackle linear first-order perturbations to the background.
 
 Qualitatively, our objective is to understand the evolution of fluctuations set up from inflation.
 Quantitatively, we want to compute the
@@ -876,6 +876,49 @@ as functions of our time-parametrization $x$ and wavenumber magnitude $k$ in Fou
 This lays the groundwork for computing power spectra in the next milestone.
 
 \subsection{Theory}
+
+In the Newtonian gauge,
+the metric perturbations $\Psi$ and $\Phi$ to the flat ($\Omega_k=k=0$) FLRW metric \eqref{eq_flrw}
+enter the full first-order metric
+\begin{equation}
+	ds^2 = -\big[1 + 2\Psi(\mathbf{x},t)\big] c^2 dt^2 + a^2(t) \big[1 + 2\Phi(\mathbf{x},t)\big] d\mathbf{x}^2 .
+\label{eq_metric}
+\end{equation}
+
+The fluctuations $\Theta$ and $\N$ to the photon and neutrino temperatures are defined by
+\begin{equation}
+	T_\gamma(\mathbf{x},t) = \bar{T}_\gamma(t) \big[1+\Theta(\mathbf{x},t)\big]
+	\qquad \text{and} \qquad
+	T_\nu(\mathbf{x},t) = \bar{T}_\nu(t) \big[1+\N(\mathbf{x},t)\big].
+\end{equation}
+
+Similarly, the mass-energy overdensities $\delta_s$ of cold dark matter, baryons, photons and neutrinos are defined by
+\begin{equation}
+	\rho_s(\mathbf{x},t) = \bar{\rho}_s(t) \big[1+\delta_s(\mathbf{x},t)\big], \qquad s=\{c,b,\gamma,\nu\}.
+\end{equation}
+
+The bulk velocity perturbation to the Hubble-recession is denoted by $a v_s c$,
+so $v_s$ is the speed-of-light-normalized velocity of the different species on the comoving grid.
+
+The photon's polarization strength is denoted by $\Theta_P$,
+and denotes the amplitude of $E$-mode (curl-free gradient-like polarization sourced by scalar perturbations) polarization.
+
+As we want to study the directional dependence of photons and neutrinos,
+we decompose the temperature fluctuations and polarization strength into multipole moments like
+\begin{equation}
+	\Theta_l(k,\eta) = \frac{1}{(-i)^l} \int_{-1}^{+1} \frac{d\mu}{2} P_l(\mu) \, \Theta(\mu,k,\eta),
+\end{equation}
+and similarly for $\N_l$ and $\Theta^P_l$,
+where $P_l$ are the Legendre polynomials.
+
+The photon and neutrino temperature monopole and dipole determine their overdensities and velocities
+\TODO{after the big system}
+\begin{equation}
+	v_\gamma = -3\Theta_1, \qquad
+	v_\nu = -3\N_1, \qquad
+	\delta_\gamma = 4\Theta_0 \qquad \text{and} \qquad
+	\delta_\nu = 4\N_0.
+\end{equation}
 
 Initial conditions
 \begin{subequations}
@@ -1138,6 +1181,9 @@ and shifts oscillations so they are not centered around $0$.
 \TODO{argument after eq (5.22) in Dodelson: why $\Theta_{l \geq 1} \rightarrow 0$?}
 So photon quadrupole is very smal during radiation domination / before decoupling
 Why not neutrinos?
+
+\item
+Neutrino decoupling: Dodelson page 88
 \end{itemize}
 
 \clearpage
