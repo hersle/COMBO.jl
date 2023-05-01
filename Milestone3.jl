@@ -83,6 +83,10 @@ end
 
 if true
     series = [
+        ("plots/ThetaP.pdf", Dict(:ylabel => L"\Theta^P_l"), [((x,y) -> y[Cosmology.i_ΘPl(0)](x), Dict(:linestyle => :solid, :label => L"l=0")), ((x,y) -> y[Cosmology.i_ΘPl(1)](x), Dict(:linestyle => :dash, :label => L"l=1")), ((x,y) -> y[Cosmology.i_ΘPl(2)](x), Dict(:linestyle => :dot, :label => L"l=2"))]),
+
+        ("plots/potentials.pdf", Dict(:ylabel => L"\{\Phi,\Psi\}"), [((x,y) -> y[Cosmology.i_Φ](x), Dict(:linestyle => :dash, :label => L"\Phi")), ((x,y) -> y[Cosmology.i_Ψ](x), Dict(:linestyle => :dot, :label => L"\Psi")), ((x,y) -> y[Cosmology.i_Φ](x) + y[Cosmology.i_Ψ](x), Dict(:linestyle => :solid, :label => L"\Phi+\Psi"))]),
+
         ("plots/overdensity.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [
             ((x,y) -> log10(abs(y[Cosmology.i_δc](x))), Dict(:linestyle => :solid, :label => L"\delta=\delta_c")),
             ((x,y) -> log10(abs(y[Cosmology.i_δb](x))), Dict(:linestyle => :dash,  :label => L"\delta=\delta_b")),
@@ -106,10 +110,6 @@ if true
         ("plots/ThetalN0.pdf", Dict(:ylabel => L"\{\Theta_0,\mathcal{N}_0\}"), [((x,y) -> y[Cosmology.i_Θl(0)](x), Dict(:linestyle => :solid, :label => L"\Theta_0")), ((x,y) -> y[Cosmology.i_Nl(0)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_0"))]),
         ("plots/ThetalN1.pdf", Dict(:ylabel => L"\{\Theta_1,\mathcal{N}_1\}"), [((x,y) -> y[Cosmology.i_Θl(1)](x), Dict(:linestyle => :solid, :label => L"\Theta_1")), ((x,y) -> y[Cosmology.i_Nl(1)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_1"))]),
         ("plots/ThetalN2.pdf", Dict(:ylabel => L"\{\Theta_2,\mathcal{N}_2\}"), [((x,y) -> y[Cosmology.i_Θl(2)](x), Dict(:linestyle => :solid, :label => L"\Theta_2")), ((x,y) -> y[Cosmology.i_Nl(2)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_2"))]),
-
-        ("plots/ThetaP.pdf", Dict(:ylabel => L"\Theta^P_l"), [((x,y) -> y[Cosmology.i_ΘPl(0)](x), Dict(:linestyle => :solid, :label => L"l=0")), ((x,y) -> y[Cosmology.i_ΘPl(1)](x), Dict(:linestyle => :dash, :label => L"l=1")), ((x,y) -> y[Cosmology.i_ΘPl(2)](x), Dict(:linestyle => :dot, :label => L"l=2"))]),
-
-        ("plots/potentials.pdf", Dict(:ylabel => L"\{\Phi,\Psi\}"), [((x,y) -> y[Cosmology.i_Φ](x), Dict(:linestyle => :dash, :label => L"\Phi")), ((x,y) -> y[Cosmology.i_Ψ](x), Dict(:linestyle => :dot, :label => L"\Psi")), ((x,y) -> y[Cosmology.i_Φ](x) + y[Cosmology.i_Ψ](x), Dict(:linestyle => :solid, :label => L"\Phi+\Psi"))]),
     ]
 
     # pre-compute callable splines once and for all (index and call as y1s[i_k][i_qty](x))
