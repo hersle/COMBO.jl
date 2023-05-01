@@ -246,23 +246,23 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
     return _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations full (k=$(k*Mpc)/Mpc)", kwargs...)
 end
 
-function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
+function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
     splines = Vector{Spline1D}(undef, i_max_ext)
     if tight
         # 1) use tight coupling approximation at early times to avoid stiff equations,
         # 2) then integrate the full equations from when the approximation breaks down,
         # 3) merge 1+2
         x12 = time_tight_coupling(co, k)
-        x1, spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
+        x1, spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5(), kwargs...)
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
-        x2, spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5())
+        x2, spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5(), kwargs...)
         x, spls = splinejoin(x1, x2, spl1s, spl2s)
         splines[1:i_max_full] .= spls
     else
         # only integrate the full (stiff) equations using an appropriate solver
         # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
         # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
-        x, splines_full = perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=KenCarp4(autodiff=false)) # KenCarp4(autodiff=false) and radau() work well!
+        x, splines_full = perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=KenCarp4(autodiff=false), kwargs...) # KenCarp4(autodiff=false) and radau() work well!
         splines[1:i_max_full] .= splines_full
     end
 

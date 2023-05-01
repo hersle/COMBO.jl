@@ -7,6 +7,7 @@ include("Plotting.jl")
 using .Cosmology
 using .Constants
 using LaTeXStrings
+using DifferentialEquations
 
 co = ΛCDM()
 xrm = equality_rm(co)
@@ -163,17 +164,24 @@ if true
     ks = [1e-1, 1e-2, 1e-3] / Mpc
     filename = "plots/perturbation_methods.pdf"
     println("Plotting $filename")
-    plot(xlabel=L"x = \log a", ylabel=L"\log_{10} \Big( \max_i{|\hat{y}^{\tiny{\textrm{KC4}}}_i-\hat{y}^{\tiny{\textrm{T5}}}_i|} \Big)", xlims=(-15, 0), xticks=-25:5:5, legend_position=:topleft)
+    plot(xlabel=L"x = \log a", ylabel=L"\log_{10} \Big( \max_i{|\hat{y}^{1}_i-\hat{y}^{2}_i|} \Big)", xlims=(-15, 0), xticks=-25:5:5, legend_position=:topleft)
     for (i_k, k) in enumerate(ks)
-        _, y1s  = Cosmology.perturbations_mode(co, k; tight=true )
-        x, y2s  = Cosmology.perturbations_mode(co, k; tight=false)
-        x = extendx(x, 5) # plot with extra points between every spline point for more smoothness
+        x, y1s  = Cosmology.perturbations_mode(co, k; tight=false, solver=KenCarp4(autodiff=false))
+        _, y2s  = Cosmology.perturbations_mode(co, k; tight=true,  solver=KenCarp4(autodiff=false))
+        _, y3s  = Cosmology.perturbations_mode(co, k; tight=true,  solver=Tsit5())
+        x = extendx(x, 3) # plot with extra points between every spline point for more smoothness
         y1s = [y1.(x) / maximum(abs.(y1.(x))) for y1 in y1s] # [i_q, i_x]
         y2s = [y2.(x) / maximum(abs.(y2.(x))) for y2 in y2s] # [i_q, i_x]
-        dy = [abs.(y1 .- y2) for (y1, y2) in zip(y1s, y2s)]
-        dy = [maximum([dy[i][j] for i in 1:length(dy)]) for j in 1:length(x)]
-        plot!(x, log10.(dy); color=1+i_k, label=L"k=10^{%$(Int(round(log10(k*Mpc))))}/\textrm{Mpc}")
+        y3s = [y3.(x) / maximum(abs.(y3.(x))) for y3 in y3s] # [i_q, i_x]
+        dy12 = [abs.(y1 .- y2) for (y1, y2) in zip(y1s, y2s)]
+        dy13 = [abs.(y1 .- y3) for (y1, y3) in zip(y1s, y3s)]
+        dy12 = [maximum([dy12[i][j] for i in 1:length(dy12)]) for j in 1:length(x)]
+        dy13 = [maximum([dy13[i][j] for i in 1:length(dy13)]) for j in 1:length(x)]
+        plot!(x, log10.(dy13); alpha=0.5, color=1+i_k, label=nothing)
+        plot!(x, log10.(dy12); alpha=1.0, color=1+i_k, label=L"k=10^{%$(Int(round(log10(k*Mpc))))}/\textrm{Mpc}")
     end
+    vline!([-21], color=:black, alpha=1.0, label=L"\textrm{\texttt{KenCarp4} (full) vs. \texttt{KenCarp4} (tight+full)}")
+    vline!([-21], color=:black, alpha=0.5, label=L"\textrm{\texttt{KenCarp4} (full) vs. \texttt{Tsit5} (tight+full)}")
     savefig(filename)
 end
 
