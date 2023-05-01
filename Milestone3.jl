@@ -26,6 +26,52 @@ function extendx(x::Vector{Float64}, nextra::Integer)
     return sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 0:nextra)...))
 end
 
+# Test splining
+if true
+    kmin, kmax = 0.00005 / Mpc, 1.0 / Mpc
+    xmin, xmax = -20.0, 0.0
+
+    series = [
+        ("logarithmic", 10 .^ (log10(kmin) .+ (log10(kmax)-log10(kmin)) * range(0, 1; length=200))),
+        ("quartic", kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 4),
+        ("cubic", kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 3),
+        ("quadratic", kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 2),
+        ("linear", kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 1),
+    ]
+
+    for (variant, splineks) in series
+        filename = "plots/splinetest_$variant.pdf"
+        println("Plotting $filename")
+
+        ks = 10 .^ (log10(kmin) .+ (log10(kmax)-log10(kmin)) * sort(rand(100)))
+        xs = xmin .+ (xmax-xmin) * sort(rand(341)) .^ 1 # linear spacing
+
+        y1s = Cosmology.perturbations_splines(co; ks=splineks)
+
+        maxdy = zeros(length(xs), length(ks))
+        for (j, k) in enumerate(ks)
+            y1spls = [x -> spl(x, k) for spl in y1s] # list of functions
+            _, y2spls = Cosmology.perturbations_mode(co, k) # list of functions
+            for l in 1:length(y1spls)
+                y1 = y1spls[l].(xs)
+                y2 = y2spls[l].(xs)
+                y1 /= maximum(abs.(y1))
+                y2 /= maximum(abs.(y2)) # TODO: divide by max(y1) or max(y2)?
+                for (i, x) in enumerate(xs)
+                    maxdy[i,j] = max(maxdy[i,j], abs(y1[i]-y2[i]))
+                end
+            end
+        end
+
+        x = xs
+        y = log10.(ks * Mpc)
+        z = log10.(maxdy') # transpose
+        plot(title=L"\log_{10} \left( \max_i |\hat{y}_i(x,k)-\hat{y}^k_i(x)| \right) \quad \textrm{(%$(variant) spacing)}", xlabel=L"x=\log a", ylabel=L"\log_{10} \left( k \cdot \textrm{Mpc} \right)", xlims=(x[1], x[end]), ylims=(y[1], y[end]), grid=nothing, colorbar_ticks=-20:0, clims=(-8, 0))
+        heatmap!(x, y, z, c=cgrad(:Reds), label=L"\log_{10} dy")
+        savefig(filename)
+    end
+end
+
 if true
     series = [
         ("plots/overdensity.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [

@@ -271,14 +271,13 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false)
     return x, splines
 end
 
-function perturbations_splines(co::ΛCDM; tight::Bool=false)
-    if length(co.perturbation_splines) == 0
+function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
+    if length(co.perturbation_splines) == 0 || !isnothing(ks)
         t1 = now()
 
-        kmin, kmax = 0.00005 / Mpc, 1.0 / Mpc
-        ks = kmin .+ (kmax-kmin) * range(0, 1; length=200) .^ 2 # quadratic spacing
-        #log10ks = log10(kmin) .+ (log10(kmax)-log10(kmin)) * range(0, 1; length=200)
-        #ks = 10 .^ log10ks
+        if isnothing(ks)
+            ks = 10 .^ (log10(kmin) .+ (log10(kmax)-log10(kmin)) * range(0, 1; length=200))
+        end
         
         # (x,k) spline requires 1D arrays for x and k (and does not accept a fully irregular 2D grid)
         # use the x-values from the mode that has the most (not necessarily k=kmax)
@@ -299,6 +298,7 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false)
             end
         end
 
+        co.perturbation_splines = [] # reset if not empty
         for i_qty in 1:i_max_ext
             qty = @view perturbs[i_qty, :, :]
             push!(co.perturbation_splines, Spline2D(xs, ks, qty)) # spline (x, k)
