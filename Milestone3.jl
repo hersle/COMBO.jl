@@ -27,6 +27,14 @@ function extendx(x::Vector{Float64}, nextra::Integer)
     return sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 0:nextra)...))
 end
 
+if false
+    Cosmology.perturbations_splines(co)
+    Cosmology.perturbations_mode(co, 1 / Mpc; tight=true, solver=KenCarp4(autodiff=false))
+    Cosmology.perturbations_mode(co, 1 / Mpc; tight=true, solver=KenCarp4(autodiff=false))
+    Cosmology.perturbations_mode(co, 1 / Mpc; tight=true, solver=Tsit5())
+    Cosmology.perturbations_mode(co, 1 / Mpc; tight=true, solver=Tsit5())
+end
+
 # Test splining
 if true
     kmin, kmax = 0.00005 / Mpc, 1.0 / Mpc
