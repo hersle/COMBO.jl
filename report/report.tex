@@ -945,7 +945,8 @@ The perturbation $k$-modes evolve independently and according to the system of d
 \end{subequations}
 In addition, at any time, the metric perturbations are related by
 \begin{equation}
-	{\Psi}  = -\Phi - \frac{12 H_0^2}{c^2 k^2 a^2} \bigg[ \Omega_{\gamma 0} \Theta_2 + \Omega_{\nu 0} \N_2 \bigg] .
+	\Psi  = -\Phi - \frac{12 H_0^2}{c^2 k^2 a^2} \bigg[ \Omega_{\gamma 0} \Theta_2 + \Omega_{\nu 0} \N_2 \bigg] .
+\label{eq_potential_relation}
 \end{equation}
 The presence of anisotropy through the quadrupoles $\Theta_2$ and $\N_2$ introduces cosmological shear stress,
 where $\Psi \neq -\Phi$ and neighboring spacetime regions expand at different rates.
@@ -1087,15 +1088,22 @@ forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they ar
 \includegraphics[height=5cm]{../plots/perturbation_methods.pdf}
 \hfill
 \includegraphics[height=5cm]{../plots/Thetal0_zoom.pdf}
-\caption{To compare the \texttt{KenCarp4} (\texttt{KC4}, without tight coupling) and \texttt{Tsit5} (\texttt{T5}, with tight coupling) integration methods,
-we integrate the perturbations $y_i(x)$ with both methods,
-normalize each quantity $\hat{y}_i(x) = y_i(x) / \max_x |y_i(x)|$, so they all lie on a common scale $[-1, +1]$,
-and plot the greatest discrepancy $\max_i |y^\text{KC4}_i(x) - y^\text{T5}_i(x)|$ at each time $x$ (left plot).
-The greatest differences occur during late-time oscillations of small-scale modes, when the integration methods grow out of phase (right plot).}
+\caption{To compare two different integration methods ``$1$'' and ``$2$'',
+we integrate the perturbations $y_i(x)$ with both of them,
+normalize each perturbation quantity $y_i(x)$ to $\hat{y}_i(x) = y_i(x) / \max_x |y_i(x)|$ on a common scale $[-1, +1]$,
+and compute the greatest discrepancy $\max_i |y^1_i(x) - y^2_i(x)|$ at each time $x$ (left plot).
+The greatest differences come from rapid oscillations of small-scale modes, when the integration methods become out of sync (exemplified in right plot).}
 \label{fig_perturb_methods}
 \end{figure}
 
-\begin{figure}[b]
+\Cref{fig_perturb_methods} compares the different methods for integrating the perturbation equations.
+Using the \texttt{KenCarp4} solver, we see that integrating only the full system
+gives the same results that switching from the tight to the full system does up to around $10^{-2.5}$.
+Comparing \texttt{KenCarp4} to \texttt{Tsit5} gives a greater discrepancy, as the two methods are different.
+We conclude that it seems safe to discard the tight coupling approximation and instead use the \texttt{KenCarp4} exclusively on the full system.
+
+\begin{figure}[ht!]
+\iffalse
 \begin{minipage}{0.49\textwidth}
 \includegraphics[height=5cm,right]{../plots/overdensity.pdf} \\
 \includegraphics[height=5cm,right]{../plots/ThetalN2.pdf} \\
@@ -1107,66 +1115,68 @@ The greatest differences occur during late-time oscillations of small-scale mode
 \includegraphics[height=5cm,right]{../plots/ThetaP.pdf} \\
 \phantom{\includegraphics[height=5cm,right]{../plots/ThetaP.pdf}} \\ % ghost
 \end{minipage}
+\fi
+\centering
+\includegraphics[height=7.5cm]{../plots/potentials.pdf} \\
+\includegraphics[height=7.5cm]{../plots/overdensity.pdf} \\
+\includegraphics[height=7.5cm]{../plots/velocity.pdf} \\
+\caption{(continues on next page)}
+\end{figure}
+\begin{figure}[ht!]\ContinuedFloat
+\centering
+\includegraphics[height=7.5cm]{../plots/ThetalN2.pdf} \\
+\includegraphics[height=7.5cm]{../plots/ThetaP.pdf} \\
 \caption{%
-	Three different perturbation $k$-modes for the Planck cosmology \eqref{eq_planck2018} and $l_\text{max}=10$.
-	The circles mark each mode's horizon entry, where $k c \eta = 1$.
-	Zoom in to see that \textit{each curve consists of three overlapping sub-curves}:
-	the innermost integrates the full system with the \texttt{KenCarp4} method and interpolates across $x$;
-	the middle integrates the tight and full system with the \texttt{Vern9} method and interpolates across $x$; and
-	the outermost is identical to the innermost, but interpolates across both $x$ and $k$ after solving the system for $200$ quadratically spaced $k$-values.
-	All integrators use the absolute and relative error tolerance $10^{-9}$.
-	This is the reason for the ``blurry'' curves.
+	Four different integrated perturbation $k$-modes (with the \texttt{KenCarp4} method and error tolerance $10^{-9}$ on the full system) for the Planck cosmology \eqref{eq_planck2018} and $l_\text{max}=10$.
+	See the last plot for the $k$olor coding.
+	Colored bands mark each mode's horizon entry, when $k c \eta = 1$.
+	Grey bands mark radiation-matter equality, recombination and matter-dark energy equality (from left to right).
+	\TODO{compare with approximate analytical solutions!}
 }
 \label{fig_perturb_all}
 \end{figure}%
 
-\Cref{fig_perturb_all} shows three integrated perturbation modes.
-
-First, note that stiff solver's solution of the full system
-agrees perfectly with the non-stiff solver's solution of the hybrid tight and full system.
-As shown in \cref{fig_perturb_zoom}, a discrepancy between the two appears only at very late times, as the oscillations become extremely rapid.
-The $k$-splined solutions also agrees well.
-
-Let us physically interpret the evolution of the perturbation modes:
+Next, let us understand the physics.
+\Cref{fig_perturb_all} shows four integrated perturbation modes:
 \begin{itemize}
-
 \item
 Before a mode enters the horizon,
-there is no causal contact between two point separated by its wavelength,
-so there is very little structure growth ($\delta = \textrm{const}$), and the potentials change little with time.
+there is no causal contact between two points separated by its wavelength,
+so there is very little structure growth, and the overdensities and potentials change little with time.
 
 \item
 Small-scale modes enter the horizon during radiation domination.
-The high pressure of radiation prevents it from clustering and forming spatial curvature and potential wells,
-so the potentials $\Phi$ and $\Psi$ plummet and are suppressed before radiation-matter equality.
-Meanwhile, the tightly coupled baryon-photon fluid oscillates acoustically, as seen from $v$ and $\delta$ (absolute values!).
-These acoustic oscillations are caused by the fight between the pull of gravity versus the push of the strong radiation pressure gives rise to sound waves.
-The oscillations are damped due to diffusion (spreading) of photons (``Silk damping'') as they random walk through the fluid and Thomson scatter, and cooling from expansion, causing the pressure to decay with time.
-After recombination, the baryon-photon fluid decouples, terminating the oscillations,
-and the photons stream freely, while the baryons fall into the dark matter's potential wells.
+The high pressure of the dominating radiation prevents it from clustering and forming spatial curvature and potential wells,
+so the potentials $\Phi$ and $\Psi$ plummet and are suppressed before matter domination.
+Meanwhile, the tightly coupled baryon-photon fluid oscillates, as seen from $|v|$ and $|\delta|$ (the absolute values indicate alternating compression and rarefaction).
+This is caused by the push of the strong radiation pressure fighting the pull of gravity, giving rise to \emph{baryon acoustic oscillations} (BAO), which are essentially sound waves.
+The oscillations are damped in time as the universe cools down (due to expansion) and the photons diffuse (spread out) as they scatter off electrons and random walk through the fluid (``Silk damping''), causing the pressure to decay with time.
+After recombination, the baryons and photons decouple and end the oscillations.
+The photons then stream away freely, while the baryons fall into the dark matter's potential wells.
 
 \item
 Large-scale modes, in contrast, enter the horizon during matter domination, and evolve in a qualitatively different way.
 Baryonic and dark matter has low and zero pressure,
-so gravity pulls it together and creates potential wells that maintain significant values of the potentials.
-As the baryon-photon fluid decouples, these modes do not oscillate.
-Intuitively, there is nothing stopping matter from accreting more matter during this time (until dark energy takes over).
+so gravity pulls it together and creates potential wells, maintain high values of the potentials.
+As the baryon-photon fluid is in the process of decoupling or has already done so, these modes do not oscillate.
+Intuitively, there is nothing stopping matter from accreting more matter during (until dark energy takes over).
 
 \item
-Medium-scale modes with wavenumber $k \approx 0.1 / \textrm{Mpc}$ enter the horizon \emph{at} radiation-matter equality.
+Medium-scale modes with wavenumber $k \approx 0.1 / \textrm{Mpc}$ enter the horizon precisely \emph{at} radiation-matter equality.
 We have seen that modes of smaller or larger scales behave differently,
-and it is, for example, precisely this wavenumber which locates the peak of the matter power spectrum.
+and it is precisely this wavenumber that locates the peak of the matter power spectrum, for example.
+\TODO{discuss the ``kink'' Meszaros effect?}
 
 \item
 The increasing diffusion of photons with smaller-scale modes
 causes them to relocate
 from hot regions (with high density and frequent scattering)
 to cold regions (with low density and rare scattering),
-equalizing the temperature and sending the $l \geq 1$-multipoles $\Theta_l(x) \rightarrow 0$ (increasingly for smaller $k$).
+equalizing the temperature and causing increasing suppression of the anisotropic $l \geq 1$-multipoles $\Theta_l(x)$ for decreasing $k$.
 
 \item
-As dark energy takes over and the expansion of space accelerates,
-we see that structure growth begins to slow due to the inevitable dilution.
+As dark energy takes over,
+we see that structure growth begins to slow due to the accelerating expansion of space.
 
 \item
 During matter domination,
@@ -1176,53 +1186,52 @@ Negligible pressure means that gravity wins; matter accretes more matter, and th
 
 \item
 We see that the onset of polarization ($\Theta^P_l$) occurs at the same time as the photons develop a quadrupole $\Theta_2 \neq 0$.
-Indeed, polarized photons are produced by Thomson scattering when light from two angles separated by $90^\circ$ collide with an electron \TODO{cite Dodelson},
-so it is naturally connected with the presence of a quadrupole.
+As explained in detail in \TODO{cite Dodelson section 10.2},
+polarized photons are indeed produced by Thomson scattering when light separated by a $90^\circ$ angles collide with electrons,
+so it is indeed naturally connected with the presence of a quadrupole.
 For modes that enter the horizon after recombination,
 the photons are free-streaming and almost never collide with electrons,
 so no polarization is produced at these scales.
 
 \item
-Meszaros effect point.
-Only modes entering the horizon during radiation domination have the ``kink''.
-
-\item
 Neutrinos interact weakly, in contrast to the ``strong'' Thomson scattering in the coupled baryon-photon fluid.
-Therefore, the neutrinos do not follow the oscillations of $\delta_b$ and $\delta_\gamma$.
-As they are massless and relativistic here, they stream free like the photons after decoupling,
-instead of ending up with the baryons in the potential wells.
+Therefore, $\delta_\nu$ does not follow the oscillations of $\delta_b$ and $\delta_\gamma$.
+Instead, the massless and relativistic neutrinos quickly free-stream away, moving too fast for becoming trapped with the baryons in the potential wells.
 
 \item
-Neutrinos develop a significant anisotropy with $\N_2$ \TODO{why? see Dodelson below eq. (5.65)}, compared to photons with small $\Theta_2$.
-This is because neutrinos have momentum dispersion (a range of different momenta) \TODO{why/cite?}.
-This causes anisotropic shear stress in the potentials $\Phi \neq -\Psi$,
-where equality would hold if $\Theta_2=\N_2=0$ \TODO{physical meaning of this?}.
-Anisotropic shear stress is caused by neighboring regions expanding at differing rates,
-inducing a shear stress,
-and by its very nature requires a quadrupole or higher.
+Compared to the photons, the neutrinos develop a significant anisotropy with the quadrupole $\N_2 \gg \Theta_2$.
+\TODO{Why? Dodelson below eq. (5.65)? But they are massless here?}.
+This causes anisotropic shear stress, as explained below relation \eqref{eq_potential_relation} between the metric perturbations.
 
 \item
-We see a subtle signature of reionization in $v_\gamma$,
-whose velocity decreases again (plot shows $|v|$) as electrons become free.
+We see a subtle signature of reionization in the smallest-scale mode.
+The oscillating pattern in $v_\gamma$ ends as some electrons break free around $x=-2$,
+causing their mean free path to decrease, and hence their bulk velocity to decrease (the plot shows $|v_\gamma| = -v_\gamma$ at this time).
 This does not have any implications for $\delta_\gamma$, however,
-as the photons are still unable to become trapped in potential wells.
+as the photons still move too fast to become trapped in potential wells.
 
 \item
+\TODO{NOTES TO SELF:}
+
+\item
+\TODO{
 Radiation driving?
 Diffusion damping?
 Baryon loading: increasing baryons lowers sound speed (and pressure) in baryon-photon fluid (compared to relativistic photon gas),
 and shifts oscillations so they are not centered around $0$.
+}
 
 \item
-\TODO{argument after eq (5.22) in Dodelson: why $\Theta_{l \geq 1} \rightarrow 0$?}
-So photon quadrupole is very smal during radiation domination / before decoupling
+\TODO{argument after eq (5.22) in Dodelson: why $\Theta_{l \geq 1} \rightarrow 0$?
+So photon quadrupole is very small during radiation domination / before decoupling
 Why not neutrinos?
+}
 
 \item
-Neutrino decoupling: Dodelson page 88
+\TODO{
+Neutrino decoupling? Dodelson page 88?
+}
 \end{itemize}
-
-\TODO{compare with approximate analytical solutions!}
 
 \clearpage
 \section{Conclusions}
