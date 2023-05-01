@@ -1021,52 +1021,60 @@ and show that one can, in fact,
 
 \begin{itemize}
 \item
-However messy,
-both the full system \eqref{eq_perturb_full} and the tight system \eqref{eq_perturb_tight} simply specify derivatives of (big) systems of differential equations
+However cluttered they might appear,
+both the full and tight systems \eqref{eq_perturb_full} and \eqref{eq_perturb_tight} simply specify derivatives of first-order systems of differential equations
 that can be integrated from the initial conditions \eqref{eq_perturb_ic} with Runge-Kutta methods.
 We do this both with and without the tight coupling approximation.
 
 \item
-There is only one ambiguous/non-obvious calculation in the tight system:
+There is only one component in the tight system that is ambiguous to calculate:
 $\Theta_1^\prime$ depends on $\Theta_2^\prime$ (through $q$),
 but $\Theta_2$ depends on $\Theta_1$,
-so $\Theta_2^\prime$ also depends on $\Theta_1^\prime$, making the calculation ``circular''.
-We resolve this with fixed-point iteration.
-This converges with a very small $\Theta_2^\prime$ in very few steps, so it is also a good approximation to simply neglect $\Theta_2^\prime$ in $q$.
+so $\Theta_2^\prime$ also depends on $\Theta_1^\prime$.
+We assume this ``circular'' dependence describes a converging fixed-point iteration, starting from $\Theta_1^\prime=\Theta_2^\prime=0$.
+In hindsight, we see that this converges with a very small $\Theta_2^\prime$ in very few steps,
+so it is also a good approximation to simply neglect $\Theta_2^\prime$ in $q$.
 
 \item
-With the tight coupling approximation,
+Using the tight coupling approximation,
 we integrate the tight system from the initial conditions while
 $|1/\tau^\prime| < 0.1 \ll 1$,
 $|ck/\aH\tau^\prime| < 0.1 \ll 1$ (both assumed in tight coupling),
 $X_e > 0.999$ (before recombination really sets in)
-or $x = -10$ (to avoid a kink in a polarization $\Theta^P$, as determined by trial and error).
+or $x = -10$ (to avoid a kink in the polarization strength $\Theta^P_l$, as determined by trial and error).
 Then we switch to integrating the full system, using the tight system's last values as its initial conditions, and finally combine and spline the results.
-We integrate both regimes with the explicit \texttt{Vern9} method with absolute and relative error tolerance $10^{-9}$.
-\textbf{This is inefficient}, as the integration chickens out and takes extremely small steps during the rapid oscillations following recombination.
+With absolute and relative error tolerance $10^{-9}$,
+this integration converges with the \texttt{Tsit5} method (a recommended integrator for general non-stiff problems)
+and the \texttt{KenCarp4} method (a recommended integrator for stiff problems).
+However, the former chickens out and takes a long time with tiny steps during the rapid oscillations,
+while the latter steps through the oscillations much more efficiently.
 
 \item
-Without the tight coupling approximation,
-we \textit{always} integrate the full system from the initial conditions using the \textbf{e}xplicit \textbf{s}ingly \textbf{d}iagonal \textbf{i}mplicit \textbf{R}unge-\textbf{K}utta method (ESDIRK) \texttt{KenCarp4} method, also with error tolerance $10^{-9}$.
-This method is recommended for solving stiff problems with medium error tolerances \TODO{cite?},
-and also used by \texttt{Bolt.jl}.
-The \texttt{radau} algorithm also works well, but is not quite as fast.
-This is the most natural, elegant and our preferred method for integrating the perturbation equations,
-and we will see in our comparison below that we can \textbf{simply forget about the tight coupling approximation}.
+Without using the tight coupling approximation,
+we \textit{always} integrate the full system from the initial conditions using the \texttt{KenCarp4} method with error tolerance $10^{-9}$.
+This seems to be the same approach taken by the \texttt{\href{https://github.com/xzackli/Bolt.jl}{Bolt.jl}} code, for example.
+The \texttt{radau} method is another stiff integrator that seems to works well, but it is not quite as fast.
+In our opinion, this is the most natural and elegant method for integrating the perturbation equations,
+and we will see in our comparison below that it gives similar results to using the tight coupling approximation.
+Therefore, \textbf{this is our preferred method for integrating the perturbations}.
 
 \item
-In addition to a function that integrates the perturbations over $x$ for a fixed mode $k$ and splines over $x$,
-we implement a function that does so for multiple $k$ and splines over \emph{both} $x$ and $k$.
-This will come in use later, when we need to evaluate the perturbations for many $k$.
-Here we use a grid with 200 $k$-values in $0.0005 / \textrm{Mpc} \leq k \leq 0.3 / \textrm{Mpc}$, spaced quadratically with finer resolution for the larger-scale modes.
-We take the $x$-values from the perturbation mode that requires the most integration points (instead of using different $x$ for each $k$, which is not supported by the spline library we use).
+We implement one function that integrates and splines the perturbations over $x$ for fixed $k$,
+and another that does so for a range of $k$ and splines over both $x$ and $k$.
+The latter enables efficient computation for any $x$ and $k$,
+which will be useful for computing power spectra in the next milestone.
+For the $(x,k)$-spline,
+we use a grid with 200 $k$-values $0.0005 / \textrm{Mpc} \leq k \leq 1 / \textrm{Mpc}$ with constant logarithmic spacing $\Delta \log_{10} k$,
+and the $x$-values from the perturbation mode whose integration requires the most points (our spline function does not support a varying number of $x$ for each $k$).
 
 \item
-On an expensive modern laptop,
-integrating and splining the smallest-scale $k=0.3/\textrm{Mpc}$ perturbation mode
-takes around $85 \textrm{ ms}$ with $1614$ $x$-values with our preferred \texttt{KenCarp4} method on only the full system.
-In contrast, integrating the tight and full systems with an explicit method takes up to one second and uses $10000$s of steps.
-With our preferred method, the $(x,k)$-splining process takes around (with $200$ $k$-values and 1625 $x$-values) takes around $16 \textrm{ s}$.
+On an expensive modern laptop and with our preferred \texttt{KenCarp4} method exclusively on the full system,
+integrating and splining the most demanding smallest-scale $k=1/\textrm{Mpc}$-mode
+takes around $100 \textrm{ ms}$ and around $2000$ $x$-steps.
+Using the \texttt{KenCarp4} method on the hybrid tight and full system takes about the same number of steps,
+but around twice as long due to the switching overhead.
+In contrast, integrating the tight and full systems with the \texttt{Tsit5} method takes millions of steps and many seconds.
+With our preferred method, the $(x,k)$-splining only takes around $13 \textrm{ s}$ for the $200$ $k$-values, without any parallel processing.
 
 \item
 We add compile-time flags for polarization and neutrinos,
@@ -1213,6 +1221,8 @@ Why not neutrinos?
 \item
 Neutrino decoupling: Dodelson page 88
 \end{itemize}
+
+\TODO{compare with approximate analytical solutions!}
 
 \clearpage
 \section{Conclusions}
