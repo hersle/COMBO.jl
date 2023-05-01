@@ -972,7 +972,7 @@ The initial conditions are then
 	v_c &= v_b = -\frac{ck}{2\mathcal{H}} \Psi, \\
 	\Theta_0 &= -\frac12 \Psi, &
 	\Theta_1 &= +\frac{ck}{6\mathcal{H}} \Psi, &
-	\Theta_2 &= \begin{cases} -\frac{8}{15} \frac{ck}{\mathcal{H} \tau\prime} & (\Theta^{\mathrlap{P}}_l=0), \\ -\frac{20}{45} \frac{ck}{\mathcal{H} \tau\prime} & (\Theta^{\mathrlap{P}}_l \neq 0), \end{cases} &
+	\Theta_2 &= \begin{cases} -\frac{8}{15} \frac{ck}{\mathcal{H} \tau\prime} & (\Theta^{\mathrlap{P}}_l \neq 0), \\ -\frac{20}{45} \frac{ck}{\mathcal{H} \tau\prime} & (\Theta^{\mathrlap{P}}_l = 0), \end{cases} &
 	\Theta_l &= -\frac{l}{2l+1} \frac{ck}{\mathcal{H} \tau\prime} \Theta_{l-1}, \\
 	\Theta^{\mathrlap{P}}_0 &= \frac54 \Theta_2, &
 	\Theta^{\mathrlap{P}}_1 &= -\frac{ck}{4\mathcal{H}\tau\prime} \Theta_2, &
@@ -992,19 +992,27 @@ the full system \eqref{eq_perturb_full} is stiff and numerically unstable when i
 To circumvent this, it can be approximated by the non-stiff \emph{tightly coupling system},
 consisting of the original system with the replacements
 \begin{subequations}
-\begin{align}
-	\Theta_2   &= \begin{cases} -\frac{8}{15} \frac{ck}{\mathcal{H} \tau\prime} & \text{(polarization)}, \\ -\frac{20}{45} \frac{ck}{\mathcal{H} \tau\prime} & \text{(polarizatioff),} \end{cases} \\
-	\Theta_l   &= -\frac{l}{2l+1} \frac{ck}{\aH \tau^\prime} \Theta_{l-1}, \\
-	\Theta^P_0 &= \frac54 \Theta_2 , \\
-	\Theta^P_1 &= -\frac{ck}{4\aH \tau^\prime} \Theta_2 , \\
-	\Theta^P_2 &= \frac14 \Theta_2 , \\
-	\Theta^P_l &= -\frac{l}{2l+1} \frac{ck}{\mathcal{H} \tau\prime} \Theta_{l-1}, \\
-	q &= - \frac{\Big[\big(1-R\big)\tau^\prime+\big(1+R\big)\tau^{\prime\prime}\Big] \Big[ 3\Theta_1+v_b \Big] + \frac{ck}{\aH} \Big[ \Psi + \big(1-\frac{\aH^\prime}{\aH}\big)\big(\Theta_0-2\Theta_2\big) + \big(\Theta_0^\prime - 2 \Theta_2^\prime\big) \Big]}{\big(1+R\big)\tau^\prime + \frac{\aH^\prime}{\aH}-1}, \\
-	v_b^\prime &= \frac{1}{1+R} \bigg[ -v_b - \frac{ck}{\aH} \Psi + R \Big( q - \frac{ck}{\aH} \big(\Psi + \Theta_0 - 2 \Theta_2 \big) \Big) \bigg], \\
-	\Theta_1^\prime &= \frac{q - v_b^\prime}{3}.
-\end{align}
+\begin{equation}
+	v_b^\prime = \frac{1}{1+R} \bigg[ -v_b - \frac{ck}{\aH} \Psi + R \Big( q - \frac{ck}{\aH} \big(\Psi + \Theta_0 - 2 \Theta_2 \big) \Big) \bigg]
+	\quad \text{and} \quad
+	\Theta_1^\prime = \frac{q - v_b^\prime}{3}.
 \label{eq_perturb_tight}
+\end{equation}
+where
+\begin{equation}
+	q = - \frac{\Big[\big(1-R\big)\tau^\prime+\big(1+R\big)\tau^{\prime\prime}\Big] \Big[ 3\Theta_1+v_b \Big] + \frac{ck}{\aH} \Big[ \Psi + \big(1-\frac{\aH^\prime}{\aH}\big)\big(\Theta_0-2\Theta_2\big) + \big(\Theta_0^\prime - 2 \Theta_2^\prime\big) \Big]}{\big(1+R\big)\tau^\prime + \frac{\aH^\prime}{\aH}-1}.
+\end{equation}
+Moreover, instead of evolving all $\Theta_l$ and $\Theta^P_l$, they are taken from the relations
+\begin{align}
+	&&&& \Theta_2   &= \begin{cases} -\frac{8}{15} \frac{ck}{\mathcal{H} \tau\prime} & (\Theta^{\mathrlap{P}}_l \neq 0), \\ -\frac{20}{45} \frac{ck}{\mathcal{H} \tau\prime} & (\Theta^{\mathrlap{P}}_l=0), \end{cases} &
+	\Theta_l   &= -\frac{l}{2l+1} \frac{ck}{\aH \tau^\prime} \Theta_{l-1}, \\
+	\Theta^{\mathrlap{P}}_0 &= \frac54 \Theta_2 , &
+	\Theta^{\mathrlap{P}}_1 &= -\frac{ck}{4\aH \tau^\prime} \Theta_2 , &
+	\Theta^{\mathrlap{P}}_2 &= \frac14 \Theta_2 , &
+	\Theta^{\mathrlap{P}}_l &= -\frac{l}{2l+1} \frac{ck}{\mathcal{H} \tau\prime} \Theta^{\mathrlap{P}}_{l-1}.
+\end{align}
 \end{subequations}
+\TODO{validity and switch time}
 We will implement and compare the full and tightly coupled systems
 and show that one can, in fact,
 \textbf{use the full system at all times with sufficiently low error tolerance and stiffly-accurate Runge-Kutta methods}.
