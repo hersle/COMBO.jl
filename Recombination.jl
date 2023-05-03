@@ -127,11 +127,13 @@ time_decoupling(co::ΛCDM) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0.0, (-20
 time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3
 
 function sound_horizon(co::ΛCDM, x::Real)
-    R(x) = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
-    cs(x) = c * √(R(x) / (3*(1+R(x))))
-    ds_dx(x, s) = cs(x) / aH(co, x)
-    x0 = -20.0
-    s0 = cs(x0) / aH(co, x0)
-    _, spline = _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s")(x) # TODO: save spline?
-    return spline
+    if isnothing(co.sound_horizon_spline)
+        R(x) = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
+        cs(x) = c * √(R(x) / (3*(1+R(x))))
+        ds_dx(x, s) = cs(x) / aH(co, x)
+        x0 = -20.0
+        s0 = cs(x0) / aH(co, x0)
+        _, co.sound_horizon_spline = _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s")
+    end
+    return co.sound_horizon_spline(x)
 end
