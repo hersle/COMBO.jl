@@ -272,7 +272,7 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
 end
 
 function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
-    if length(co.perturbation_splines) == 0 || !isnothing(ks)
+    if length(co.perturbation_splines2D) == 0 || !isnothing(ks)
         t1 = now()
 
         if isnothing(ks)
@@ -299,24 +299,40 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
             end
         end
 
-        co.perturbation_splines = [] # reset if not empty
+        co.perturbation_splines2D = [] # reset if not empty
         for i_qty in 1:i_max_ext
             qty = @view perturbs[i_qty, :, :]
-            push!(co.perturbation_splines, Spline2D(xs, ks, qty)) # spline (x, k)
+            push!(co.perturbation_splines2D, Spline2D(xs, ks, qty)) # spline (x, k)
         end
 
         t2 = now()
         println("Splined perturbations(x,k) on ($(length(xs)),$(length(ks))) grid in $(t2-t1) using $(sizeof(perturbs)/1e6) MB and $(nthreads()) parallel threads")
     end
-    return co.perturbation_splines
+    return co.perturbation_splines2D
 end
 
-Φ(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_Φ](x, k)
-Ψ(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_Ψ](x, k)
-δc(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_δc](x, k)
-δb(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_δb](x, k)
-vc(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vc](x, k)
-vb(co::ΛCDM, x::Real, k::Real) = perturbations_splines(co)[i_vb](x, k)
-Θl( co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_Θl(l)](x, k)
-ΘPl(co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_ΘPl(l)](x, k)
-Nl( co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_splines(co)[i_Nl(l)](x, k)
+function quantity(co::ΛCDM, x::Real, k::Real, i_qty::Integer; splinek=false)
+    if splinek
+        return perturbations_splines(co)[i_qty](x, k)
+    else
+        # TODO: move to perturbations_mode
+        i = searchsortedfirst(co.perturbation_splines1D, k; by = tuple -> tuple[1]) # index of existing k-mode
+        if i <= length(co.perturbation_splines1D) # already computed
+            _, splines = co.perturbation_splines1D[i]
+        else # not already computed
+            _, splines = perturbations_mode(co, k)
+            insert!(co.perturbation_splines1D, i, (k, splines))
+        end
+        return splines[i_qty](x)
+    end
+end
+
+Φ(co::ΛCDM, x::Real, k::Real; kwargs...)               = quantity(co, x, k, i_Φ; kwargs...)
+Ψ(co::ΛCDM, x::Real, k::Real; kwargs...)               = quantity(co, x, k, i_Ψ; kwargs...)
+δc(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_δc; kwargs...)
+δb(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_δb; kwargs...)
+vc(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_vc; kwargs...)
+vb(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_vb; kwargs...)
+Θl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...)  = quantity(co, x, k, i_Θl(l); kwargs...)
+Nl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...)  = quantity(co, x, k, i_Nl(l); kwargs...)
+ΘPl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...) = quantity(co, x, k, i_ΘPl(l); kwargs...)

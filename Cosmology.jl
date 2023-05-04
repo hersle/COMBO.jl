@@ -53,7 +53,9 @@ mutable struct ΛCDM
     Xe_spline::Union{Nothing, Spline1D} # free electron fraction (TODO: separate struct?)
     τ_spline::Union{Nothing, Spline1D} # optical depth (TODO: separate struct?)
     sound_horizon_spline::Union{Nothing, Spline1D} # sound horizon
-    perturbation_splines::Vector{Union{Nothing, Spline2D}}
+
+    perturbation_splines1D::Vector{Tuple{Float64, Vector{Spline1D}}} # cached (k, [y1(x), y2(x), ...]) pairs
+    perturbation_splines2D::Vector{Union{Nothing, Spline2D}} # [y1(x, k), y2(x, k), ...]
 
     function ΛCDM(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046, Yp=0.24, z_reion_H=8.0, Δz_reion_H=0.5, z_reion_He=3.5, Δz_reion_He=0.5)
         H0  = h * 100*km/Mpc # 1/s
@@ -63,7 +65,7 @@ mutable struct ΛCDM
         Ωr0 = Ωγ0 + Ων0
         ΩΛ0 = 1.0 - (Ωr0 + Ωm0 + Ωk0)
         reionization = count(isnan(num) for num in (z_reion_H, z_reion_He, Δz_reion_H, Δz_reion_He)) == 0 # turn off by setting either to NaN
-        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, reionization, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, nothing, nothing, nothing, nothing, nothing, [])
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, reionization, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, nothing, nothing, nothing, nothing, nothing, [], [])
     end
 end
 
