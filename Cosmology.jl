@@ -23,7 +23,7 @@ export multirange
 export format_time_variations
 
 export time_tight_coupling, time_horizon_entry
-export δc, δb, vc, vb, Φ, Ψ, Θl
+export δc, δb, vc, vb, Φ, Ψ, Θl, Nl, ΘPl
 
 mutable struct ΛCDM
     const h0::Float64  # dimensionless Hubble parameter h0 = H0 / (100 (km/s/Mpc))

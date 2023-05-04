@@ -75,99 +75,86 @@ if true
     yf(x) = co.Ωm0/co.Ωr0 * a(x)
     Φy_small_anal(Φ0,y) = Φ0 / (10*y^3) * (16*√(1+y) + 9*y^3 + 2*y^2 - 8*y - 16)
     dΦy_small_anal(Φ0,y; ϵ=1e-4) = (Φy_small_anal(Φ0,y+ϵ/2)-Φy_small_anal(Φ0,y-ϵ/2)) / ϵ
-    Φ_small_anal(x,y,k) = Φy_small_anal(y[Cosmology.i_Φ](-15.0), yf(x))
-    dΦ_small_anal(x,y,k) = dΦy_small_anal(y[Cosmology.i_Φ](-15.0), yf(x))
+    Φ_small_anal(x,k) = Φy_small_anal(Φ(co,-15.0,k), yf(x))
+    dΦ_small_anal(x,k) = dΦy_small_anal(Φ(co,-15.0,k), yf(x))
     xf(x,k) = c*k*η(co,x) / √(3)
-    Φ_large_anal(x,y,k) = k*Mpc > 0.05 ? 3 * (sin(xf(x,k))-xf(x,k)*cos(xf(x,k))) / xf(x,k)^3 * y[Cosmology.i_Φ](-15.0) : NaN
+    Φ_large_anal(x,k) = k*Mpc > 0.05 ? 3 * (sin(xf(x,k))-xf(x,k)*cos(xf(x,k))) / xf(x,k)^3 * Φ(co,-15.0,k) : NaN
 
-    δm_anal_matter(x,y,k) = x > xrm && c*k/aH(co,x) > 1 ? y[Cosmology.i_Φ](x) * 2*k^2*c^2*a(x) / (3*co.Ωm0*co.H0^2) : NaN
+    δm_anal_matter(x,k) = x > xrm && c*k/aH(co,x) > 1 ? Φ(co,x,k) * 2*k^2*c^2*a(x) / (3*co.Ωm0*co.H0^2) : NaN
     A, B = 6.4, 0.44
-    δc_anal_radiation(x,y,k) = x < xrm && B*c*k*η(co,x) > 1 ? A * 3/2*y[Cosmology.i_Φ](-15.0) * (log(B*c*k*η(co,x))) : NaN
-    δc_anal_small(x,y,k) = x < xrm ? 6*(yf(x)+1)/(3*yf(x)+4) * (yf(x)*dΦ_small_anal(x,y,k)+Φ_small_anal(x,y,k)) : NaN # Dodelson (8.22)
+    δc_anal_radiation(x,k) = x < xrm && B*c*k*η(co,x) > 1 ? A * 3/2*Φ(co,-15.0,k) * (log(B*c*k*η(co,x))) : NaN
+    δc_anal_small(x,k) = x < xrm ? 6*(yf(x)+1)/(3*yf(x)+4) * (yf(x)*dΦ_small_anal(x,k)+Φ_small_anal(x,k)) : NaN # Dodelson (8.22)
 
-    R(x,y) = 3/2 * y[Cosmology.i_Φ](x)
+    R(x,k) = 3/2 * Φ(co,x,k)
     Dm(y) = (y+2/3) * log((√(1+y)+1) / (√(1+y)-1)) - 2*√(1+y)
     Dp(y) = y + 2/3
     dDm(y; ϵ=1e-4) = (Dm(y+ϵ/2) - Dm(y-ϵ/2)) / ϵ # derivatives; forward-difference needed for matching
     dDp(y; ϵ=1e-4) = (Dp(y+ϵ/2) - Dp(y-ϵ/2)) / ϵ # derivatives; forward-difference needed for matching
 
-    function δc_anal_Meszaros(x,y,k)
+    function δc_anal_Meszaros(x,k)
         a_H = a(time_horizon_entry(co, k))
         y_H = a_H / a(xrm)
         y_m = 3*y_H
         if y_H > 1 || yf(x) < y_H || B*c*k*η(co,x) < 1
             return NaN
         end
-        C1, C2 = [Dp(y_m) Dm(y_m); dDp(y_m) dDm(y_m)] \ [A*R(-15.0,y)*log(B*y_m/y_H), A*R(-15.0,y)/y_m]
+        C1, C2 = [Dp(y_m) Dm(y_m); dDp(y_m) dDm(y_m)] \ [A*R(-15.0,k)*log(B*y_m/y_H), A*R(-15.0,k)/y_m]
         return C1 * Dp(yf(x)) + C2 * Dm(yf(x))
     end
 
     fD(y) = 5*√(1+1/y) - 20/3*(1+1/y)^(3/2) + 8/3*((1+1/y)^(5/2)-1/y^(5/2))
-    Θ0_plus_Φ_anal(x,y,k) = k*Mpc > 0.5 ? cos(k*c*η(co,x)/√(3)) * exp(-k^2 * 3.1e6 * Mpc^2 * a(x)^(5/2) * fD(a(x)/a(xrm)) * (co.Ωb0*co.h0^2)^(-1) * (1-co.Yp/2)^(-1) * (co.Ωm0*co.h0^2)^(-1/2)) * (y[Cosmology.i_Φ](-10.7)+y[Cosmology.i_Θl(0)](-10.7)) : NaN
+    Θ0_plus_Φ_anal(x,k) = k*Mpc > 0.5 ? cos(k*c*η(co,x)/√(3)) * exp(-k^2 * 3.1e6 * Mpc^2 * a(x)^(5/2) * fD(a(x)/a(xrm)) * (co.Ωb0*co.h0^2)^(-1) * (1-co.Yp/2)^(-1) * (co.Ωm0*co.h0^2)^(-1/2)) * (Φ(co,-10.7,k)+Θl(co,-10.7,k,0)) : NaN
 
     series = [
         ("plots/ThetaP.pdf", Dict(:ylabel => L"\Theta^P_l"), [
-            ((x,y,k) -> y[Cosmology.i_ΘPl(0)](x), Dict(:linestyle => :solid, :label => L"l=0")),
-            ((x,y,k) -> y[Cosmology.i_ΘPl(1)](x), Dict(:linestyle => :dash, :label => L"l=1")),
-            ((x,y,k) -> y[Cosmology.i_ΘPl(2)](x), Dict(:linestyle => :dot, :label => L"l=2"))
+            ((x,k) -> ΘPl(co,x,k,0), Dict(:linestyle => :solid, :label => L"l=0")),
+            ((x,k) -> ΘPl(co,x,k,1), Dict(:linestyle => :dash, :label => L"l=1")),
+            ((x,k) -> ΘPl(co,x,k,2), Dict(:linestyle => :dot, :label => L"l=2"))
         ]),
 
         ("plots/oscillations.pdf", Dict(:ylabel => L"\Theta_0+\Phi"), [
-            ((x,y,k) -> y[Cosmology.i_Θl(0)](x) + y[Cosmology.i_Φ](x), Dict(:linestyle => :solid, :label => nothing)),
-            ((x,y,k) -> Θ0_plus_Φ_anal(x,y,k), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
+            ((x,k) -> Θl(co,x,k,0) + Φ(co,x,k), Dict(:linestyle => :solid, :label => nothing)),
+            ((x,k) -> Θ0_plus_Φ_anal(x,k), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
         ]),
 
         ("plots/overdensity.pdf", Dict(:ylabel => L"\log_{10}|\delta|"), [
-            #((x,y,k) -> log10(abs(δc_anal_small(x,y,k))), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
-            ((x,y,k) -> log10(abs(δm_anal_matter(x,y,k))), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
-            ((x,y,k) -> log10(abs(δc_anal_radiation(x,y,k))), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
-            ((x,y,k) -> log10(abs(δc_anal_Meszaros(x,y,k))), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
-            ((x,y,k) -> log10(abs(y[Cosmology.i_δc](x))), Dict(:linestyle => :solid, :label => L"\delta=\delta_c")),
-            ((x,y,k) -> log10(abs(y[Cosmology.i_δb](x))), Dict(:linestyle => :dash,  :label => L"\delta=\delta_b")),
-            ((x,y,k) -> log10(abs(4*y[Cosmology.i_Θl(0)](x))), Dict(:linestyle => :dashdot,  :label => L"\delta=\delta_\gamma=4\Theta_0")),
-            ((x,y,k) -> log10(abs(4*y[Cosmology.i_Nl(0)](x))), Dict(:linestyle => :dot,      :label => L"\delta=\delta_\nu=4\mathcal{N}_0")),
+            ((x,k) -> log10(abs(δm_anal_matter(x,k))), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
+            ((x,k) -> log10(abs(δc_anal_radiation(x,k))), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
+            ((x,k) -> log10(abs(δc_anal_Meszaros(x,k))), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
+            ((x,k) -> log10(abs(δc(co,x,k))), Dict(:linestyle => :solid, :label => L"\delta=\delta_c")),
+            ((x,k) -> log10(abs(δb(co,x,k))), Dict(:linestyle => :dash,  :label => L"\delta=\delta_b")),
+            ((x,k) -> log10(abs(4*Θl(co,x,k,0))), Dict(:linestyle => :dashdot,  :label => L"\delta=\delta_\gamma=4\Theta_0")),
+            ((x,k) -> log10(abs(4*Nl(co,x,k,0))), Dict(:linestyle => :dot,      :label => L"\delta=\delta_\nu=4\mathcal{N}_0")),
         ]),
 
         ("plots/potentials.pdf", Dict(:ylabel => L"\{\Phi,\Psi\}", :ylims => (-0.8, +0.8)), [
-            ((x,y,k) -> Φ_small_anal(x,y,k), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
-            ((x,y,k) -> Φ_large_anal(x,y,k), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
-            ((x,y,k) -> y[Cosmology.i_Φ](x), Dict(:linestyle => :dash, :label => L"\Phi")),
-            ((x,y,k) -> y[Cosmology.i_Ψ](x), Dict(:linestyle => :dot, :label => L"\Psi")),
-            ((x,y,k) -> y[Cosmology.i_Φ](x) + y[Cosmology.i_Ψ](x), Dict(:linestyle => :solid, :label => L"\Phi+\Psi"))
+            ((x,k) -> Φ_small_anal(x,k), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
+            ((x,k) -> Φ_large_anal(x,k), Dict(:linestyle => :solid, :color => :gray, :alpha => 0.5, :label => nothing)),
+            ((x,k) -> Φ(co,x,k), Dict(:linestyle => :dash, :label => L"\Phi")),
+            ((x,k) -> Ψ(co,x,k), Dict(:linestyle => :dot, :label => L"\Psi")),
+            ((x,k) -> Φ(co,x,k) + Ψ(co,x,k), Dict(:linestyle => :solid, :label => L"\Phi+\Psi"))
         ]),
 
         ("plots/velocity.pdf", Dict(:ylabel => L"\log_{10}|v|"), [
-            ((x,y,k) -> log10(abs(y[Cosmology.i_vc](x))), Dict(:linestyle => :solid, :label => L"v=v_c")),
-            ((x,y,k) -> log10(abs(y[Cosmology.i_vb](x))), Dict(:linestyle => :dash, :label => L"v=v_b")),
-            ((x,y,k) -> log10(abs(-3*y[Cosmology.i_Θl(1)](x))), Dict(:linestyle => :dashdot, :label => L"v=v_\gamma=-3\Theta_1")),
-            ((x,y,k) -> log10(abs(-3*y[Cosmology.i_Nl(1)](x))), Dict(:linestyle => :dot,     :label => L"v=v_\gamma=-3\mathcal{N}_1")),
+            ((x,k) -> log10(abs(vc(co,x,k))), Dict(:linestyle => :solid, :label => L"v=v_c")),
+            ((x,k) -> log10(abs(vb(co,x,k))), Dict(:linestyle => :dash, :label => L"v=v_b")),
+            ((x,k) -> log10(abs(-3*Θl(co,x,k,1))), Dict(:linestyle => :dashdot, :label => L"v=v_\gamma=-3\Theta_1")),
+            ((x,k) -> log10(abs(-3*Nl(co,x,k,1))), Dict(:linestyle => :dot,     :label => L"v=v_\gamma=-3\mathcal{N}_1")),
         ]),
 
-        ("plots/ThetalN0.pdf", Dict(:ylabel => L"\{\Theta_0,\mathcal{N}_0\}"), [((x,y,k) -> y[Cosmology.i_Θl(0)](x), Dict(:linestyle => :solid, :label => L"\Theta_0")), ((x,y,k) -> y[Cosmology.i_Nl(0)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_0"))]),
-        ("plots/ThetalN1.pdf", Dict(:ylabel => L"\{\Theta_1,\mathcal{N}_1\}"), [((x,y,k) -> y[Cosmology.i_Θl(1)](x), Dict(:linestyle => :solid, :label => L"\Theta_1")), ((x,y,k) -> y[Cosmology.i_Nl(1)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_1"))]),
-        ("plots/ThetalN2.pdf", Dict(:ylabel => L"\{\Theta_2,\mathcal{N}_2\}"), [((x,y,k) -> y[Cosmology.i_Θl(2)](x), Dict(:linestyle => :solid, :label => L"\Theta_2")), ((x,y,k) -> y[Cosmology.i_Nl(2)](x), Dict(:linestyle => :dash, :label => L"\mathcal{N}_2"))]),
+        ("plots/ThetalN0.pdf", Dict(:ylabel => L"\{\Theta_0,\mathcal{N}_0\}"), [((x,k) -> Θl(co,x,k,0), Dict(:linestyle => :solid, :label => L"\Theta_0")), ((x,k) -> Nl(co,x,k,0), Dict(:linestyle => :dash, :label => L"\mathcal{N}_0"))]),
+        ("plots/ThetalN1.pdf", Dict(:ylabel => L"\{\Theta_1,\mathcal{N}_1\}"), [((x,k) -> Θl(co,x,k,1), Dict(:linestyle => :solid, :label => L"\Theta_1")), ((x,k) -> Nl(co,x,k,1), Dict(:linestyle => :dash, :label => L"\mathcal{N}_1"))]),
+        ("plots/ThetalN2.pdf", Dict(:ylabel => L"\{\Theta_2,\mathcal{N}_2\}"), [((x,k) -> Θl(co,x,k,2), Dict(:linestyle => :solid, :label => L"\Theta_2")), ((x,k) -> Nl(co,x,k,2), Dict(:linestyle => :dash, :label => L"\mathcal{N}_2"))]),
     ]
-
-    # pre-compute callable splines once and for all (index and call as y1s[i_k][i_qty](x))
-    xs, y1s, y2s = [], [], []
-    for k in ks
-        #y1 = [x -> spline(x, k) for spline in Cosmology.perturbations_splines(co; tight=false)]
-        x, y2 = Cosmology.perturbations_mode(co, k; tight=false)
-        push!(xs, x)
-        #push!(y1s, y1)
-        push!(y2s, y2)
-    end
 
     for (ploti, (filename, plotsettings, func_linesettings)) in enumerate(series)
         println("Plotting $filename")
         plot(xlabel=L"x = \log a", xlims=(-15, 0), xticks=-25:1:5, legend_position=:bottomleft; plotsettings...)
         for (i, k) in enumerate(ks)
             xhor = time_horizon_entry(co, k)
-            x = Cosmology.extendx(xs[i], 5) # plot with extra points between every spline point for more smoothness
+            x = range(-15, 0, length=500) # TODO: take from spline
             for (func, linesettings) in func_linesettings
-                #plot!(x, func.(x, Ref(y1s[i])), alpha=0.5, linewidth=1.0, color=i; linesettings..., label=nothing)
-                plot!(x, func.(x, Ref(y2s[i]), Ref(k)), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
-                #plot!([xhor], [func(xhor, y2s[i])], color=i, markerstrokecolor=i, markersize=2, markershape=:circle, label=nothing)
+                plot!(x, func.(x, Ref(k)), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
             end
             if ploti == 1
                 # put k-labels on first plot only
@@ -201,6 +188,7 @@ if true
     plot!(x, func.(x, Ref(y1)), label=L"\texttt{ Tsit5}    \textrm{ method with tight coupling}")
     plot!(x, func.(x, Ref(y2)), label=L"\texttt{ KenCarp4} \textrm{ method without tight coupling}")
     savefig(filename)
+
 end
 
 # TODO: compare RK methods. plot max(yM1 - yM2) for each x and some k

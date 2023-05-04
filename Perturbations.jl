@@ -309,28 +309,35 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
     return co.perturbation_splines2D
 end
 
-function quantity(co::ΛCDM, x::Real, k::Real, i_qty::Integer; splinek=false)
+# TODO: this is really quite stupid with "2 quantites"
+function perturbations_quantity(co::ΛCDM, x::Real, k::Real, i_qty::Integer; splinek=false, reset=false, kwargs...)
     if splinek
-        return perturbations_splines(co)[i_qty](x, k)
+        if reset
+            co.perturbation_splines2D = []
+        end
+        return perturbations_splines(co)[i_qty](x, k; kwargs...)
     else
         # TODO: move to perturbations_mode?
+        if reset
+            co.perturbation_splines1D = []
+        end
         i = searchsortedfirst(co.perturbation_splines1D, k; by = tuple -> tuple[1]) # index of existing k-mode
-        if i <= length(co.perturbation_splines1D) # already computed
+        if i <= length(co.perturbation_splines1D) && co.perturbation_splines1D[i][1] == k # already computed
             _, splines = co.perturbation_splines1D[i]
         else # not already computed
-            _, splines = perturbations_mode(co, k)
+            _, splines = perturbations_mode(co, k; kwargs...)
             insert!(co.perturbation_splines1D, i, (k, splines))
         end
         return splines[i_qty](x)
     end
 end
 
-Φ(co::ΛCDM, x::Real, k::Real; kwargs...)               = quantity(co, x, k, i_Φ; kwargs...)
-Ψ(co::ΛCDM, x::Real, k::Real; kwargs...)               = quantity(co, x, k, i_Ψ; kwargs...)
-δc(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_δc; kwargs...)
-δb(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_δb; kwargs...)
-vc(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_vc; kwargs...)
-vb(co::ΛCDM, x::Real, k::Real; kwargs...)              = quantity(co, x, k, i_vb; kwargs...)
-Θl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...)  = quantity(co, x, k, i_Θl(l); kwargs...)
-Nl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...)  = quantity(co, x, k, i_Nl(l); kwargs...)
-ΘPl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...) = quantity(co, x, k, i_ΘPl(l); kwargs...)
+Φ(co::ΛCDM, x::Real, k::Real; kwargs...)               = perturbations_quantity(co, x, k, i_Φ; kwargs...)
+Ψ(co::ΛCDM, x::Real, k::Real; kwargs...)               = perturbations_quantity(co, x, k, i_Ψ; kwargs...)
+δc(co::ΛCDM, x::Real, k::Real; kwargs...)              = perturbations_quantity(co, x, k, i_δc; kwargs...)
+δb(co::ΛCDM, x::Real, k::Real; kwargs...)              = perturbations_quantity(co, x, k, i_δb; kwargs...)
+vc(co::ΛCDM, x::Real, k::Real; kwargs...)              = perturbations_quantity(co, x, k, i_vc; kwargs...)
+vb(co::ΛCDM, x::Real, k::Real; kwargs...)              = perturbations_quantity(co, x, k, i_vb; kwargs...)
+Θl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...)  = perturbations_quantity(co, x, k, i_Θl(l); kwargs...)
+Nl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...)  = perturbations_quantity(co, x, k, i_Nl(l); kwargs...)
+ΘPl(co::ΛCDM, x::Real, k::Real, l::Integer; kwargs...) = perturbations_quantity(co, x, k, i_ΘPl(l); kwargs...)
