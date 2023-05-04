@@ -98,11 +98,29 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
         x1 = range(x1, xswitch, length=length(x2)) # use as many points as Peebles; don't duplicate xswitch
         Xe1spl = Spline1D(x1, Xe_Saha_H_He.(co, x1))
 
-        # merge splines and save
-        _, co.Xe_spline = splinejoin(x1, x2, Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
+        # merge Saha and Peebles
+        x12, co.Xe_spline = splinejoin(x1, x2, Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
+
+        # Reionization points
+        if co.reionization
+            dx(z) = -1/(1+z)
+            xH  = time_reionization_H(co)
+            xHe = time_reionization_He(co)
+            dxH  = 1/(1+co.z_reion_H) # = |x′(z)|
+            dxHe = 1/(1+co.z_reion_He)
+            x3H  = range(xH-5*dxH, xH+5*dxH, length=100) # resolve one reionization with 100 points extending ±5dx from central x (in addition to Saha/Peebles points in x12)
+            x3He = range(xHe-5*dxHe, xHe+5*dxHe, length=100)
+            x3 = unique(sort(vcat(x3H, x3He)))
+        else
+            x3 = []
+        end
+
+        # merge (Saha and Peebles) and reionization
+        x123 = unique(sort(vcat(x12, x3)))
+        co.Xe_spline = Spline1D(x123, co.Xe_spline(x123) .+ Xe_reionization.(co, x123))
     end
 
-    return co.Xe_spline(x) + Xe_reionization(co, x) # add reionization here instead
+    return co.Xe_spline(x)
 end
 
 ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
