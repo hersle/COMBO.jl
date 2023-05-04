@@ -119,9 +119,17 @@ end
 d2τ(co::ΛCDM, x::Real) = τ(co, x; deriv=2)
 d3τ(co::ΛCDM, x::Real) = τ(co, x; deriv=3)
 
-  g(co::ΛCDM, x::Real) = -dτ(co,x) * exp(-τ(co,x))
- dg(co::ΛCDM, x::Real) = -d2τ(co,x)*exp(-τ(co,x)) + dτ(co,x)^2*exp(-τ(co,x))
-d2g(co::ΛCDM, x::Real) = (d3τ(co,x)*dτ(co,x)-d2τ(co,x)^2) / dτ(co,x)^2 * g(co,x) + d2τ(co,x)/dτ(co,x)*dg(co,x) - d2τ(co,x)*g(co,x) - dτ(co,x)*dg(co,x)
+function g(co::ΛCDM, x::Real; deriv::Integer=0)
+    if isnothing(co.g_spline)
+        τ(co, 0.0) # trigger spline computation
+        xs = extendx(splinex(co.τ_spline), 3)
+        co.g_spline = Spline1D(xs, @. -dτ(co,xs) * exp(-τ(co,xs)); bc="error")
+    end
+    return deriv == 0 ? co.g_spline(x) : derivative(co.g_spline, x; nu=deriv)
+end
+
+ dg(co::ΛCDM, x::Real) = g(co, x; deriv=1)
+d2g(co::ΛCDM, x::Real) = g(co, x; deriv=2)
 
 time_decoupling(co::ΛCDM) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
 time_recombination(co::ΛCDM) = find_zero(x -> Xe(co, x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3

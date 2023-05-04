@@ -159,8 +159,8 @@ if true || !isfile("plots/visibility_function_log.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(x[1], x[end]), ylims=(-15, +5), legend_position=:topright)
 
-    plot!(x, log10.(g.(co_H_He_reion, x)), color=1, alpha=1.0, label=nothing)
-    plot!(x, log10.(g.(co_H_reioff, x)), color=1, alpha=0.3, label=nothing)
+    plot!(x, log10.(abs.(g.(co_H_He_reion, x))), color=1, alpha=1.0, label=nothing)
+    plot!(x, log10.(abs.(g.(co_H_reioff, x))), color=1, alpha=0.3, label=nothing)
 
     # Mark event times
     vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.25, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
