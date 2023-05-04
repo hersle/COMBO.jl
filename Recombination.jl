@@ -63,7 +63,7 @@ function Xe_Peebles_spline(co::ΛCDM, x1::Float64, Xe1::Float64)
         C_r = (Λ_2s_1s + Λ_α) / (Λ_2s_1s + Λ_α + β2)
         return C_r / H(co,x) * (β*(1-Xe) - nH(co,x)*α2*Xe^2)
     end
-    return _spline_integral(dXe_dx, x1, +20.0, Xe1; abstol=1e-15, name="free electron fraction Xe")
+    return _spline_integral(dXe_dx, x1, +20.0, Xe1; name="free electron fraction Xe")
 end
 
 function time_switch_Peebles(co::ΛCDM)::Float64
@@ -125,11 +125,11 @@ end
 
 ne(co::ΛCDM, x::Real) = nH(co,x) * Xe(co,x)
 
-dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x)
+dτ(co::ΛCDM, x::Real) = -ne(co,x) * σT * c / H(co,x) # TODO: spline!!
 
 function τ(co::ΛCDM, x::Real; deriv::Integer=0)
     if isnothing(co.τ_spline)
-        _, co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0; reltol=1e-15, abstol=1e-15, name="optical depth τ")
+        _, co.τ_spline = _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0; name="optical depth τ")
     end
     return deriv == 0 ? co.τ_spline(x) : derivative(co.τ_spline, x; nu=deriv)
 end

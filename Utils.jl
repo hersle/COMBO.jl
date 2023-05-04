@@ -25,7 +25,7 @@ end
 # TODO: autodiff?
 #
 
-function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=nothing, name="unnamed quantity", abstol=1e-8, reltol=1e-8, maxiters=1e7, xskip=1, benchmark=false, verbose=true, kwargs...)
+function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=Tsit5(), name="unnamed quantity", abstol=1e-8, reltol=1e-8, maxiters=1e7, xskip=1, benchmark=false, verbose=true, kwargs...)
     if benchmark
         sol = solve(ODEProblem(f, y1, (x1, x2)), solver; maxiters=maxiters, kwargs..., abstol=abstol, reltol=reltol) # pre-compile before measuring
     end
