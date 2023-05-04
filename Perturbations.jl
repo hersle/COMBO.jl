@@ -74,7 +74,7 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
     return y
 end
 
-function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0.0, stiff=false, kwargs...)
+function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0.0, kwargs...)
     function dy_dx!(x, y, dy)
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
@@ -139,9 +139,8 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
     end
 
     splines = Vector{Spline1D}(undef, i_max_full)
-    alg_hints = [stiff ? :auto : :nonstiff]
     y1 = perturbations_initial_conditions(co, x1, k)[1:i_max_tight] # cut away variables not in the tight system
-    x, splines_tight = _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations tight (k=$(k*Mpc)/Mpc)", kwargs...)
+    x, splines_tight = _spline_integral(dy_dx!, x1, x2, y1; name="perturbations tight (k=$(k*Mpc)/Mpc)", kwargs...)
     splines[1:i_max_tight] .= splines_tight
 
     # extend tight splines to full system
@@ -166,7 +165,7 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
     return x, splines
 end
 
-function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0, x2::Real=0.0, stiff=true, kwargs...)
+function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0, x2::Real=0.0, kwargs...)
     function dy_dx!(x::Float64, y::Vector{Float64}, dy::Vector{Float64})
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
@@ -242,8 +241,7 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
     if isnothing(y1)
         y1 = perturbations_initial_conditions(co, x1, k)
     end
-    alg_hints = [stiff ? :auto : :nonstiff] # TODO: can remove this now
-    return _spline_integral(dy_dx!, x1, x2, y1; alg_hints=alg_hints, name="perturbations full (k=$(k*Mpc)/Mpc)", kwargs...)
+    return _spline_integral(dy_dx!, x1, x2, y1; name="perturbations full (k=$(k*Mpc)/Mpc)", kwargs...)
 end
 
 function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
@@ -253,16 +251,16 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
         # 2) then integrate the full equations from when the approximation breaks down,
         # 3) merge 1+2
         x12 = time_tight_coupling(co, k)
-        x1, spl1s = perturbations_mode_tight(co, k; x2=x12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5(), kwargs...)
+        x1, spl1s = perturbations_mode_tight(co, k; x2=x12, solver=Tsit5(), kwargs...)
         y12 = [spl1(x12) for spl1 in spl1s] # give final tight values as ICs for full system
-        x2, spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, stiff=false, abstol=1e-9, reltol=1e-9, solver=Tsit5(), kwargs...)
+        x2, spl2s = perturbations_mode_full(co, k; x1=x12, y1=y12, solver=Tsit5(), kwargs...)
         x, spls = splinejoin(x1, x2, spl1s, spl2s)
         splines[1:i_max_full] .= spls
     else
         # only integrate the full (stiff) equations using an appropriate solver
         # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
         # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
-        x, splines_full = perturbations_mode_full(co, k; stiff=true, abstol=1e-9, reltol=1e-9, solver=KenCarp4(autodiff=false), kwargs...) # KenCarp4(autodiff=false) and radau() work well!
+        x, splines_full = perturbations_mode_full(co, k; solver=KenCarp4(autodiff=false), kwargs...) # KenCarp4(autodiff=false) and radau() work well!
         splines[1:i_max_full] .= splines_full
     end
 
@@ -315,7 +313,7 @@ function quantity(co::ΛCDM, x::Real, k::Real, i_qty::Integer; splinek=false)
     if splinek
         return perturbations_splines(co)[i_qty](x, k)
     else
-        # TODO: move to perturbations_mode
+        # TODO: move to perturbations_mode?
         i = searchsortedfirst(co.perturbation_splines1D, k; by = tuple -> tuple[1]) # index of existing k-mode
         if i <= length(co.perturbation_splines1D) # already computed
             _, splines = co.perturbation_splines1D[i]
