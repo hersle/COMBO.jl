@@ -78,11 +78,11 @@ function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64
     return x, Spline1D(x, y, bc="error")
 end
 
-splinex(spline::Spline1D) = unique(spline.t) # TODO: does this make sense to use?
+splinex(spline::Spline1D) = Dierckx.get_knots(spline) # TODO: does this make sense to use?
 spliney(spline::Spline1D) = spline(splinex(spline))
 
-splinex(spline::Spline2D) = unique(spline.tx)
-spliney(spline::Spline2D) = unique(spline.ty)
+splinex(spline::Spline2D) = Dierckx.get_knots(spline)[1]
+spliney(spline::Spline2D) = Dierckx.get_knots(spline)[2]
 splinez(spline::Spline2D) = spline(splinex(spline), spliney(spline))
 
 function splinejoin(x1, x2, spl1::Spline1D, spl2::Spline1D)
@@ -98,6 +98,16 @@ function splinejoin(x1, x2, spl1s::Vector{Spline1D}, spl2s::Vector{Spline1D})
         push!(spls, spl)
     end
     return x, spls
+end
+
+# use spline points for plotting,
+# but add nextra points between each of them
+# TODO: make accessible to plotter?
+# take an array of x values (e.g. spline points),
+# then add nextra points between each of them
+function extendx(x::Vector{Float64}, nextra::Integer)
+    dx = diff(x)
+    return sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 1:nextra)...))
 end
 
 function multirange(posts, lengths)

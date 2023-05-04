@@ -15,7 +15,6 @@ co_H_He_reioff = ΛCDM(z_reion_H=NaN)
 co_H_reion     = ΛCDM(Yp=0)
 co_H_reioff    = ΛCDM(Yp=0, z_reion_H=NaN)
 co             = co_H_He_reion # default
-x = range(-10, 0, length=8000)
 
 # TODO: gather into one common function?
 xswi = time_switch_Peebles(co)
@@ -34,8 +33,9 @@ println("Free electron fraction: today: ", Xe(co, 0))
 
 if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
-    plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(x[1], x[end]), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
+    plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(-10, 0), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
+    x = Cosmology.splinex(co.Xe_spline)
     plot!(x, log10.(Xe.(co_H_reion,     x)),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
     plot!(x, log10.(Xe.(co_H_reioff,    x)),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
     plot!(x, log10.(Xe.(co_H_He_reion,  x)),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
@@ -67,8 +67,9 @@ end
 if true || !isfile("plots/free_electron_fraction_linear.pdf")
     println("Plotting free electron fraction (linear)")
 
-    plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(x[1], x[end]), ylims=(-0.1, 1.3), yticks=-0.25:0.25:1.5, legend_position=:top, framestyle=:box)
+    plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(-10, 0), ylims=(-0.1, 1.3), yticks=-0.25:0.25:1.5, legend_position=:top, framestyle=:box)
 
+    x = Cosmology.splinex(co.Xe_spline)
     plot!(x, Xe.(co_H_reion,     x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
     plot!(x, Xe.(co_H_reioff,    x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
     plot!(x, Xe.(co_H_He_reion,  x),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
@@ -100,10 +101,13 @@ end
 
 if true || !isfile("plots/optical_depth.pdf")
     println("Plotting optical depth")
-    plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-7.5, 3.5), legend_position=:topright)
 
-    d2τpos(co, x) = d2τ(co, x) > 0 ? d2τ(co, x) : 1e-10 # skip values where d2τ < 0. increase resolution here?
+    plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-7.5, 3.5), legend_position=:topright)
 
+    d2τpos(co, x) = d2τ(co, x) > 0 ? d2τ(co, x) : 1e-10 # "positive" d2τ: skip values where d2τ < 0. increase resolution here?
+
+    τ(co, 0.0) # trigger spline computation
+    x = Cosmology.splinex(co.τ_spline)
     plot!(x, log10.(τ.(co_H_reioff, x)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
     plot!(x, log10.(-dτ.(co_H_reioff, x)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
     plot!(x, log10.(d2τpos.(co_H_reioff, x)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
@@ -123,11 +127,12 @@ if true || !isfile("plots/optical_depth.pdf")
 end
 
 if true || !isfile("plots/visibility_function_linear.pdf")
-    # TODO: inset reionization plot (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
     println("Plotting visibility function (linear)")
 
-    plot(xlabel = L"x = \log a", xlims=(x[1], x[end]), ylims=(-10, +10), legend_position=:topright)
+    plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-10, +10), legend_position=:topright)
 
+    g(co, 0.0) # trigger spline computation
+    x = Cosmology.splinex(co.g_spline)
     ys = [g.(co_H_reioff, x) / 1, dg.(co_H_reioff, x) / 10, d2g.(co_H_reioff, x) / 100,
           g.(co_H_He_reion,  x) / 1, dg.(co_H_He_reion,  x) / 10, d2g.(co_H_He_reion,  x) / 100]
     cs = [1  2  3  1  2  3]
@@ -147,18 +152,20 @@ if true || !isfile("plots/visibility_function_linear.pdf")
     # Mark event times
     vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.25, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
 
-    # Zoom-in plot
+    # Zoom-in reionization plot
+    # (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
     plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
 
     savefig("plots/visibility_function_linear.pdf")
 end
 
 if true || !isfile("plots/visibility_function_log.pdf")
-    # TODO: inset reionization plot (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
     println("Plotting visibility function (logarithmic)")
 
-    plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(x[1], x[end]), ylims=(-15, +5), legend_position=:topright)
+    plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(-10, 0), ylims=(-15, +5), legend_position=:topright)
 
+    g(co, 0.0) # trigger spline computation
+    x = Cosmology.splinex(co.g_spline)
     plot!(x, log10.(abs.(g.(co_H_He_reion, x))), color=1, alpha=1.0, label=nothing)
     plot!(x, log10.(abs.(g.(co_H_reioff, x))), color=1, alpha=0.3, label=nothing)
 

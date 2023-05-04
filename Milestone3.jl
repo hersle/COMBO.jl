@@ -17,16 +17,6 @@ xrec = time_recombination(co)
 ks = [1e-0, 1e-1, 1e-2, 1e-3] / Mpc
 #println("Tight coupling end (k = $(k*Mpc)/Mpc): ", format_time_variations(co, xtce))
 
-# use spline points for plotting,
-# but add nextra points between each of them
-# TODO: make accessible to plotter?
-# take an array of x values (e.g. spline points),
-# then add nextra points between each of them
-function extendx(x::Vector{Float64}, nextra::Integer)
-    dx = diff(x)
-    return sort(vcat(x, (x[1:end-1] .+ i/(nextra+1)*dx for i in 0:nextra)...))
-end
-
 if false
     Cosmology.perturbations_splines(co)
     Cosmology.perturbations_mode(co, 1 / Mpc; tight=true, solver=KenCarp4(autodiff=false))
