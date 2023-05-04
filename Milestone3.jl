@@ -152,7 +152,7 @@ if true
         plot(xlabel=L"x = \log a", xlims=(-15, 0), xticks=-25:1:5, legend_position=:bottomleft; plotsettings...)
         for (i, k) in enumerate(ks)
             xhor = time_horizon_entry(co, k)
-            x = range(-15, 0, length=500) # TODO: take from spline
+            x = Cosmology.extendx(Cosmology.splinex(Cosmology.perturbations_mode_splines(co, k)[1]), 3)
             for (func, linesettings) in func_linesettings
                 plot!(x, func.(x, Ref(k)), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
             end

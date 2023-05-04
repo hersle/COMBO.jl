@@ -309,6 +309,15 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
     return co.perturbation_splines2D
 end
 
+function perturbations_mode_splines(co::ΛCDM, k::Real; kwargs...)
+    i = searchsortedfirst(co.perturbation_splines1D, k; by = tuple -> tuple[1]) # index of existing k-mode
+    if i > length(co.perturbation_splines1D) || co.perturbation_splines1D[i][1] != k # not computed before
+        _, splines = perturbations_mode(co, k; kwargs...)
+        insert!(co.perturbation_splines1D, i, (k, splines))
+    end
+    return co.perturbation_splines1D[i][2]
+end
+
 # TODO: this is really quite stupid with "2 quantites"
 function perturbations_quantity(co::ΛCDM, x::Real, k::Real, i_qty::Integer; splinek=false, reset=false, kwargs...)
     if splinek
@@ -321,14 +330,7 @@ function perturbations_quantity(co::ΛCDM, x::Real, k::Real, i_qty::Integer; spl
         if reset
             co.perturbation_splines1D = []
         end
-        i = searchsortedfirst(co.perturbation_splines1D, k; by = tuple -> tuple[1]) # index of existing k-mode
-        if i <= length(co.perturbation_splines1D) && co.perturbation_splines1D[i][1] == k # already computed
-            _, splines = co.perturbation_splines1D[i]
-        else # not already computed
-            _, splines = perturbations_mode(co, k; kwargs...)
-            insert!(co.perturbation_splines1D, i, (k, splines))
-        end
-        return splines[i_qty](x)
+        return perturbations_mode_splines(co, k; kwargs...)[i_qty](x)
     end
 end
 
