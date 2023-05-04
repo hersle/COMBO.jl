@@ -34,18 +34,17 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
     t2 = now()
     dt = t2 - t1
 
-    # print some statistics
     success = sol.retcode == SciMLBase.ReturnCode.Success
-    if verbose
-        println("Integrated $name $(success ? "successfully" : "unsuccessfully"):")
-        println("- system size:      $(length(y1)) variables")
-        println("- algorithm$(isnothing(solver) ? " (auto):" : ":       ") $(typeof(sol.alg))") # nothing means that DifferentialEquations decides the integration algorithm
-        println("- abstol & reltol:  $abstol & $reltol")
-        println("- domain:           [$(sol.t[1]), $(sol.t[end])] with $(length(sol.t)) points")
-        println("- time elapsed:     $dt")
-    end
-
     @assert success "failed integrating $name"
+
+    # print some statistics
+    if verbose
+        print("Integrated $name ")
+        print("on [$(sol.t[1]), $(sol.t[end])] ")
+        print("with $(length(y1)) variables and $(length(sol.t)) points ")
+        print("using $(typeof(sol.alg)), abstol $abstol and reltol $reltol ")
+        print("in $dt\n")
+    end
 
     # spline wants points with ascending x values,
     # while the integrator can output them in a different order
