@@ -1,5 +1,6 @@
 const polarization = true
 const neutrinos = true
+const splinek = false
 
 const lγmax = 6  # recommended by notes
 const lνmax = 10 # recommended by Callin
@@ -330,7 +331,7 @@ function perturbations_mode_splines(co::ΛCDM, k::Real; kwargs...)
 end
 
 # TODO: this is really quite stupid with "2 quantites"
-function perturbations_quantity(co::ΛCDM, x, k::Real, i_qty::Integer; deriv::Integer=0, splinek::Bool=true)
+function perturbations_quantity(co::ΛCDM, x, k::Real, i_qty::Integer; deriv::Integer=0)
     if splinek
         return derivative(perturbations_splines(co)[i_qty], x, k, nux=deriv, nuy=0)
     else
