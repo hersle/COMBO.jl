@@ -9,6 +9,8 @@ using ODEInterfaceDiffEq # fast & stiff "radau" ODE integrator (for perturbation
 using Dierckx # splines
 using Base.Threads # parallelization
 using SpecialFunctions: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
+using QuadGK # quadrature (TODO: needed, or trapz instead?)
+using Trapz
 
 export a, z
 export ΛCDM
@@ -26,7 +28,7 @@ export format_time_variations
 export time_tight_coupling, time_horizon_entry
 export δc, δb, vc, vb, Φ, Ψ, Θl, Nl, ΘPl, S
 
-export P_primordial, P
+export P_primordial, P, Cl
 
 mutable struct ΛCDM
     const h0::Float64  # dimensionless Hubble parameter h0 = H0 / (100 (km/s/Mpc))

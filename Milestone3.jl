@@ -26,7 +26,7 @@ if false
 end
 
 # Test splining
-if true
+if false
     kmin, kmax = 0.00005 / Mpc, 1.0 / Mpc
     xmin, xmax = -20.0, 0.0
 
