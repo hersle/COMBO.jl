@@ -284,7 +284,8 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
         t1 = now()
 
         if isnothing(ks)
-            kmin, kmax = 0.00005 / Mpc, 1.0 / Mpc
+            kmin =    1 / (c*η(co,0))
+            kmax = 3000 / (c*η(co,0))
             ks = 10 .^ (log10(kmin) .+ (log10(kmax)-log10(kmin)) * range(0, 1; length=200))
         end
         
