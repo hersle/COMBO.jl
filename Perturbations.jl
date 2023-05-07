@@ -17,10 +17,11 @@ const i_Nl(l::Integer) = 6 + l
 const i_Θl(l::Integer) = i_Nl(lmax) + 1 + l
 const i_ΘPl(l::Integer) = i_Θl(lmax) + 1 + l # variables here and below are only part of the full system
 const i_Ψ = i_ΘPl(lmax) + 1
+const i_S = i_Ψ + 1 # source function
 
 const i_max_tight = i_Θl(1)     # last variable of tight system
 const i_max_full  = i_ΘPl(lmax) # last variable of full system
-const i_max_ext   = i_Ψ         # last variable of extended system (with Ψ)
+const i_max_ext   = i_S         # last variable of extended system (with Ψ and S)
 
 function time_tight_coupling(co::ΛCDM, k::Real; tol::Float64=10.0)
     x1 = find_zero(x -> abs(dτ(co,x)) - tol,                (-20.0, +20.0)) # tight coupling assumes     1/τ′ << 1
@@ -264,8 +265,17 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
         splines[1:i_max_full] .= splines_full
     end
 
-    # extend with variables given in terms of the integrated ones (like Ψ)
+    # extend with variables given in terms of the integrated ones (like Ψ and S)
     splines[i_Ψ] = Spline1D(x, @. -splines[i_Φ](x) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*splines[i_Θl(2)](x) + co.Ων0*splines[i_Nl(2)](x)); bc="error")
+
+    Π            = Spline1D(x, @.  splines[i_Θl(2)](x) + splines[i_ΘPl(0)](x) + splines[i_ΘPl(2)](x); bc="error")
+    aH_g_vb      = Spline1D(x, @. aH(co,x) * g(co,x) * splines[i_vb](x); bc="error")
+    aH_g_Π       = Spline1D(x, @. aH(co,x) * g(co,x) * Π(x); bc="error")
+    aH_d_aH_g_Π  = Spline1D(x, aH.(co,x) .* derivative(aH_g_Π, x); bc="error")
+    splines[i_S] = Spline1D(x, g.(co,x) .* (splines[i_Θl(0)](x) .+ splines[i_Ψ](x) .+ Π(x)/4) .+
+                               exp.(-τ.(co,x)) .* (derivative(splines[i_Ψ], x) .- derivative(splines[i_Φ], x)) .-
+                               1/(c*k) * derivative(aH_g_vb, x) .+
+                               3/(4*c^2*k^2) * derivative(aH_d_aH_g_Π, x); bc="error")
     return x, splines
 end
 
@@ -319,20 +329,23 @@ function perturbations_mode_splines(co::ΛCDM, k::Real; kwargs...)
 end
 
 # TODO: this is really quite stupid with "2 quantites"
-function perturbations_quantity(co::ΛCDM, x::Real, k::Real, i_qty::Integer; splinek::Bool=false)
+function perturbations_quantity(co::ΛCDM, x, k::Real, i_qty::Integer; deriv::Integer=0, splinek::Bool=true)
     if splinek
-        return perturbations_splines(co)[i_qty](x, k)
+        return derivative(perturbations_splines(co)[i_qty], x, k, nux=deriv, nuy=0)
     else
-        return perturbations_mode_splines(co, k)[i_qty](x) # TODO: move to perturbations_mode?
+        spline = perturbations_mode_splines(co, k)[i_qty] # TODO: move to perturbations_mode?
+        return deriv == 0 ? spline(x) : derivative(spline, nu=deriv)
     end
 end
 
-Φ(co::ΛCDM, x::Real, k::Real)               = perturbations_quantity(co, x, k, i_Φ)
-Ψ(co::ΛCDM, x::Real, k::Real)               = perturbations_quantity(co, x, k, i_Ψ)
-δc(co::ΛCDM, x::Real, k::Real)              = perturbations_quantity(co, x, k, i_δc)
-δb(co::ΛCDM, x::Real, k::Real)              = perturbations_quantity(co, x, k, i_δb)
-vc(co::ΛCDM, x::Real, k::Real)              = perturbations_quantity(co, x, k, i_vc)
-vb(co::ΛCDM, x::Real, k::Real)              = perturbations_quantity(co, x, k, i_vb)
-Θl(co::ΛCDM, x::Real, k::Real, l::Integer)  = perturbations_quantity(co, x, k, i_Θl(l))
-Nl(co::ΛCDM, x::Real, k::Real, l::Integer)  = perturbations_quantity(co, x, k, i_Nl(l))
-ΘPl(co::ΛCDM, x::Real, k::Real, l::Integer) = perturbations_quantity(co, x, k, i_ΘPl(l))
+# raw quantities (from integration)
+Φ(co::ΛCDM, x, k::Real)               = perturbations_quantity(co, x, k, i_Φ)
+Ψ(co::ΛCDM, x, k::Real)               = perturbations_quantity(co, x, k, i_Ψ)
+δc(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_δc)
+δb(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_δb)
+vc(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_vc)
+vb(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_vb)
+Θl(co::ΛCDM, x, k::Real, l::Integer)  = perturbations_quantity(co, x, k, i_Θl(l))
+Nl(co::ΛCDM, x, k::Real, l::Integer)  = perturbations_quantity(co, x, k, i_Nl(l))
+ΘPl(co::ΛCDM, x, k::Real, l::Integer) = perturbations_quantity(co, x, k, i_ΘPl(l))
+S(co::ΛCDM, x, k::Real)               = perturbations_quantity(co, x, k, i_S)

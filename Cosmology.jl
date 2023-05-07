@@ -23,7 +23,7 @@ export multirange
 export format_time_variations
 
 export time_tight_coupling, time_horizon_entry
-export δc, δb, vc, vb, Φ, Ψ, Θl, Nl, ΘPl
+export δc, δb, vc, vb, Φ, Ψ, Θl, Nl, ΘPl, S
 
 export P_primordial, P
 
