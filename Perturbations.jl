@@ -273,7 +273,7 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
     aH_g_vb      = spline(x, @. aH(co,x) * g(co,x) * splines[i_vb](x))
     aH_g_Π       = spline(x, @. aH(co,x) * g(co,x) * Π(x))
     aH_d_aH_g_Π  = spline(x, aH.(co,x) .* derivative(aH_g_Π, x))
-    splines[i_S] = spline(x, g.(co,x) .* (splines[i_Θl(0)](x) .+ splines[i_Ψ](x) .+ Π(x)/4)
+    splines[i_S] = spline(x, g.(co,x) .* (splines[i_Θl(0)](x) .+ splines[i_Ψ](x) .+ Π(x)/4) .+
                              exp.(-τ.(co,x)) .* (derivative(splines[i_Ψ], x) .- derivative(splines[i_Φ], x)) .-
                              1/(c*k) * derivative(aH_g_vb, x) .+
                              3/(4*c^2*k^2) * derivative(aH_d_aH_g_Π, x)
