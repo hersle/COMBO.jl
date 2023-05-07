@@ -8,6 +8,7 @@ using DifferentialEquations # ODE integration
 using ODEInterfaceDiffEq # fast & stiff "radau" ODE integrator (for perturbations)
 using Dierckx # splines
 using Base.Threads # parallelization
+using SpecialFunctions: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
 
 export a, z
 export ΛCDM
