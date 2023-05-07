@@ -146,21 +146,21 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
     splines[1:i_max_tight] .= splines_tight
 
     # extend tight splines to full system
-    splines[i_Θl(2)] = Spline1D(x, @. (polarization ? -8/15 : -20/45) * c*k / (aH(co,x)*dτ(co,x)) * splines[i_Θl(1)](x); bc="error")
+    splines[i_Θl(2)] = spline(x, @. (polarization ? -8/15 : -20/45) * c*k / (aH(co,x)*dτ(co,x)) * splines[i_Θl(1)](x))
     for l in 3:lmax
-        splines[i_Θl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines[i_Θl(l-1)](x); bc="error")
+        splines[i_Θl(l)] = spline(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines[i_Θl(l-1)](x))
     end
 
     if polarization
-        splines[i_ΘPl(0)] = Spline1D(x, @. 5/4 * splines[i_Θl(2)](x); bc="error")
-        splines[i_ΘPl(1)] = Spline1D(x, @. -c*k/(4*aH(co,x)*dτ(co,x)) * splines[i_Θl(2)](x); bc="error")
-        splines[i_ΘPl(2)] = Spline1D(x, @. 1/4 * splines[i_Θl(2)](x); bc="error")
+        splines[i_ΘPl(0)] = spline(x, @. 5/4 * splines[i_Θl(2)](x))
+        splines[i_ΘPl(1)] = spline(x, @. -c*k/(4*aH(co,x)*dτ(co,x)) * splines[i_Θl(2)](x))
+        splines[i_ΘPl(2)] = spline(x, @. 1/4 * splines[i_Θl(2)](x))
         for l in 3:lmax
-            splines[i_ΘPl(l)] = Spline1D(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines[i_ΘPl(l-1)](x); bc="error")
+            splines[i_ΘPl(l)] = spline(x, @. -l/(2*l+1) * c*k/(aH(co,x)*dτ(co,x)) * splines[i_ΘPl(l-1)](x))
         end
     else
         for l in 0:lmax
-            splines[i_ΘPl(l)] = Spline1D(x, 0 .* x)
+            splines[i_ΘPl(l)] = spline(x, 0 .* x)
         end
     end
 
@@ -267,16 +267,17 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
     end
 
     # extend with variables given in terms of the integrated ones (like Ψ and S)
-    splines[i_Ψ] = Spline1D(x, @. -splines[i_Φ](x) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*splines[i_Θl(2)](x) + co.Ων0*splines[i_Nl(2)](x)); bc="error")
+    splines[i_Ψ] = spline(x, @. -splines[i_Φ](x) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*splines[i_Θl(2)](x) + co.Ων0*splines[i_Nl(2)](x)))
 
-    Π            = Spline1D(x, @.  splines[i_Θl(2)](x) + splines[i_ΘPl(0)](x) + splines[i_ΘPl(2)](x); bc="error")
-    aH_g_vb      = Spline1D(x, @. aH(co,x) * g(co,x) * splines[i_vb](x); bc="error")
-    aH_g_Π       = Spline1D(x, @. aH(co,x) * g(co,x) * Π(x); bc="error")
-    aH_d_aH_g_Π  = Spline1D(x, aH.(co,x) .* derivative(aH_g_Π, x); bc="error")
-    splines[i_S] = Spline1D(x, g.(co,x) .* (splines[i_Θl(0)](x) .+ splines[i_Ψ](x) .+ Π(x)/4) .+
-                               exp.(-τ.(co,x)) .* (derivative(splines[i_Ψ], x) .- derivative(splines[i_Φ], x)) .-
-                               1/(c*k) * derivative(aH_g_vb, x) .+
-                               3/(4*c^2*k^2) * derivative(aH_d_aH_g_Π, x); bc="error")
+    Π            = spline(x, @.  splines[i_Θl(2)](x) + splines[i_ΘPl(0)](x) + splines[i_ΘPl(2)](x))
+    aH_g_vb      = spline(x, @. aH(co,x) * g(co,x) * splines[i_vb](x))
+    aH_g_Π       = spline(x, @. aH(co,x) * g(co,x) * Π(x))
+    aH_d_aH_g_Π  = spline(x, aH.(co,x) .* derivative(aH_g_Π, x))
+    splines[i_S] = spline(x, g.(co,x) .* (splines[i_Θl(0)](x) .+ splines[i_Ψ](x) .+ Π(x)/4)
+                             exp.(-τ.(co,x)) .* (derivative(splines[i_Ψ], x) .- derivative(splines[i_Φ], x)) .-
+                             1/(c*k) * derivative(aH_g_vb, x) .+
+                             3/(4*c^2*k^2) * derivative(aH_d_aH_g_Π, x)
+                   )
     return x, splines
 end
 

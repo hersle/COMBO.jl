@@ -96,7 +96,7 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
 
         # Saha equation points
         x1 = range(x1, xswitch, length=length(x2)) # use as many points as Peebles; don't duplicate xswitch
-        Xe1spl = Spline1D(x1, Xe_Saha_H_He.(co, x1))
+        Xe1spl = spline(x1, Xe_Saha_H_He.(co, x1))
 
         # merge Saha and Peebles
         x12, co.Xe_spline = splinejoin(x1, x2, Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
@@ -117,7 +117,7 @@ function Xe(co::ΛCDM, x::Real; x1::Float64=-20.0)
 
         # merge (Saha and Peebles) and reionization
         x123 = unique(sort(vcat(x12, x3)))
-        co.Xe_spline = Spline1D(x123, co.Xe_spline(x123) .+ Xe_reionization.(co, x123))
+        co.Xe_spline = spline(x123, co.Xe_spline(x123) .+ Xe_reionization.(co, x123))
     end
 
     return co.Xe_spline(x)
@@ -141,7 +141,7 @@ function g(co::ΛCDM, x::Real; deriv::Integer=0)
     if isnothing(co.g_spline)
         τ(co, 0.0) # trigger spline computation
         xs = extendx(splinex(co.τ_spline), 3)
-        co.g_spline = Spline1D(xs, @. -dτ(co,xs) * exp(-τ(co,xs)); bc="error")
+        co.g_spline = spline(xs, @. -dτ(co,xs) * exp(-τ(co,xs)))
     end
     return deriv == 0 ? co.g_spline(x) : derivative(co.g_spline, x; nu=deriv)
 end

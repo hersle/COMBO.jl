@@ -68,15 +68,18 @@ function _spline_integral(dy_dx!::Function, x1::Float64, x2::Float64, y1::Vector
     f!(dy, y, p, x) = dy_dx!(x, y, dy)
     x, y = _spline_integral_generic(f!, x1, x2, y1; kwargs...)
     y = [y[ix][iy] for iy in 1:length(y1), ix in 1:length(x)] # convert vector of vectors to 2D matrix
-    return x, [Spline1D(x, y[i,:], k=3, bc="error") for i in 1:length(y1)]
+    return x, [spline(x, y[i,:]) for i in 1:length(y1)]
 end
 
 # integrate scalar equations with out-of-place (scalar) RHS
 function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; kwargs...)
     f(y, p, x) = dy_dx(x, y)
     x, y = _spline_integral_generic(f, x1, x2, y1; kwargs...)
-    return x, Spline1D(x, y, bc="error")
+    return x, spline(x, y)
 end
+
+spline(x, y) = Spline1D(x, y; bc="error")
+#spline(x, y) = scale(interpolate(y, BSpline(Cubic(Line(OnGrid())))), x) # TODO: OOB BC
 
 splinex(spline::Spline1D) = Dierckx.get_knots(spline) # TODO: does this make sense to use?
 spliney(spline::Spline1D) = spline(splinex(spline))
@@ -85,10 +88,10 @@ splinex(spline::Spline2D) = Dierckx.get_knots(spline)[1]
 spliney(spline::Spline2D) = Dierckx.get_knots(spline)[2]
 splinez(spline::Spline2D) = spline(splinex(spline), spliney(spline))
 
-function splinejoin(x1, x2, spl1::Spline1D, spl2::Spline1D)
+function splinejoin(x1, x2, spl1, spl2)
     x = unique(vcat(x1, x2)) # don't duplicate midpoint
     y = vcat(spl1.(x1), spl2.(x2)[2:end])
-    return x, Spline1D(x, y; bc="error")
+    return x, spline(x, y)
 end
 
 function splinejoin(x1, x2, spl1s::Vector{Spline1D}, spl2s::Vector{Spline1D})
