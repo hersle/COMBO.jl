@@ -25,7 +25,7 @@ end
 # TODO: autodiff?
 #
 
-function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=Tsit5(), name="unnamed quantity", abstol=1e-8, reltol=1e-8, maxiters=1e7, xskip=1, benchmark=false, verbose=true, kwargs...)
+function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; solver=Tsit5(), name="unnamed quantity", abstol=1e-8, reltol=1e-8, maxiters=1e7, xskip=1, benchmark=false, verbose=false, kwargs...)
     if benchmark
         sol = solve(ODEProblem(f, y1, (x1, x2)), solver; maxiters=maxiters, kwargs..., abstol=abstol, reltol=reltol) # pre-compile before measuring
     end
@@ -117,9 +117,9 @@ function multirange(posts, lengths)
     return vcat((range(posts[i], posts[i+1], length=lengths[i])[1:end-1] for i in range(1, length(lengths)))..., posts[end])
 end
 
-function format_time_variations(co::ΛCDM, x::Real)
+function format_time_variations(bg::Background, x::Real)
     return @sprintf("x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr",
-                     x,          a(x),      z(x),      η(co,x) / Gyr, t(co,x) / Gyr)
+                     x,          a(x),      z(x),      η(bg,x) / Gyr, t(bg,x) / Gyr)
 end
 
 function fixed_point_iterate(xfunc::Function, x0; tol::Float64=1e-10, maxiters::Integer=100)

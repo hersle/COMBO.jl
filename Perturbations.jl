@@ -1,3 +1,4 @@
+#=
 const polarization = true
 const neutrinos = true
 const splinek = false
@@ -23,6 +24,11 @@ const i_S = i_Ψ + 1 # source function
 const i_max_tight = i_Θl(1)     # last variable of tight system
 const i_max_full  = i_ΘPl(lmax) # last variable of full system
 const i_max_ext   = i_S         # last variable of extended system (with Ψ and S)
+
+struct Perturbations
+    perturbation_splines1D::Vector{Tuple{Float64, Vector{Spline1D}}} # cached (k, [y1(x), y2(x), ...]) pairs
+    perturbation_splines2D::Vector{Union{Nothing, Spline2D}} # [y1(x, k), y2(x, k), ...]
+end
 
 function time_tight_coupling(co::ΛCDM, k::Real; tol::Float64=10.0)
     x1 = find_zero(x -> abs(dτ(co,x)) - tol,                (-20.0, +20.0)) # tight coupling assumes     1/τ′ << 1
@@ -352,3 +358,4 @@ vb(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_vb)
 Nl(co::ΛCDM, x, k::Real, l::Integer)  = perturbations_quantity(co, x, k, i_Nl(l))
 ΘPl(co::ΛCDM, x, k::Real, l::Integer) = perturbations_quantity(co, x, k, i_ΘPl(l))
 S(co::ΛCDM, x, k::Real)               = perturbations_quantity(co, x, k, i_S)
+=#

@@ -15,18 +15,19 @@ using Printf
 
 include("Plotting.jl") # common plotting settings
 
-co = ΛCDM()
+par = Parameters()
+bg = Background(par)
 x = range(-15, 5, length=400)
-xrm = equality_rm(co)
-xmΛ = equality_mΛ(co)
-xacc = acceleration_onset(co)
+xrm = equality_rm(par)
+xmΛ = equality_mΛ(par)
+xacc = acceleration_onset(par)
 x1, x2, x3, x4 = minimum(x), xrm, xmΛ, maximum(x)
 x0 = 0.0
 
-println("Ωr = Ωm:     ", format_time_variations(co, xrm))
-println("d²a/dt² = 0: ", format_time_variations(co, xacc))
-println("Ωm = ΩΛ:     ", format_time_variations(co, xmΛ))
-println("Today:       ", format_time_variations(co, x0))
+println("Ωr = Ωm:     ", format_time_variations(bg, xrm))
+println("d²a/dt² = 0: ", format_time_variations(bg, xacc))
+println("Ωm = ΩΛ:     ", format_time_variations(bg, xmΛ))
+println("Today:       ", format_time_variations(bg, x0))
 
 
 if !isdir("plots")
@@ -34,13 +35,13 @@ if !isdir("plots")
 end
 
 # Conformal Hubble parameter
-if true || !isfile("plots/conformal_Hubble.pdf")
+if false || !isfile("plots/conformal_Hubble.pdf")
     println("Plotting plots/conformal_Hubble.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc}) \Big]", legend_position = :topleft, ylims = (-1, +7), yticks = -1:1:+7)
-    plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωr0) * a(x)^(-1  )); linestyle = :dash,  label = "radiation-dominated")
-    plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.Ωm0) * a(x)^(-1/2)); linestyle = :dash,  label = "matter-dominated")
-    plot!(x, @. log10(co.H0     / (100*km/Mpc) * √(co.ΩΛ0) * a(x)^(+1  )); linestyle = :dash,  label = "cosmological constant-dominated")
-    plot!(x, @. log10(aH(co, x) / (100*km/Mpc)                          ); linestyle = :solid, label = "general case", color = :black)
+    plot!(x, @. log10(par.H0     / (100*km/Mpc) * √(par.Ωr0) * a(x)^(-1  )); linestyle = :dash,  label = "radiation-dominated")
+    plot!(x, @. log10(par.H0     / (100*km/Mpc) * √(par.Ωm0) * a(x)^(-1/2)); linestyle = :dash,  label = "matter-dominated")
+    plot!(x, @. log10(par.H0     / (100*km/Mpc) * √(par.ΩΛ0) * a(x)^(+1  )); linestyle = :dash,  label = "cosmological constant-dominated")
+    plot!(x, @. log10(aH(par, x) / (100*km/Mpc)                          ); linestyle = :solid, label = "general case", color = :black)
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     vline!([xacc], z_order = :back, color = :gray, linestyle = :dot, label = nothing)
     annotate!([-2.5], [6.5], [(L"x_\textrm{acc} = %$(round(xacc, digits=2))", :gray)])
@@ -48,42 +49,42 @@ if true || !isfile("plots/conformal_Hubble.pdf")
 end
 
 # conformal Hubble parameter 1st derivative
-if true || !isfile("plots/conformal_Hubble_derivative1.pdf")
+if false || !isfile("plots/conformal_Hubble_derivative1.pdf")
     println("Plotting plots/conformal_Hubble_derivative1.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}\mathcal{H}}{\mathrm{d} x}", legend_position = :topleft)
     plot!(x, x -> -1;                   linestyle = :dash,  label = "radiation-dominated")
     plot!(x, x -> -1/2;                 linestyle = :dash,  label = "matter-dominated")
     plot!(x, x -> +1;                   linestyle = :dash,  label = "cosmological constant-dominated")
-    plot!(x, @. daH(co, x) / aH(co, x); linestyle = :solid, label = "general case", color = :black)
+    plot!(x, @. daH(par, x) / aH(par, x); linestyle = :solid, label = "general case", color = :black)
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     vline!([xacc], z_order = :back, color = :gray, linestyle = :dot, label = nothing)
     savefig("plots/conformal_Hubble_derivative1.pdf")
 end
 
 # Conformal Hubble parameter 2nd derivative
-if true || !isfile("plots/conformal_Hubble_derivative2.pdf")
+if false || !isfile("plots/conformal_Hubble_derivative2.pdf")
     println("Plotting plots/conformal_Hubble_derivative2.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}^2\mathcal{H}}{\mathrm{d} x^2}", legend_positions = :topleft, yticks = 0:0.25:1.5, ylims = (0, 1.5))
     plot!(x, x -> ( 1)^2;                linestyle = :dash,  label = "radiation-dominated")
     plot!(x, x -> (-1/2)^2;              linestyle = :dash,  label = "matter-dominated")
     plot!(x, x -> (-1)^2;                linestyle = :dash,  label = "cosmological constant-dominated", color = 1) # same color as radiation
-    plot!(x, @. d2aH(co, x) / aH(co, x); linestyle = :solid, label = "general case", color = :black)
+    plot!(x, @. d2aH(par, x) / aH(par, x); linestyle = :solid, label = "general case", color = :black)
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     vline!([xacc], z_order = :back, color = :gray, linestyle = :dot, label = nothing)
     savefig("plots/conformal_Hubble_derivative2.pdf")
 end
 
 # Product of conformal time and conformal Hubble parameter
-if true || !isfile("plots/eta_H.pdf")
+if false || !isfile("plots/eta_H.pdf")
     println("Plotting plots/eta_H.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \eta \mathcal{H} \Big]", legend_position = :topleft)
 
     #plot!(x, x -> log10(1);                      linestyle = :dash,  label = "radiation-dominated")
-    plot!(x, @. log10(η(co, x) * aH(co, x)); linestyle = :solid, color = :black, label = "general case")
+    plot!(x, @. log10(η(bg, x) * aH(par, x)); linestyle = :solid, color = :black, label = "general case")
 
-    aeq_anal = co.Ωr0 / co.Ωm0
-    η_anal = @. 2 / (co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
-    aH_anal = @. a(x) * co.H0 * √(co.Ωr0/a(x)^4 + co.Ωm0/a(x)^3)
+    aeq_anal = par.Ωr0 / par.Ωm0
+    η_anal = @. 2 / (par.H0 * √(par.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
+    aH_anal = @. a(x) * par.H0 * √(par.Ωr0/a(x)^4 + par.Ωm0/a(x)^3)
     η_aH_anal = @. η_anal * aH_anal
     plot!(x, log10.(η_aH_anal); linestyle = :dash, color = 1, label = "radiation-matter universe")
 
@@ -93,19 +94,19 @@ if true || !isfile("plots/eta_H.pdf")
 end
 
 # Cosmic and conformal time
-if true || !isfile("plots/times.pdf")
+if false || !isfile("plots/times.pdf")
     println("Plotting plots/times.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
 
     # in a radiation-matter-only universe
-    aeq_anal = co.Ωr0 / co.Ωm0
-    η_anal = @. 2 / (    co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
-    t_anal = @. 2 / (3 * co.H0 * √(co.Ωm0)) * (√(a(x) + aeq_anal) * (a(x) - 2*aeq_anal) + 2*aeq_anal^(3/2))
+    aeq_anal = par.Ωr0 / par.Ωm0
+    η_anal = @. 2 / (    par.H0 * √(par.Ωm0)) * (√(a(x) + aeq_anal) - √(aeq_anal))
+    t_anal = @. 2 / (3 * par.H0 * √(par.Ωm0)) * (√(a(x) + aeq_anal) * (a(x) - 2*aeq_anal) + 2*aeq_anal^(3/2))
 
-    plot!(x, log10.(η.(co, x) / Gyr); linestyle = :solid, color = 0, label = L"\eta \,\, \textrm{(general)}")
+    plot!(x, log10.(η.(bg, x) / Gyr); linestyle = :solid, color = 0, label = L"\eta \,\, \textrm{(general)}")
     plot!(x, log10.(η_anal    / Gyr); linestyle = :dash,  color = 0, label = L"\eta \,\, \textrm{(radiation-matter universe)}")
 
-    plot!(x, log10.(t.(co, x) / Gyr); linestyle = :solid, color = 1, label = L"t \,\, \textrm{(general)}")
+    plot!(x, log10.(t.(bg, x) / Gyr); linestyle = :solid, color = 1, label = L"t \,\, \textrm{(general)}")
     plot!(x, log10.(t_anal    / Gyr); linestyle = :dash,  color = 1, label = L"t \,\, \textrm{(radiation-matter universe)}")
 
     vline!([xrm, xmΛ], z_order = :back, color = :gray, linestyle = :dash, label = nothing)
@@ -114,14 +115,14 @@ if true || !isfile("plots/times.pdf")
 end
 
 # Density parameters
-if true || !isfile("plots/density_parameters.pdf")
+if false || !isfile("plots/density_parameters.pdf")
     println("Plotting plots/density_parameters.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\Omega_i", legend_position = (0.05, 0.6), ylims=(-0.05, +1.3))
-    plot!(x, Ωr.(co, x); label = L"\Omega_r")
-    plot!(x, Ωm.(co, x); label = L"\Omega_m")
-    plot!(x, Ωk.(co, x); label = L"\Omega_k = %$(round(Int, Ωk(co, 0.0)))")
-    plot!(x, ΩΛ.(co, x); label = L"\Omega_\Lambda")
-    plot!(x, Ω.(co, x);  label = L"\sum_s \Omega_s = %$(round(Int, Ω(co, 0.0)))")
+    plot!(x, Ωr.(par, x); label = L"\Omega_r")
+    plot!(x, Ωm.(par, x); label = L"\Omega_m")
+    plot!(x, Ωk.(par, x); label = L"\Omega_k = %$(round(Int, Ωk(par, 0.0)))")
+    plot!(x, ΩΛ.(par, x); label = L"\Omega_\Lambda")
+    plot!(x, Ω.(par, x);  label = L"\sum_s \Omega_s = %$(round(Int, Ω(par, 0.0)))")
     plot!([xrm, xrm], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     plot!([xmΛ, xmΛ], [-0.05, 1.2]; z_order = :back, color = :gray, linestyle = :dash, label = nothing)
     annotate!([xrm], [1.25], [(L"x_\textrm{eq}^{rm} = %$(round(xrm; digits=2))", :gray)])
@@ -144,11 +145,12 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
 
     function logLfunc(params::Vector{Float64})
         h, Ωm0, Ωk0 = params[1], params[2], params[3]
-        co = ΛCDM(h=h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=Ωk0, Neff=0)
-        if Cosmology.is_fucked(co)
+        par = Parameters(h=h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=Ωk0, Neff=0)
+        if Cosmology.is_fucked(par)
             return -Inf # so set L = 0 (or log(L) = -∞, or χ2 = ∞)
         else
-            dL_mod = Cosmology.dL.(co, x_obs) / Gpc
+            bg = Background(par)
+            dL_mod = Cosmology.dL.(par, bg, x_obs) / Gpc
             return -1/2 * sum((dL_mod .- dL_obs).^2 ./ σdL_obs.^2) # L = exp(-χ2/2)
         end
     end
@@ -163,7 +165,7 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
     # compute corresponding ΩΛ values by reconstructing the cosmologies (this is computationally cheap)
-    ΩΛ0 = [ΛCDM(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i], Neff=0).ΩΛ0 for i in 1:length(h)]
+    ΩΛ0 = [Parameters(h=h[i], Ωb0=0.05, Ωc0=Ωm0[i]-0.05, Ωk0=Ωk0[i], Neff=0).ΩΛ0 for i in 1:length(h)]
     ΩΛ0bounds = (0.0, 1.2) # just for later plotting
 
     # best fit
@@ -190,7 +192,7 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
 
     # plot ΩΛ(Ωm0) for a few flat universes (should give ΩΛ ≈ 1 - Ωm0)
     Ωm0_flat = range(Ωm0bounds..., length=20)
-    ΩΛ0_flat = [ΛCDM(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ0 for Ωm0 in Ωm0_flat]
+    ΩΛ0_flat = [Parameters(h=best_h, Ωb0=0.05, Ωc0=Ωm0-0.05, Ωk0=0, Neff=0).ΩΛ0 for Ωm0 in Ωm0_flat]
     plot!(Ωm0_flat, ΩΛ0_flat; color = :black, marker = :circle, markersize = 2, label = "flat universes")
 
     scatter!([best_Ωm0], [best_ΩΛ0]; color = :red, markerstrokecolor = :red, markershape = :cross, markersize = 10, label = "our best fit")
@@ -217,10 +219,11 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"d_L \,/\, z \, \mathrm{Gpc}", legend_position = :topleft)
 
     x2 = range(-1, 0, length=400)
-    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(co, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :green, label = "prediction (Planck 2018)")
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(par, bg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :green, label = "prediction (Planck 2018)")
 
-    snco = ΛCDM(h=best_h, Ωb0=0, Ωc0=best_Ωm0, Ωk0=best_Ωk0, Neff=0)
-    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(snco, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :red, label = "prediction (our best fit)")
+    snpar = Parameters(h=best_h, Ωb0=0, Ωc0=best_Ωm0, Ωk0=best_Ωk0, Neff=0)
+    snbg = Background(snpar)
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(snpar, snbg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :red, label = "prediction (our best fit)")
 
     data = readdlm("data/supernovadata.txt", comments=true)
     zobs, dL, σdL = data[:,1], data[:,2], data[:,3]

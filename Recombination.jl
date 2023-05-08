@@ -1,3 +1,24 @@
+#=
+struct Recombination
+    Yp::Float64 # helium mass fraction
+    reionization::Bool   # reionization on?
+     z_reion_H::Float64  # Hydrogen reionization redshift time
+    Δz_reion_H::Float64  # Hydrogen reionization redshift duration
+     z_reion_He::Float64 # Helium   reionization redshift time
+    Δz_reion_He::Float64 # Helium   reionization redshift duration
+
+    # splines (lazily initialized)
+    Xe_spline::Spline1D # free electron fraction
+    τ_spline::Spline1D # optical depth
+    g_spline::Spline1D # visibility function
+    sound_horizon_spline::Spline1D # sound horizon
+
+    function Recombination(; Yp=0.24, z_reion_H=8.0, Δz_reion_H=0.5, z_reion_He=3.5, Δz_reion_He=0.5)
+        reionization = count(isnan(num) for num in (z_reion_H, z_reion_He, Δz_reion_H, Δz_reion_He)) == 0 # turn off by setting either to NaN
+        new(Yp, reionization, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, As, ns, k_pivot, nothing, nothing, nothing, nothing, nothing, nothing, [], [])
+    end
+end
+
 ρcrit(co::ΛCDM, x::Real) = 3 * H(co, x)^2 / (8 * π * G)
 ρb(co::ΛCDM, x::Real) = Ωb(co, x) * ρcrit(co, x)
 nb(co::ΛCDM, x::Real) = ρb(co, x) / mH
@@ -163,3 +184,4 @@ function sound_horizon(co::ΛCDM, x::Real)
     end
     return co.sound_horizon_spline(x)
 end
+=#

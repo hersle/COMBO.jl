@@ -1,76 +1,44 @@
-# convert between (a, x, z) across a = e^x = 1/(z+1)
-x(a::Real) = log(a)     # natural logarithm of scale factor (our internal time variable)
-a(x::Real) = exp(x)     # scale factor
-z(x::Real) = 1/a(x) - 1 # redshift
+struct Background
+    η_spline::Spline1D # conformal time
+    t_spline::Spline1D # cosmic    time
 
-# the d'th derivative of the thing in the square root in the Friedmann equation, E = H^2 / H0^2
-E(co::ΛCDM, x::Real; d::Integer=0) = (-4)^d * co.Ωr0/a(x)^4 +
-                                     (-3)^d * co.Ωm0/a(x)^3 +
-                                     (-2)^d * co.Ωk0/a(x)^2 +
-                                        0^d * co.ΩΛ0          # 0^0 = 1, 0^1 = 0, 0^2 = 0, ...
-
-# Friedmann equation
-   H(co::ΛCDM, x::Real) = co.H0 * √(E(co, x)) # cosmic    Hubble parameter
-  aH(co::ΛCDM, x::Real) = a(x) * H(co, x)     # conformal Hubble parameter
- daH(co::ΛCDM, x::Real) = aH(co, x) * (1 + 1/2 * E(co, x; d=1) / E(co, x)) # 1st derivative of aH
-d2aH(co::ΛCDM, x::Real) = aH(co, x) * (1 + E(co, x; d=1) / E(co, x) + 1/2 * E(co, x; d=2) / E(co, x) - 1/4 * (E(co, x; d=1) / E(co, x))^2) # 2nd derivative of aH
-
-# conformal time
-function η(co::ΛCDM, x::Real)
-    if isnothing(co.η_spline)
-        # lazy initialize spline
-        dη_dx(x, η) = 1 / aH(co, x)
+    function Background(par::Parameters)
+        # integrate η (TODO: build from Parameters struct?)
+        dη_dx(x, η) = 1 / aH(par, x)
         x1, x2 = -20.0, +20.0
-        aeq = co.Ωr0 / co.Ωm0
-        if co.Ωm0 > 0
-            η1 = 2 / (co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) - √(aeq)) # anal expr with Ωk=ΩΛ=0
+        aeq = par.Ωr0 / par.Ωm0
+        if par.Ωm0 > 0
+            η1 = 2 / (par.H0*√(par.Ωm0)) * (√(a(x1)+aeq) - √(aeq)) # anal expr with Ωk=ΩΛ=0
         else
-            η1 = 1 / aH(co, x1) # anal expr with Ωm=Ωk=ΩΛ=0
+            η1 = 1 / aH(par, x1) # anal expr with Ωm=Ωk=ΩΛ=0
         end
-        _, co.η_spline = _spline_integral(dη_dx, x1, x2, η1; name="conformal time η")
+        _, η_spline = _spline_integral(dη_dx, x1, x2, η1; name="conformal time η")
+
+        # integrate t
+        dt_dx(x, η) = 1 / H(par, x)
+        x1, x2 = -20.0, +20.0
+        aeq = par.Ωr0 / par.Ωm0
+        if par.Ωm0 > 0
+            t1 = 2 / (3*par.H0*√(par.Ωm0)) * (√(a(x1)+aeq) * (a(x1)-2*aeq) + 2*aeq^(3/2)) # anal expr with Ωk=ΩΛ=0
+        else
+            t1 = 1 / (2*H(par, x1)) # anal expr with Ωm=Ωk=ΩΛ=0
+        end
+        _, t_spline = _spline_integral(dt_dx, x1, x2, t1; name="cosmic time t")
+
+        new(η_spline, t_spline)
     end
-    return co.η_spline(x)
 end
 
-# cosmic time
-function t(co::ΛCDM, x::Real)
-    if isnothing(co.t_spline)
-        # lazy initialize spline
-        dt_dx(x, η) = 1 / H(co, x)
-        x1, x2 = -20.0, +20.0
-        aeq = co.Ωr0 / co.Ωm0
-        if co.Ωm0 > 0
-            t1 = 2 / (3*co.H0*√(co.Ωm0)) * (√(a(x1)+aeq) * (a(x1)-2*aeq) + 2*aeq^(3/2)) # anal expr with Ωk=ΩΛ=0
-        else
-            t1 = 1 / (2*H(co, x1)) # anal expr with Ωm=Ωk=ΩΛ=0
-        end
-        _, co.t_spline = _spline_integral(dt_dx, x1, x2, t1; name="cosmic time t")
-    end
-    return co.t_spline(x)
-end
+# in vectorized calls, like H.(co, [1.0, 2.0]),
+# broadcast the same cosmology to all scalar calls
+# TODO: apply to recombination etc., too
+Base.broadcastable(bg::Background) = Ref(bg)
 
-# density parameters (relative to critical density *at the time*)
-# computed using Ωs = ρs/ρcrit = ρs/ρcrit0 * ρcrit0/ρcrit = Ωs0 * H0^2/H^2 = Ωs0 / E
-Ωγ(co::ΛCDM, x::Real) = co.Ωγ0 / a(x)^4 / E(co, x)
-Ων(co::ΛCDM, x::Real) = co.Ων0 / a(x)^4 / E(co, x)
-Ωb(co::ΛCDM, x::Real) = co.Ωb0 / a(x)^3 / E(co, x)
-Ωc(co::ΛCDM, x::Real) = co.Ωc0 / a(x)^3 / E(co, x)
-Ωk(co::ΛCDM, x::Real) = co.Ωk0 / a(x)^2 / E(co, x)
-ΩΛ(co::ΛCDM, x::Real) = co.ΩΛ0          / E(co, x)
-Ωr(co::ΛCDM, x::Real) = Ωγ(co, x) + Ων(co, x)
-Ωm(co::ΛCDM, x::Real) = Ωb(co, x) + Ωc(co, x)
-Ω( co::ΛCDM, x::Real) = Ωr(co, x) + Ωm(co, x) + Ωk(co, x) + ΩΛ(co, x)
-
-# time of equality between different species (as x = log(a))
-# TODO: rename time_...
-equality_rm(co::ΛCDM) = log(co.Ωr0 / co.Ωm0)
-equality_mΛ(co::ΛCDM) = log(co.Ωm0 / co.ΩΛ0) / 3
-
-# time of acceleration onset (as x = log(a))
-acceleration_onset(co::ΛCDM) = find_zero(x -> daH(co, x), (-20, +20))
+η(bg::Background, x::Real) = bg.η_spline(x)
+t(bg::Background, x::Real) = bg.t_spline(x)
 
 # conformal distance
-χ(co::ΛCDM, x::Real) = c * (η(co, 0) - η(co, x))
+χ(bg::Background, x::Real) = c * (η(bg, 0) - η(bg, x))
 
 # radial coordinate (of light emitted at x)
 #   note: ALL three expressions
@@ -82,30 +50,8 @@ acceleration_onset(co::ΛCDM) = find_zero(x -> daH(co, x), (-20, +20))
 #   using complex numbers,
 #   because sinc(x) = sin(π*x) / (π*x) -> 1 as x -> 0,
 #   and sinh(x) = -i * sin(i*x)
-r(co::ΛCDM, x::Real) = χ(co, x) * real(sinc(√(complex(-co.Ωk0)) * co.H0 * χ(co, x) / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x), so divide argument by π!
+r(par::Parameters, bg::Background, x::Real) = χ(bg, x) * real(sinc(√(complex(-par.Ωk0)) * par.H0 * χ(bg, x) / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x), so divide argument by π!
 
 # angular diameter distance and luminosity distance (of light emitted at x)
-dA(co::ΛCDM, x::Real) = r(co, x) * a(x)
-dL(co::ΛCDM, x::Real) = r(co, x) / a(x)
-
-# checks whether the Hubble parameter becomes complex on the integration interval (x1, x2)
-# EXAMPLE: Cosmology.ΛCDM(Ωr0=0, Ωb0=0, Ωc0=0.2, Ωk0=-0.9) has E(x ≈ -1) < 0
-function is_fucked(co::ΛCDM; x1=-20.0, x2=+20.0)
-    # negative at the endpoints?
-    if E(co, x1) < 0 || E(co, x2) < 0
-        return true
-    end
-
-    # negative between the endpoints?
-    # check the values at the stationary points of E(x), defined by roots of 2nd degree polynomial
-    # dE/dx = -a^(-2) * [ 4*Ωr0*a^(-2) + 3*Ωm0*a^(-1) + 2*Ωk0 ] = 0
-    ainv1, ainv2 = quadroots(4*co.Ωr0, 3*co.Ωm0, 2*co.Ωk0)
-    if !isnan(ainv1)
-        a1, a2 = 1/ainv1, 1/ainv2
-        if (a1 >= 0 && E(co, x(a1)) < 0) || (a2 >= 0 && E(co, x(a2)) < 0)
-            return true
-        end
-    end
-
-    return false # always positive
-end
+dA(par::Parameters, bg::Background, x::Real) = r(par, bg, x) * a(x)
+dL(par::Parameters, bg::Background, x::Real) = r(par, bg, x) / a(x)
