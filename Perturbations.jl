@@ -1,4 +1,3 @@
-#=
 const polarization = true
 const neutrinos = true
 const splinek = false
@@ -26,43 +25,55 @@ const i_max_full  = i_ΘPl(lmax) # last variable of full system
 const i_max_ext   = i_S         # last variable of extended system (with Ψ and S)
 
 struct Perturbations
-    perturbation_splines1D::Vector{Tuple{Float64, Vector{Spline1D}}} # cached (k, [y1(x), y2(x), ...]) pairs
-    perturbation_splines2D::Vector{Union{Nothing, Spline2D}} # [y1(x, k), y2(x, k), ...]
+    #perturbation_splines1D::Vector{Tuple{Float64, Vector{Spline1D}}} # cached (k, [y1(x), y2(x), ...]) pairs
+    #perturbation_splines2D::Vector{Union{Nothing, Spline2D}} # [y1(x, k), y2(x, k), ...]
+    rec::Recombination
+    k::Real
+    qty_splines
+
+    function Perturbations(rec::Recombination, k::Real; tight=false, kwargs...)
+        new(rec, k, perturbations_mode(rec, k; tight=tight, kwargs...)[2])
+    end
 end
 
-function time_tight_coupling(co::ΛCDM, k::Real; tol::Float64=10.0)
-    x1 = find_zero(x -> abs(dτ(co,x)) - tol,                (-20.0, +20.0)) # tight coupling assumes     1/τ′ << 1
-    x2 = find_zero(x -> abs(dτ(co,x)) - tol * c*k/aH(co,x), (-20.0, +20.0)) # tight coupling assumes ck/̇(aτ′) << 1
-    x3 = time_switch_Peebles(co) # switch no later than when recombination begins # TODO: or -8.3?
+Base.broadcastable(perturb::Perturbations) = Ref(perturb)
+
+function time_tight_coupling(rec::Recombination, k::Real; tol::Float64=10.0)
+    x1 = find_zero(x -> abs(dτ(rec,x)) - tol,                        (-20.0, +20.0)) # tight coupling assumes     1/τ′ << 1
+    x2 = find_zero(x -> abs(dτ(rec,x)) - tol * c*k/aH(rec.bg.par,x), (-20.0, +20.0)) # tight coupling assumes ck/̇(aτ′) << 1
+    x3 = time_switch_Peebles(rec.bg.par) # switch no later than when recombination begins # TODO: or -8.3?
     x4 = -10.0 # switch before this to avoid kink in ΘP # TODO: find dynamic way of computing this?
     return min(x1, x2, x3, x4) # take the earliest of these times
 end
 
-function time_horizon_entry(co::ΛCDM, k::Real)
-    return find_zero(x -> k * c*η(co,x) - 1, (-20.0, +20.0))
+function time_horizon_entry(bg::Background, k::Real)
+    return find_zero(x -> k * c*η(bg,x) - 1, (-20.0, +20.0))
 end
 
-function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
-    fν = co.Ων0 / co.Ωr0
+function perturbations_initial_conditions(rec::Recombination, x0::Real, k::Real)
+    bg = rec.bg
+    par = bg.par
+
+    fν = par.Ων0 / par.Ωr0
     Ψ  = -1 / (3/2 + 2*fν/5)
 
     y = Vector{Float64}(undef, i_max_full)
     y[i_δc] = y[i_δb] = -3/2 * Ψ
-    y[i_vc] = y[i_vb] = -k*c/(2*aH(co,x0)) * Ψ
+    y[i_vc] = y[i_vb] = -k*c/(2*aH(par,x0)) * Ψ
     y[i_Φ]            = -(1 + 2*fν/5) * Ψ
     y[i_Θl(0)]        = -1/2 * Ψ
-    y[i_Θl(1)]        = -c*k / (3*aH(co,x0)) * y[i_Θl(0)]
-    y[i_Θl(2)]        = (polarization ? -8/15 : -20/45) * c*k / (aH(co,x0)*dτ(co,x0)) * y[i_Θl(1)]
+    y[i_Θl(1)]        = -c*k / (3*aH(par,x0)) * y[i_Θl(0)]
+    y[i_Θl(2)]        = (polarization ? -8/15 : -20/45) * c*k / (aH(par,x0)*dτ(rec,x0)) * y[i_Θl(1)]
     for l in 3:lmax
-        y[i_Θl(l)]    = -l/(2*l+1) * c*k/(aH(co,x0)*dτ(co,x0)) * y[i_Θl(l-1)] # recursive relation
+        y[i_Θl(l)]    = -l/(2*l+1) * c*k/(aH(par,x0)*dτ(rec,x0)) * y[i_Θl(l-1)] # recursive relation
     end
 
     if polarization
         y[i_ΘPl(0)]       = 5/4 * y[i_Θl(2)]
-        y[i_ΘPl(1)]       = -c*k/(4*aH(co,x0)*dτ(co,x0)) * y[i_Θl(2)]
+        y[i_ΘPl(1)]       = -c*k/(4*aH(par,x0)*dτ(rec,x0)) * y[i_Θl(2)]
         y[i_ΘPl(2)]       = 1/4 * y[i_Θl(2)]
         for l in 3:lmax
-            y[i_ΘPl(l)]    = -l/(2*l+1) * c*k/(aH(co,x0)*dτ(co,x0)) * y[i_ΘPl(l-1)] # recursive relation
+            y[i_ΘPl(l)]    = -l/(2*l+1) * c*k/(aH(par,x0)*dτ(rec,x0)) * y[i_ΘPl(l-1)] # recursive relation
         end
     else
         y[i_ΘPl(0):i_ΘPl(lmax)] .= 0.0
@@ -70,10 +81,10 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
 
     if neutrinos
         y[i_Nl(0)] = -1/2 * Ψ
-        y[i_Nl(1)] = +c*k/(6*aH(co,x0)) * Ψ
-        y[i_Nl(2)] = +(c*k*a(x0)/co.H0)^2 / (30*co.Ωr0) * Ψ # expand to avoid 1/Ων0 with Ων0=0
+        y[i_Nl(1)] = +c*k/(6*aH(par,x0)) * Ψ
+        y[i_Nl(2)] = +(c*k*a(x0)/par.H0)^2 / (30*par.Ωr0) * Ψ # expand to avoid 1/Ων0 with Ων0=0
         for l in 3:lmax
-            y[i_Nl(l)] = c*k/((2*l+1)*aH(co,x0)) * y[i_Nl(l-1)]
+            y[i_Nl(l)] = c*k/((2*l+1)*aH(par,x0)) * y[i_Nl(l-1)]
         end
     else
         y[i_Nl(0):i_Nl(lmax)] .= 0.0
@@ -82,7 +93,8 @@ function perturbations_initial_conditions(co::ΛCDM, x0::Real, k::Real)
     return y
 end
 
-function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0.0, kwargs...)
+#=
+function perturbations_mode_tight(rec::Recombination, k::Real; x1::Real=-20.0, x2::Real=0.0, kwargs...)
     function dy_dx!(x, y, dy)
         # pre-compute some common combined quantities
         ck_aH = c*k / aH(co,x)
@@ -172,13 +184,17 @@ function perturbations_mode_tight(co::ΛCDM, k::Real; x1::Real=-20.0, x2::Real=0
 
     return x, splines
 end
+=#
 
-function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0, x2::Real=0.0, kwargs...)
+function perturbations_mode_full(rec::Recombination, k::Real; y1=nothing, x1::Real=-20.0, x2::Real=0.0, kwargs...)
+    bg = rec.bg
+    par = bg.par
+
     function dy_dx!(x::Float64, y::Vector{Float64}, dy::Vector{Float64})
         # pre-compute some common combined quantities
-        ck_aH = c*k / aH(co,x)
-        R = 4*co.Ωγ0 / (3*co.Ωb0*a(x))
-        τ′ = dτ(co,x) # ′ = \prime != '
+        ck_aH = c*k / aH(par,x)
+        R = 4*par.Ωγ0 / (3*par.Ωb0*a(x))
+        τ′ = dτ(rec,x) # ′ = \prime != '
 
         # 1) un-pack variables from vector
         δc = y[i_δc]
@@ -194,18 +210,18 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
         ΘPl = @view y[i_ΘPl(1):i_ΘPl(lmax)]
 
         # 2) compute derivatives
-        Ψ   = -Φ - 12 * (co.H0 / (c*k*a(x)))^2 * (co.Ωγ0*Θl[2]+co.Ων0*Nl[2])
+        Ψ   = -Φ - 12 * (par.H0 / (c*k*a(x)))^2 * (par.Ωγ0*Θl[2]+par.Ων0*Nl[2])
         Π   = Θl[2] + ΘP0 + ΘPl[2]
-        dΦ  = Ψ - ck_aH^2/3*Φ + (co.H0/aH(co,x))^2/2 * (co.Ωc0/a(x)*δc + co.Ωb0/a(x)*δb + 4*co.Ωγ0/a(x)^2*Θ0 + 4*co.Ων0/a(x)^2*N0)
+        dΦ  = Ψ - ck_aH^2/3*Φ + (par.H0/aH(par,x))^2/2 * (par.Ωc0/a(x)*δc + par.Ωb0/a(x)*δb + 4*par.Ωγ0/a(x)^2*Θ0 + 4*par.Ων0/a(x)^2*N0)
         dδc = ck_aH*vc - 3*dΦ
         dδb = ck_aH*vb - 3*dΦ
         dvc = -vc - ck_aH*Ψ
         dvb = -vb - ck_aH*Ψ + τ′*R*(3*Θl[1]+vb)
         dΘl0   = -ck_aH*Θl[1] - dΦ
         dΘl1   =  ck_aH/3 * (Θ0-2*Θl[2]+Ψ) + τ′*(Θl[1]+vb/3)
-        dΘlmax = ck_aH*Θl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x))*Θl[lmax] + τ′*Θl[lmax] # 2nd term: their η is my c*η
+        dΘlmax = ck_aH*Θl[lmax-1] - (lmax+1)/(aH(par,x)*η(bg,x))*Θl[lmax] + τ′*Θl[lmax] # 2nd term: their η is my c*η
         dΘPl0   = -ck_aH*ΘPl[1] + τ′*(ΘP0-Π/2)
-        dΘPlmax =  ck_aH*ΘPl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x))*ΘPl[lmax] + τ′*ΘPl[lmax]
+        dΘPlmax =  ck_aH*ΘPl[lmax-1] - (lmax+1)/(aH(par,x)*η(bg,x))*ΘPl[lmax] + τ′*ΘPl[lmax]
 
         # re-pack variables into vector
         dy[i_δc]    = dδc
@@ -238,7 +254,7 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
             for l in 2:lmax-1
                 dy[i_Nl(l)] = ck_aH/(2*l+1) * (l*Nl[l-1] - (l+1)*Nl[l+1])
             end
-            dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(co,x)*η(co,x)) * Nl[lmax]
+            dy[i_Nl(lmax)] = ck_aH*Nl[lmax-1] - (lmax+1)/(aH(par,x)*η(bg,x)) * Nl[lmax]
         else
             dy[i_Nl(0):i_Nl(lmax)] .= 0.0
         end
@@ -247,13 +263,17 @@ function perturbations_mode_full(co::ΛCDM, k::Real; y1=nothing, x1::Real=-20.0,
     end
 
     if isnothing(y1)
-        y1 = perturbations_initial_conditions(co, x1, k)
+        y1 = perturbations_initial_conditions(rec, x1, k)
     end
     return _spline_integral(dy_dx!, x1, x2, y1; name="perturbations full (k=$(k*Mpc)/Mpc)", kwargs...)
 end
 
-function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
+function perturbations_mode(rec::Recombination, k::Real; tight::Bool=false, kwargs...)
+    bg = rec.bg
+    par = bg.par
+
     splines = Vector{Spline1D}(undef, i_max_ext)
+    #=
     if tight
         # 1) use tight coupling approximation at early times to avoid stiff equations,
         # 2) then integrate the full equations from when the approximation breaks down,
@@ -265,28 +285,30 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
         x, spls = splinejoin(x1, x2, spl1s, spl2s)
         splines[1:i_max_full] .= spls
     else
+    =#
         # only integrate the full (stiff) equations using an appropriate solver
         # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
         # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
-        x, splines_full = perturbations_mode_full(co, k; solver=KenCarp4(autodiff=false), abstol=1e-10, reltol=1e-10, kwargs...) # KenCarp4(autodiff=false) and radau() work well!
+        x, splines_full = perturbations_mode_full(rec, k; solver=KenCarp4(autodiff=false), abstol=1e-10, reltol=1e-10, verbose=true, kwargs...) # KenCarp4(autodiff=false) and radau() work well!
         splines[1:i_max_full] .= splines_full
-    end
+    #end
 
     # extend with variables given in terms of the integrated ones (like Ψ and S)
-    splines[i_Ψ] = spline(x, @. -splines[i_Φ](x) - 12*co.H0^2/(c*k*a(x))^2 * (co.Ωγ0*splines[i_Θl(2)](x) + co.Ων0*splines[i_Nl(2)](x)))
+    splines[i_Ψ] = spline(x, @. -splines[i_Φ](x) - 12*par.H0^2/(c*k*a(x))^2 * (par.Ωγ0*splines[i_Θl(2)](x) + par.Ων0*splines[i_Nl(2)](x)))
 
     Π            = spline(x, @.  splines[i_Θl(2)](x) + splines[i_ΘPl(0)](x) + splines[i_ΘPl(2)](x))
-    aH_g_vb      = spline(x, @. aH(co,x) * g(co,x) * splines[i_vb](x))
-    aH_g_Π       = spline(x, @. aH(co,x) * g(co,x) * Π(x))
-    aH_d_aH_g_Π  = spline(x, aH.(co,x) .* derivative(aH_g_Π, x))
-    splines[i_S] = spline(x, g.(co,x) .* (splines[i_Θl(0)](x) .+ splines[i_Ψ](x) .+ Π(x)/4) .+
-                             exp.(-τ.(co,x)) .* (derivative(splines[i_Ψ], x) .- derivative(splines[i_Φ], x)) .-
+    aH_g_vb      = spline(x, @. aH(par,x) * g(rec,x) * splines[i_vb](x))
+    aH_g_Π       = spline(x, @. aH(par,x) * g(rec,x) * Π(x))
+    aH_d_aH_g_Π  = spline(x, aH.(par,x) .* derivative(aH_g_Π, x))
+    splines[i_S] = spline(x, g.(rec,x) .* (splines[i_Θl(0)](x) .+ splines[i_Ψ](x) .+ Π(x)/4) .+
+                             exp.(-τ.(rec,x)) .* (derivative(splines[i_Ψ], x) .- derivative(splines[i_Φ], x)) .-
                              1/(c*k) * derivative(aH_g_vb, x) .+
                              3/(4*c^2*k^2) * derivative(aH_d_aH_g_Π, x)
                    )
     return x, splines
 end
 
+#=
 function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
     if length(co.perturbation_splines2D) == 0 || !isnothing(ks)
         t1 = now()
@@ -327,7 +349,9 @@ function perturbations_splines(co::ΛCDM; tight::Bool=false, ks=nothing)
     end
     return co.perturbation_splines2D
 end
+=#
 
+#=
 function perturbations_mode_splines(co::ΛCDM, k::Real; kwargs...)
     i = searchsortedfirst(co.perturbation_splines1D, k; by = tuple -> tuple[1]) # index of existing k-mode
     if i > length(co.perturbation_splines1D) || co.perturbation_splines1D[i][1] != k # not computed before
@@ -336,26 +360,28 @@ function perturbations_mode_splines(co::ΛCDM, k::Real; kwargs...)
     end
     return co.perturbation_splines1D[i][2]
 end
+=#
 
 # TODO: this is really quite stupid with "2 quantites"
-function perturbations_quantity(co::ΛCDM, x, k::Real, i_qty::Integer; deriv::Integer=0)
+function perturbations_quantity(perturbs::Perturbations, x, i_qty::Integer; deriv::Integer=0)
+    #=
     if splinek
-        return derivative(perturbations_splines(co)[i_qty], x, k, nux=deriv, nuy=0)
+        return derivative(perturbations_splines(perturbs)[i_qty], x, k, nux=deriv, nuy=0)
     else
-        spline = perturbations_mode_splines(co, k)[i_qty] # TODO: move to perturbations_mode?
+    =#
+        spline = perturbs.qty_splines[i_qty] # TODO: move to perturbations_mode?
         return deriv == 0 ? spline(x) : derivative(spline, nu=deriv)
-    end
+    #end
 end
 
 # raw quantities (from integration)
-Φ(co::ΛCDM, x, k::Real)               = perturbations_quantity(co, x, k, i_Φ)
-Ψ(co::ΛCDM, x, k::Real)               = perturbations_quantity(co, x, k, i_Ψ)
-δc(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_δc)
-δb(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_δb)
-vc(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_vc)
-vb(co::ΛCDM, x, k::Real)              = perturbations_quantity(co, x, k, i_vb)
-Θl(co::ΛCDM, x, k::Real, l::Integer)  = perturbations_quantity(co, x, k, i_Θl(l))
-Nl(co::ΛCDM, x, k::Real, l::Integer)  = perturbations_quantity(co, x, k, i_Nl(l))
-ΘPl(co::ΛCDM, x, k::Real, l::Integer) = perturbations_quantity(co, x, k, i_ΘPl(l))
-S(co::ΛCDM, x, k::Real)               = perturbations_quantity(co, x, k, i_S)
-=#
+Φ(perturbs::Perturbations, x)               = perturbations_quantity(perturbs, x, i_Φ)
+Ψ(perturbs::Perturbations, x)               = perturbations_quantity(perturbs, x, i_Ψ)
+δc(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x, i_δc)
+δb(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x, i_δb)
+vc(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x, i_vc)
+vb(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x, i_vb)
+Θl(perturbs::Perturbations, x, l::Integer)  = perturbations_quantity(perturbs, x, i_Θl(l))
+Nl(perturbs::Perturbations, x, l::Integer)  = perturbations_quantity(perturbs, x, i_Nl(l))
+ΘPl(perturbs::Perturbations, x, l::Integer) = perturbations_quantity(perturbs, x, i_ΘPl(l))
+S(perturbs::Perturbations, x)               = perturbations_quantity(perturbs, x, i_S)
