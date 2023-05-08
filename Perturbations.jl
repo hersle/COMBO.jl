@@ -262,7 +262,7 @@ function perturbations_mode(co::ΛCDM, k::Real; tight::Bool=false, kwargs...)
         # only integrate the full (stiff) equations using an appropriate solver
         # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
         # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
-        x, splines_full = perturbations_mode_full(co, k; solver=KenCarp4(autodiff=false), kwargs...) # KenCarp4(autodiff=false) and radau() work well!
+        x, splines_full = perturbations_mode_full(co, k; solver=KenCarp4(autodiff=false), abstol=1e-10, reltol=1e-10, kwargs...) # KenCarp4(autodiff=false) and radau() work well!
         splines[1:i_max_full] .= splines_full
     end
 
