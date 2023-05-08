@@ -35,7 +35,7 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(-10, 0), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
-    x = Cosmology.splinex(rec.Xe_spline)
+    x = Cosmology.splinex(rec.τ_spline)
     plot!(x, log10.(Xe.(rec_H_reion,     x)),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
     plot!(x, log10.(Xe.(rec_H_reioff,    x)),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
     plot!(x, log10.(Xe.(rec_H_He_reion,  x)),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
@@ -69,7 +69,7 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(-10, 0), ylims=(-0.1, 1.3), yticks=-0.25:0.25:1.5, legend_position=:top, framestyle=:box)
 
-    x = Cosmology.splinex(rec.Xe_spline)
+    x = Cosmology.splinex(rec.τ_spline)
     plot!(x, Xe.(rec_H_reion,     x),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
     plot!(x, Xe.(rec_H_reioff,    x),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
     plot!(x, Xe.(rec_H_He_reion,  x),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
@@ -130,7 +130,7 @@ if true || !isfile("plots/visibility_function_linear.pdf")
 
     plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-10, +10), legend_position=:topright)
 
-    x = Cosmology.splinex(rec.g_spline)
+    x = Cosmology.splinex(rec.τ_spline)
     ys = [g.(rec_H_reioff, x) / 1, dg.(rec_H_reioff, x) / 10, d2g.(rec_H_reioff, x) / 100,
           g.(rec_H_He_reion,  x) / 1, dg.(rec_H_He_reion,  x) / 10, d2g.(rec_H_He_reion,  x) / 100]
     cs = [1  2  3  1  2  3]
@@ -162,7 +162,7 @@ if true || !isfile("plots/visibility_function_log.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(-10, 0), ylims=(-15, +5), legend_position=:topright)
 
-    x = Cosmology.splinex(rec.g_spline)
+    x = Cosmology.splinex(rec.τ_spline)
     plot!(x, log10.(abs.(g.(rec_H_He_reion, x))), color=1, alpha=1.0, label=nothing)
     plot!(x, log10.(abs.(g.(rec_H_reioff, x))), color=1, alpha=0.3, label=nothing)
 

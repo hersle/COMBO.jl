@@ -9,6 +9,7 @@ using .Constants # physical constants
 using Roots # root finding
 using DifferentialEquations # ODE integration
 using ODEInterfaceDiffEq # fast & stiff "radau" ODE integrator (for perturbations)
+using ForwardDiff # TODO: make this work
 using Dierckx # splines
 using Base.Threads # parallelization
 using SpecialFunctions: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
@@ -81,6 +82,7 @@ a(x::Real) = exp(x)     # scale factor
 z(x::Real) = 1/a(x) - 1 # redshift
 
 # the d'th derivative of the thing in the square root in the Friedmann equation, E = H^2 / H0^2
+# TODO: does this also work with ForwardDiff?
 E(par::Parameters, x::Real; d::Integer=0) = (-4)^d * par.Ωr0/a(x)^4 +
                                             (-3)^d * par.Ωm0/a(x)^3 +
                                             (-2)^d * par.Ωk0/a(x)^2 +
@@ -89,8 +91,8 @@ E(par::Parameters, x::Real; d::Integer=0) = (-4)^d * par.Ωr0/a(x)^4 +
 # Friedmann equation
    H(par::Parameters, x::Real) = par.H0 * √(E(par, x)) # cosmic    Hubble parameter
   aH(par::Parameters, x::Real) = a(x) * H(par, x)     # conformal Hubble parameter
- daH(par::Parameters, x::Real) = aH(par, x) * (1 + 1/2 * E(par, x; d=1) / E(par, x)) # 1st derivative of aH
-d2aH(par::Parameters, x::Real) = aH(par, x) * (1 + E(par, x; d=1) / E(par, x) + 1/2 * E(par, x; d=2) / E(par, x) - 1/4 * (E(par, x; d=1) / E(par, x))^2) # 2nd derivative of aH
+ daH(par::Parameters, x::Real) = ForwardDiff.derivative(x ->  aH(par, x), x)
+d2aH(par::Parameters, x::Real) = ForwardDiff.derivative(x -> daH(par, x), x)
 
 # density parameters (relative to critical density *at the time*)
 # computed using Ωs = ρs/ρcrit = ρs/ρcrit0 * ρcrit0/ρcrit = Ωs0 * H0^2/H^2 = Ωs0 / E

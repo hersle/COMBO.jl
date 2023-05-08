@@ -29,10 +29,10 @@ struct Perturbations
     #perturbation_splines2D::Vector{Union{Nothing, Spline2D}} # [y1(x, k), y2(x, k), ...]
     rec::Recombination
     k::Real
-    qty_splines
+    qty_splines::ODESolution
 
     function Perturbations(rec::Recombination, k::Real; tight=false, kwargs...)
-        new(rec, k, perturbations_mode(rec, k; tight=tight, kwargs...)[2])
+        new(rec, k, perturbations_mode(rec, k; tight=tight, kwargs...))
     end
 end
 
@@ -269,11 +269,11 @@ function perturbations_mode_full(rec::Recombination, k::Real; y1=nothing, x1::Re
 end
 
 function perturbations_mode(rec::Recombination, k::Real; tight::Bool=false, kwargs...)
+    #=
     bg = rec.bg
     par = bg.par
 
     splines = Vector{Spline1D}(undef, i_max_ext)
-    #=
     if tight
         # 1) use tight coupling approximation at early times to avoid stiff equations,
         # 2) then integrate the full equations from when the approximation breaks down,
@@ -289,11 +289,13 @@ function perturbations_mode(rec::Recombination, k::Real; tight::Bool=false, kwar
         # only integrate the full (stiff) equations using an appropriate solver
         # discussion of stiff solvers / tight coupling etc. in context of Boltzmann solvers / Julia / DifferentialEquations:
         # https://discourse.julialang.org/t/is-autodifferentiation-possible-in-this-situation/54807
-        x, splines_full = perturbations_mode_full(rec, k; solver=KenCarp4(autodiff=false), abstol=1e-10, reltol=1e-10, verbose=true, kwargs...) # KenCarp4(autodiff=false) and radau() work well!
-        splines[1:i_max_full] .= splines_full
+        return perturbations_mode_full(rec, k; solver=KenCarp4(autodiff=false), abstol=1e-10, reltol=1e-10, verbose=true, kwargs...) # KenCarp4(autodiff=false) and radau() work well!  # TODO: autodiff here
+        #x, splines_full = perturbations_mode_full(rec, k; solver=KenCarp4(autodiff=false), abstol=1e-10, reltol=1e-10, verbose=true, kwargs...) # KenCarp4(autodiff=false) and radau() work well!
+        #splines[1:i_max_full] .= splines_full
     #end
 
     # extend with variables given in terms of the integrated ones (like Ψ and S)
+    #=
     splines[i_Ψ] = spline(x, @. -splines[i_Φ](x) - 12*par.H0^2/(c*k*a(x))^2 * (par.Ωγ0*splines[i_Θl(2)](x) + par.Ων0*splines[i_Nl(2)](x)))
 
     Π            = spline(x, @.  splines[i_Θl(2)](x) + splines[i_ΘPl(0)](x) + splines[i_ΘPl(2)](x))
@@ -306,6 +308,7 @@ function perturbations_mode(rec::Recombination, k::Real; tight::Bool=false, kwar
                              3/(4*c^2*k^2) * derivative(aH_d_aH_g_Π, x)
                    )
     return x, splines
+    =#
 end
 
 #=
@@ -363,20 +366,18 @@ end
 =#
 
 # TODO: this is really quite stupid with "2 quantites"
-function perturbations_quantity(perturbs::Perturbations, x, i_qty::Integer; deriv::Integer=0)
+function perturbations_quantity(perturbs::Perturbations, x, i_qty::Integer)
     #=
     if splinek
         return derivative(perturbations_splines(perturbs)[i_qty], x, k, nux=deriv, nuy=0)
     else
     =#
-        spline = perturbs.qty_splines[i_qty] # TODO: move to perturbations_mode?
-        return deriv == 0 ? spline(x) : derivative(spline, nu=deriv)
+        return perturbs.qty_splines(x)[i_qty]
     #end
 end
 
 # raw quantities (from integration)
 Φ(perturbs::Perturbations, x)               = perturbations_quantity(perturbs, x, i_Φ)
-Ψ(perturbs::Perturbations, x)               = perturbations_quantity(perturbs, x, i_Ψ)
 δc(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x, i_δc)
 δb(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x, i_δb)
 vc(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x, i_vc)
@@ -384,4 +385,23 @@ vb(perturbs::Perturbations, x)              = perturbations_quantity(perturbs, x
 Θl(perturbs::Perturbations, x, l::Integer)  = perturbations_quantity(perturbs, x, i_Θl(l))
 Nl(perturbs::Perturbations, x, l::Integer)  = perturbations_quantity(perturbs, x, i_Nl(l))
 ΘPl(perturbs::Perturbations, x, l::Integer) = perturbations_quantity(perturbs, x, i_ΘPl(l))
-S(perturbs::Perturbations, x)               = perturbations_quantity(perturbs, x, i_S)
+
+# "composite" quantities (form raw quantities)
+function Ψ(perturbs::Perturbations, x; deriv=0)
+    par = perturbs.rec.bg.par
+    k = perturbs.k
+    return -Φ(perturbs, x) - 12*par.H0^2/(c*k*a(x))^2 * (par.Ωγ0*Θl(perturbs, x, 2) + par.Ων0*Nl(perturbs, x, 2))
+end
+
+Π(perturbs::Perturbations, x) = Θl(perturbs, x, 2) + ΘPl(perturbs, x, 0) + ΘPl(perturbs, x, 2)
+
+function S(perturbs::Perturbations, x)
+    rec = perturbs.rec
+    par = rec.bg.par
+    k = perturbs.k
+    # TODO: split up into S_Sachse_Wolfe etc.
+    return g(rec,x) * (Θl(perturbs, x, 0) + Ψ(perturbs, x) + Π(perturbs,x)/4) +
+           exp(-τ(rec,x)) * ForwardDiff.derivative(x -> Ψ(perturbs,x) - Φ(perturbs,x), x) -
+           1/(c*k) * ForwardDiff.derivative(x -> aH(par,x) * g(rec,x) * vb(perturbs, x), x) +
+           3/(4*c^2*k^2) * ForwardDiff.derivative(x -> aH(par,x) * ForwardDiff.derivative(x -> aH(par,x) * g(rec,x) * Π(perturbs,x), x), x)
+end

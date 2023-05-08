@@ -1,28 +1,27 @@
 struct Recombination
     bg::Background
 
-    Xe_spline::Spline1D # free electron fraction
-    τ_spline::Spline1D # optical depth
-    g_spline::Spline1D # visibility function
-    sound_horizon_spline::Spline1D # sound horizon
+    xswitch::Real
+    Xe_spline::ODESolution # free electron fraction
+    τ_spline::ODESolution # optical depth
+    sound_horizon_spline::ODESolution # sound horizon
 
     function Recombination(bg::Background; x0=-20.0)
-        Xe_spline = spline_Xe(bg.par)
+        xswitch = time_switch_Peebles(bg.par) # TODO: why does this allocate?
+        Xe_spline = spline_Xe(bg.par, xswitch)
 
-        ne(x) = nH(bg.par,x) * Xe_spline(x)
+        Xe(x) = (x < xswitch ? Xe_Saha_H_He(bg.par, x) : Xe_spline(x)) + Xe_reionization(bg.par, x)
+        ne(x) = nH(bg.par,x) * Xe(x)
         dτ(x) = -ne(x) * σT * c / H(bg.par,x)
-        τ_spline = _spline_integral((x, τ) -> dτ(x), 0.0, x0, 0.0; name="optical depth τ")[2]
-
-        xs = extendx(splinex(τ_spline), 3)
-        g_spline = spline(xs, -derivative(τ_spline,xs) .* exp.(-τ_spline(xs)))
+        τ_spline = _spline_integral((x, τ) -> dτ(x), 0.0, x0, 0.0; name="optical depth τ")
 
         R(x) = 4*bg.par.Ωγ0 / (3*bg.par.Ωb0*a(x))
         cs(x) = c * √(R(x) / (3*(1+R(x))))
         ds_dx(x, s) = cs(x) / aH(bg.par, x)
         s0 = cs(x0) / aH(bg.par, x0)
-        sound_horizon_spline = _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s")[2] # TODO: rename s
+        sound_horizon_spline = _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s") # TODO: rename s
 
-        new(bg, Xe_spline, τ_spline, g_spline, sound_horizon_spline)
+        new(bg, xswitch, Xe_spline, τ_spline, sound_horizon_spline)
     end
 end
 
@@ -118,48 +117,20 @@ function Xe_reionization(par::Parameters, x::Real)
     return Xe_reionization_total
 end
 
-function spline_Xe(par::Parameters; x1::Float64=-20.0)
-    xswitch = time_switch_Peebles(par) # TODO: why does this allocate?
-
-    # Peebles equation points
-    x2, Xe2spl = Xe_Peebles_spline(par, xswitch, Xe_Saha_H_He(par, xswitch)) # start Peebles from last value of Saha
-
-    # Saha equation points
-    x1 = range(x1, xswitch, length=length(x2)) # use as many points as Peebles; don't duplicate xswitch
-    Xe1spl = spline(x1, Xe_Saha_H_He.(par, x1))
-
-    # merge Saha and Peebles
-    x12, Xe_spline = splinejoin(x1, x2, Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
-
-    # Reionization points
-    if par.reionization
-        dx(z) = -1/(1+z)
-        xH  = time_reionization_H(par)
-        xHe = time_reionization_He(par)
-        dxH  = 1/(1+par.z_reion_H) # = |x′(z)|
-        dxHe = 1/(1+par.z_reion_He)
-        x3H  = range(xH-5*dxH, xH+5*dxH, length=100) # resolve one reionization with 100 points extending ±5dx from central x (in addition to Saha/Peebles points in x12)
-        x3He = range(xHe-5*dxHe, xHe+5*dxHe, length=100)
-        x3 = unique(sort(vcat(x3H, x3He)))
-    else
-        x3 = []
-    end
-
-    # merge (Saha and Peebles) and reionization
-    x123 = unique(sort(vcat(x12, x3)))
-    return spline(x123, Xe_spline(x123) .+ Xe_reionization.(par, x123))
+function spline_Xe(par::Parameters, xswitch::Real; x1::Float64=-20.0)
+    return Xe_Peebles_spline(par, xswitch, Xe_Saha_H_He(par, xswitch)) # start Peebles from last value of Saha
 end
 
-Xe(rec::Recombination, x::Real) = rec.Xe_spline(x)
+# TODO: don't duplicate in constructor
+Xe(rec::Recombination, x::Real) = (x < rec.xswitch ? Xe_Saha_H_He(rec.bg.par, x) : rec.Xe_spline(x)) + Xe_reionization(rec.bg.par, x)
 
   τ(rec::Recombination, x::Real) = rec.τ_spline(x)
- dτ(rec::Recombination, x::Real) = derivative(rec.τ_spline, x; nu=1)
-d2τ(rec::Recombination, x::Real) = derivative(rec.τ_spline, x; nu=2)
-d3τ(rec::Recombination, x::Real) = derivative(rec.τ_spline, x; nu=3)
+ dτ(rec::Recombination, x::Real) = ForwardDiff.derivative(x ->  τ(rec, x), x)
+d2τ(rec::Recombination, x::Real) = ForwardDiff.derivative(x -> dτ(rec, x), x)
 
-  g(rec::Recombination, x::Real) = rec.g_spline(x)
- dg(rec::Recombination, x::Real) = derivative(rec.g_spline, x; nu=1)
-d2g(rec::Recombination, x::Real) = derivative(rec.g_spline, x; nu=2)
+  g(rec::Recombination, x::Real) = -dτ(rec, x) * exp.(-τ(rec, x))
+ dg(rec::Recombination, x::Real) = ForwardDiff.derivative(x ->  g(rec, x), x)
+d2g(rec::Recombination, x::Real) = ForwardDiff.derivative(x -> dg(rec, x), x)
 
 sound_horizon(rec::Recombination, x::Real) = rec.sound_horizon_spline(x)
 

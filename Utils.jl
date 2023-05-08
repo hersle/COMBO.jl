@@ -46,6 +46,9 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
         print("in $dt\n")
     end
 
+    return sol
+
+    #=
     # spline wants points with ascending x values,
     # while the integrator can output them in a different order
     sortinds = sortperm(sol.t)
@@ -61,25 +64,28 @@ function _spline_integral_generic(f::Function, x1::Float64, x2::Float64, y1; sol
     y = y[filter]
 
     return x, y
+    =#
 end
 
 # integrate systems of equations with in-place RHS
 function _spline_integral(dy_dx!::Function, x1::Float64, x2::Float64, y1::Vector{Float64}; kwargs...)
     f!(dy, y, p, x) = dy_dx!(x, y, dy)
-    x, y = _spline_integral_generic(f!, x1, x2, y1; kwargs...)
-    y = [y[ix][iy] for iy in 1:length(y1), ix in 1:length(x)] # convert vector of vectors to 2D matrix
-    return x, [spline(x, y[i,:]) for i in 1:length(y1)]
+    return _spline_integral_generic(f!, x1, x2, y1; kwargs...)
+    #y = [y[ix][iy] for iy in 1:length(y1), ix in 1:length(x)] # convert vector of vectors to 2D matrix
+    #return x, [spline(x, y[i,:]) for i in 1:length(y1)]
 end
 
 # integrate scalar equations with out-of-place (scalar) RHS
 function _spline_integral(dy_dx::Function, x1::Float64, x2::Float64, y1::Float64; kwargs...)
     f(y, p, x) = dy_dx(x, y)
-    x, y = _spline_integral_generic(f, x1, x2, y1; kwargs...)
-    return x, spline(x, y)
+    return _spline_integral_generic(f, x1, x2, y1; kwargs...)
+    #return x, spline(x, y)
 end
 
 spline(x, y) = Spline1D(x, y; bc="error")
 #spline(x, y) = scale(interpolate(y, BSpline(Cubic(Line(OnGrid())))), x) # TODO: OOB BC
+
+splinex(spline::ODESolution) = spline.t # TODO: does this make sense to use?
 
 splinex(spline::Spline1D) = Dierckx.get_knots(spline) # TODO: does this make sense to use?
 spliney(spline::Spline1D) = spline(splinex(spline))

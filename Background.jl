@@ -1,8 +1,8 @@
 struct Background
     par::Parameters # TODO: pass by reference?
 
-    η_spline::Spline1D # conformal time
-    t_spline::Spline1D # cosmic    time
+    η_spline::ODESolution # conformal time
+    t_spline::ODESolution # cosmic    time
 
     function Background(par::Parameters)
         # integrate η (TODO: build from Parameters struct?)

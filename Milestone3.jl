@@ -160,7 +160,7 @@ if true
         for (i, k) in enumerate([1e-0, 1e-1, 1e-2, 1e-3] / Mpc)
             perturb = Perturbations(rec, k)
             xhor = time_horizon_entry(bg, k)
-            x = Cosmology.extendx(Cosmology.splinex(perturb.qty_splines[1]), 3)
+            x = Cosmology.extendx(Cosmology.splinex(perturb.qty_splines), 3)
             for (func, linesettings) in func_linesettings
                 plot!(x, func.(perturb, x), alpha=1.0, linewidth=0.5, color=i; linesettings..., label=nothing)
             end
