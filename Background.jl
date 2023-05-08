@@ -1,4 +1,6 @@
 struct Background
+    par::Parameters # TODO: pass by reference?
+
     η_spline::Spline1D # conformal time
     t_spline::Spline1D # cosmic    time
 
@@ -25,7 +27,7 @@ struct Background
         end
         _, t_spline = _spline_integral(dt_dx, x1, x2, t1; name="cosmic time t")
 
-        new(η_spline, t_spline)
+        new(par, η_spline, t_spline)
     end
 end
 
@@ -50,8 +52,8 @@ t(bg::Background, x::Real) = bg.t_spline(x)
 #   using complex numbers,
 #   because sinc(x) = sin(π*x) / (π*x) -> 1 as x -> 0,
 #   and sinh(x) = -i * sin(i*x)
-r(par::Parameters, bg::Background, x::Real) = χ(bg, x) * real(sinc(√(complex(-par.Ωk0)) * par.H0 * χ(bg, x) / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x), so divide argument by π!
+r(bg::Background, x::Real) = χ(bg, x) * real(sinc(√(complex(-bg.par.Ωk0)) * bg.par.H0 * χ(bg, x) / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x), so divide argument by π!
 
 # angular diameter distance and luminosity distance (of light emitted at x)
-dA(par::Parameters, bg::Background, x::Real) = r(par, bg, x) * a(x)
-dL(par::Parameters, bg::Background, x::Real) = r(par, bg, x) / a(x)
+dA(bg::Background, x::Real) = r(bg, x) * a(x)
+dL(bg::Background, x::Real) = r(bg, x) / a(x)

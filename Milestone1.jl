@@ -150,7 +150,7 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
             return -Inf # so set L = 0 (or log(L) = -∞, or χ2 = ∞)
         else
             bg = Background(par)
-            dL_mod = Cosmology.dL.(par, bg, x_obs) / Gpc
+            dL_mod = Cosmology.dL.(bg, x_obs) / Gpc
             return -1/2 * sum((dL_mod .- dL_obs).^2 ./ σdL_obs.^2) # L = exp(-χ2/2)
         end
     end
@@ -219,11 +219,10 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"d_L \,/\, z \, \mathrm{Gpc}", legend_position = :topleft)
 
     x2 = range(-1, 0, length=400)
-    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(par, bg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :green, label = "prediction (Planck 2018)")
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(bg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :green, label = "prediction (Planck 2018)")
 
-    snpar = Parameters(h=best_h, Ωb0=0, Ωc0=best_Ωm0, Ωk0=best_Ωk0, Neff=0)
-    snbg = Background(snpar)
-    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(snpar, snbg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :red, label = "prediction (our best fit)")
+    snbg = Background(Parameters(h=best_h, Ωb0=0, Ωc0=best_Ωm0, Ωk0=best_Ωk0, Neff=0))
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(snbg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :red, label = "prediction (our best fit)")
 
     data = readdlm("data/supernovadata.txt", comments=true)
     zobs, dL, σdL = data[:,1], data[:,2], data[:,3]
