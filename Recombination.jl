@@ -1,42 +1,46 @@
 struct Recombination
-    Yp::Float64 # helium mass fraction
-    reionization::Bool   # reionization on?
-     z_reion_H::Float64  # Hydrogen reionization redshift time
-    Δz_reion_H::Float64  # Hydrogen reionization redshift duration
-     z_reion_He::Float64 # Helium   reionization redshift time
-    Δz_reion_He::Float64 # Helium   reionization redshift duration
+    bg::Background
 
-    # splines (lazily initialized)
     Xe_spline::Spline1D # free electron fraction
     τ_spline::Spline1D # optical depth
     g_spline::Spline1D # visibility function
     sound_horizon_spline::Spline1D # sound horizon
 
-    function Recombination(; Yp=0.24, z_reion_H=8.0, Δz_reion_H=0.5, z_reion_He=3.5, Δz_reion_He=0.5)
-        reionization = all(!isnan(num) for num in (z_reion_H, z_reion_He, Δz_reion_H, Δz_reion_He)) # turn off by setting either to NaN
-        Xe_spline = spline_Xe(par, bg)
-        τ_spline = spline_τ(par, bg)
-        g_spline = spline_g(par, bg)
-        sound_horizon_spline = spline_sound_horizon(par, bg)
-        new(Yp, reionization, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, Xe_spline, τ_spline, g_spline, sound_horizon_spline)
+    function Recombination(bg::Background; x0=-20.0)
+        Xe_spline = spline_Xe(bg.par)
+
+        ne(x) = nH(bg.par,x) * Xe_spline(x)
+        dτ(x) = -ne(x) * σT * c / H(bg.par,x)
+        τ_spline = _spline_integral((x, τ) -> dτ(x), 0.0, x0, 0.0; name="optical depth τ")[2]
+
+        xs = extendx(splinex(τ_spline), 3)
+        g_spline = spline(xs, -derivative(τ_spline,xs) .* exp.(-τ_spline(xs)))
+
+        R(x) = 4*bg.par.Ωγ0 / (3*bg.par.Ωb0*a(x))
+        cs(x) = c * √(R(x) / (3*(1+R(x))))
+        ds_dx(x, s) = cs(x) / aH(bg.par, x)
+        s0 = cs(x0) / aH(bg.par, x0)
+        sound_horizon_spline = _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s")[2] # TODO: rename s
+
+        new(bg, Xe_spline, τ_spline, g_spline, sound_horizon_spline)
     end
 end
 
 Base.broadcastable(rec::Recombination) = Ref(rec)
 
-ρcrit(par::Parameters, x::Real) = 3 * H(co, x)^2 / (8 * π * G)
-ρb(par::Parameters, x::Real) = Ωb(co, x) * ρcrit(co, x)
-nb(par::Parameters, x::Real) = ρb(co, x) / mH
-nH(par::Parameters, x::Real) = (1-co.Yp) * nb(co, x)
-nHe(par::Parameters, x::Real) = co.Yp/4 * nb(co, x)
-Tγ(par::Parameters, x::Real) = co.Tγ0 / a(x)
+ρcrit(par::Parameters, x::Real) = 3 * H(par, x)^2 / (8 * π * G)
+ρb(par::Parameters, x::Real) = Ωb(par, x) * ρcrit(par, x)
+nb(par::Parameters, x::Real) = ρb(par, x) / mH
+nH(par::Parameters, x::Real) = (1-par.Yp) * nb(par, x)
+nHe(par::Parameters, x::Real) = par.Yp/4 * nb(par, x)
+Tγ(par::Parameters, x::Real) = par.Tγ0 / a(x)
 fHe(Yp::Real) = Yp / (4*(1-Yp))
 
 function Xe_Saha_H(par::Parameters, x::Real)
-    Tb = Tγ(co, x)
+    Tb = Tγ(par, x)
     λe = h / √(2*π*me*kB*Tb)
     a = 1
-    b = 1 / λe^3 * exp(-EH1ion/(kB*Tb)) / nH(co,x)
+    b = 1 / λe^3 * exp(-EH1ion/(kB*Tb)) / nH(par,x)
     c = -b
 
     # when b >> 1, the quadratic equation solution is
@@ -47,30 +51,31 @@ function Xe_Saha_H(par::Parameters, x::Real)
     return b < 1e10 ? quadroots(a, b, c)[2] : 1 - 1/b # choose Taylor expansion for large b
 end
 
-# To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
-# begin with an initial guess for Xe and iteratively solve the system of Saha equations
-# (1) ne * XHe+ / (1 - XHe+ - XHe++) = 2 / λe^3 * exp(-EHe1ion / (kB*Tb))
-# (2) ne * XHe++ / XHe+ = 4 / λe^3 * exp(-EHe2ion/(kB*Tb))
-# (3) ne * XH+ / (1-XH+) = 1 / λe^3 * exp(-EH1ion/(kB*Tb))
-# for {XH+, XHe+, XHe++} = {XH1, XHe1, XHe2}.
-function Xe_Saha_H_He_fixed_point(co, x, Xe)
-    Tb = Tγ(co, x)
-    λe = h / √(2*π*me*kB*Tb)
-    ne = Xe * nH(co, x)
-    R1 = 1 / λe^3 * exp(-EH1ion /(kB*Tb)) / ne
-    R2 = 2 / λe^3 * exp(-EHe1ion/(kB*Tb)) / ne
-    R3 = 4 / λe^3 * exp(-EHe2ion/(kB*Tb)) / ne
-    XH1  = 1 / (1 + 1/R1)
-    XHe1 = 1 / (1 + 1/R2 + R3)
-    XHe2 = 1 / (1 + 1/R3 + 1/(R2*R3))
-    return XH1 + fHe(co.Yp) * (XHe1 + 2*XHe2)
-end
-
 function Xe_Saha_H_He(par::Parameters, x::Real; tol::Float64=1e-15, maxiters::Int=10000)
     # Fixed-point iterate for Xe, starting with the fast H-only Saha equation as the initial guess
     # If Xe0 is small, the iterations converges very slowly, but then there is almost no He anyway, so we just take the H-only solution
-    Xe0 = Xe_Saha_H(co, x)
-    return Xe0 < 0.5 ? Xe0 : fixed_point_iterate(Xe -> Xe_Saha_H_He_fixed_point(co, x, Xe), Xe0; tol=tol)
+    Xe0 = Xe_Saha_H(par, x)
+
+    # To find Xe = XH+ + Yp/(4*(1-Yp)) * (XHe+ + 2*XHe++),
+    # begin with an initial guess for Xe and iteratively solve the system of Saha equations
+    # (1) ne * XHe+ / (1 - XHe+ - XHe++) = 2 / λe^3 * exp(-EHe1ion / (kB*Tb))
+    # (2) ne * XHe++ / XHe+ = 4 / λe^3 * exp(-EHe2ion/(kB*Tb))
+    # (3) ne * XH+ / (1-XH+) = 1 / λe^3 * exp(-EH1ion/(kB*Tb))
+    # for {XH+, XHe+, XHe++} = {XH1, XHe1, XHe2}.
+    function Xe_Saha_H_He_fixed_point(Xe)
+        Tb = Tγ(par, x)
+        λe = h / √(2*π*me*kB*Tb)
+        ne = Xe * nH(par, x)
+        R1 = 1 / λe^3 * exp(-EH1ion /(kB*Tb)) / ne
+        R2 = 2 / λe^3 * exp(-EHe1ion/(kB*Tb)) / ne
+        R3 = 4 / λe^3 * exp(-EHe2ion/(kB*Tb)) / ne
+        XH1  = 1 / (1 + 1/R1)
+        XHe1 = 1 / (1 + 1/R2 + R3)
+        XHe2 = 1 / (1 + 1/R3 + 1/(R2*R3))
+        return XH1 + fHe(par.Yp) * (XHe1 + 2*XHe2)
+    end
+
+    return Xe0 < 0.5 ? Xe0 : fixed_point_iterate(Xe_Saha_H_He_fixed_point, Xe0; tol=tol)
 end
 
 # @code_warntype on Xe(co,x) says that this can return Any, unless its return type is explicitly stated (due to Union{...., Nothing}?)
@@ -96,11 +101,11 @@ function time_switch_Peebles(par::Parameters)::Float64
     return find_zero(x -> Xe_Saha_H_He(par, x) - 0.999, (-20.0, +20.0), rtol=1e-20, atol=1e-20)
 end
 
-time_reionization_H(par::Parameters)  = co.reionization ? -log(1 + co.z_reion_H)  : NaN
-time_reionization_He(par::Parameters) = co.reionization ? -log(1 + co.z_reion_He) : NaN
+time_reionization_H(par::Parameters)  = par.reionization ? -log(1 + par.z_reion_H)  : NaN
+time_reionization_He(par::Parameters) = par.reionization ? -log(1 + par.z_reion_He) : NaN
 
 function Xe_reionization(par::Parameters, x::Real)
-    if !co.reionization
+    if !par.reionization
         return 0.0
     end
 
@@ -108,31 +113,31 @@ function Xe_reionization(par::Parameters, x::Real)
     dy_dz(z) = 3/2 * (1+z)^(1/2)
     Δy(z, Δz) = dy_dz(z) * Δz
     smoothstep(y, Δy, h) = h/2 * (1 + tanh(y / Δy))
-    Xe_reionization_total  = smoothstep(y(co.z_reion_H ) - y(z(x)), Δy(co.z_reion_H,  co.Δz_reion_H),  1+fHe(co.Yp))
-    Xe_reionization_total += smoothstep(y(co.z_reion_He) - y(z(x)), Δy(co.z_reion_He, co.Δz_reion_He), 0+fHe(co.Yp))
+    Xe_reionization_total  = smoothstep(y(par.z_reion_H ) - y(z(x)), Δy(par.z_reion_H,  par.Δz_reion_H),  1+fHe(par.Yp))
+    Xe_reionization_total += smoothstep(y(par.z_reion_He) - y(z(x)), Δy(par.z_reion_He, par.Δz_reion_He), 0+fHe(par.Yp))
     return Xe_reionization_total
 end
 
 function spline_Xe(par::Parameters; x1::Float64=-20.0)
-    xswitch = time_switch_Peebles(co) # TODO: why does this allocate?
+    xswitch = time_switch_Peebles(par) # TODO: why does this allocate?
 
     # Peebles equation points
-    x2, Xe2spl = Xe_Peebles_spline(co, xswitch, Xe_Saha_H_He(co, xswitch)) # start Peebles from last value of Saha
+    x2, Xe2spl = Xe_Peebles_spline(par, xswitch, Xe_Saha_H_He(par, xswitch)) # start Peebles from last value of Saha
 
     # Saha equation points
     x1 = range(x1, xswitch, length=length(x2)) # use as many points as Peebles; don't duplicate xswitch
-    Xe1spl = spline(x1, Xe_Saha_H_He.(co, x1))
+    Xe1spl = spline(x1, Xe_Saha_H_He.(par, x1))
 
     # merge Saha and Peebles
-    x12, co.Xe_spline = splinejoin(x1, x2, Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
+    x12, Xe_spline = splinejoin(x1, x2, Xe1spl, Xe2spl) # spline is WITHOUT reionization (the spline points do not resolve reionization)!
 
     # Reionization points
-    if co.reionization
+    if par.reionization
         dx(z) = -1/(1+z)
-        xH  = time_reionization_H(co)
-        xHe = time_reionization_He(co)
-        dxH  = 1/(1+co.z_reion_H) # = |x′(z)|
-        dxHe = 1/(1+co.z_reion_He)
+        xH  = time_reionization_H(par)
+        xHe = time_reionization_He(par)
+        dxH  = 1/(1+par.z_reion_H) # = |x′(z)|
+        dxHe = 1/(1+par.z_reion_He)
         x3H  = range(xH-5*dxH, xH+5*dxH, length=100) # resolve one reionization with 100 points extending ±5dx from central x (in addition to Saha/Peebles points in x12)
         x3He = range(xHe-5*dxHe, xHe+5*dxHe, length=100)
         x3 = unique(sort(vcat(x3H, x3He)))
@@ -142,37 +147,21 @@ function spline_Xe(par::Parameters; x1::Float64=-20.0)
 
     # merge (Saha and Peebles) and reionization
     x123 = unique(sort(vcat(x12, x3)))
-    return spline(x123, co.Xe_spline(x123) .+ Xe_reionization.(co, x123))
+    return spline(x123, Xe_spline(x123) .+ Xe_reionization.(par, x123))
 end
 
-ne(par::Parameters, x::Real) = nH(co,x) * Xe(co,x)
-
-function spline_τ(par::Parameters)
-    dτ(x) = -ne(par,x) * σT * c / H(par,x)
-    return _spline_integral((x, τ) -> dτ(co, x), 0.0, -20.0, 0.0; name="optical depth τ")[2]
-end
+Xe(rec::Recombination, x::Real) = rec.Xe_spline(x)
 
   τ(rec::Recombination, x::Real) = rec.τ_spline(x)
  dτ(rec::Recombination, x::Real) = derivative(rec.τ_spline, x; nu=1)
 d2τ(rec::Recombination, x::Real) = derivative(rec.τ_spline, x; nu=2)
 d3τ(rec::Recombination, x::Real) = derivative(rec.τ_spline, x; nu=3)
 
-function spline_g(τ_spline)
-    xs = extendx(splinex(co.τ_spline), 3)
-    return spline(xs, @. -dτ(co,xs) * exp(-τ(co,xs)))
-end
-
   g(rec::Recombination, x::Real) = rec.g_spline(x)
  dg(rec::Recombination, x::Real) = derivative(rec.g_spline, x; nu=1)
 d2g(rec::Recombination, x::Real) = derivative(rec.g_spline, x; nu=2)
 
-time_decoupling(rec::Recombination) = find_zero(x -> dτ(co,x)^2 - d2τ(co,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
-time_recombination(rec::Recombination) = find_zero(x -> Xe(co, x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3
+sound_horizon(rec::Recombination, x::Real) = rec.sound_horizon_spline(x)
 
-function integrate_sound_horizon(par::Parameters; x0=-20.0)
-    R(x) = 4*par.Ωγ0 / (3*par.Ωb0*a(x))
-    cs(x) = c * √(R(x) / (3*(1+R(x))))
-    ds_dx(x, s) = cs(x) / aH(par, x)
-    s0 = cs(x0) / aH(co, x0)
-    return _spline_integral(ds_dx, x0, +20.0, s0; name="sound horizon s")[2]
-end
+time_decoupling(rec::Recombination) = find_zero(x -> dτ(rec,x)^2 - d2τ(rec,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
+time_recombination(rec::Recombination) = find_zero(x -> Xe(rec,x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3

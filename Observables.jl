@@ -1,10 +1,6 @@
 #=
 struct PowerSpectrum
-    const As::Float64 # power spectrum amplitude (for k = k_pivot)
-    const ns::Float64 # power spectrum spectral index (for k = k_pivot)
-    const k_pivot::Float64
-
-    function PowerSpectrum(; As=2e-9, ns=0.96, k_pivot=0.05/Mpc)
+    function PowerSpectrum()
         new(As, ns, k_pivot)
     end
 end

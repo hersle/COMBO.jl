@@ -13,7 +13,7 @@ using QuadGK # quadrature (TODO: needed, or trapz instead?)
 using Trapz
 
 export a, z
-export Parameters, Background
+export Parameters, Background, Recombination
 export H, aH, daH, d2aH
 export t, η, Ωγ, Ων, Ωb, Ωc, Ωk, ΩΛ, Ωr, Ωm, Ω
 export equality_rm, equality_mΛ, acceleration_onset

@@ -35,7 +35,7 @@ if !isdir("plots")
 end
 
 # Conformal Hubble parameter
-if false || !isfile("plots/conformal_Hubble.pdf")
+if true || !isfile("plots/conformal_Hubble.pdf")
     println("Plotting plots/conformal_Hubble.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \mathcal{H} \,/\, (100\,\mathrm{km/s/Mpc}) \Big]", legend_position = :topleft, ylims = (-1, +7), yticks = -1:1:+7)
     plot!(x, @. log10(par.H0     / (100*km/Mpc) * √(par.Ωr0) * a(x)^(-1  )); linestyle = :dash,  label = "radiation-dominated")
@@ -49,7 +49,7 @@ if false || !isfile("plots/conformal_Hubble.pdf")
 end
 
 # conformal Hubble parameter 1st derivative
-if false || !isfile("plots/conformal_Hubble_derivative1.pdf")
+if true || !isfile("plots/conformal_Hubble_derivative1.pdf")
     println("Plotting plots/conformal_Hubble_derivative1.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}\mathcal{H}}{\mathrm{d} x}", legend_position = :topleft)
     plot!(x, x -> -1;                   linestyle = :dash,  label = "radiation-dominated")
@@ -62,7 +62,7 @@ if false || !isfile("plots/conformal_Hubble_derivative1.pdf")
 end
 
 # Conformal Hubble parameter 2nd derivative
-if false || !isfile("plots/conformal_Hubble_derivative2.pdf")
+if true || !isfile("plots/conformal_Hubble_derivative2.pdf")
     println("Plotting plots/conformal_Hubble_derivative2.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\frac{1}{\mathcal{H}} \frac{\mathrm{d}^2\mathcal{H}}{\mathrm{d} x^2}", legend_positions = :topleft, yticks = 0:0.25:1.5, ylims = (0, 1.5))
     plot!(x, x -> ( 1)^2;                linestyle = :dash,  label = "radiation-dominated")
@@ -75,7 +75,7 @@ if false || !isfile("plots/conformal_Hubble_derivative2.pdf")
 end
 
 # Product of conformal time and conformal Hubble parameter
-if false || !isfile("plots/eta_H.pdf")
+if true || !isfile("plots/eta_H.pdf")
     println("Plotting plots/eta_H.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \eta \mathcal{H} \Big]", legend_position = :topleft)
 
@@ -94,7 +94,7 @@ if false || !isfile("plots/eta_H.pdf")
 end
 
 # Cosmic and conformal time
-if false || !isfile("plots/times.pdf")
+if true || !isfile("plots/times.pdf")
     println("Plotting plots/times.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} \Big[ \{t, \eta\} / \mathrm{Gyr} \Big]", legend_position = :bottomright)
 
@@ -115,7 +115,7 @@ if false || !isfile("plots/times.pdf")
 end
 
 # Density parameters
-if false || !isfile("plots/density_parameters.pdf")
+if true || !isfile("plots/density_parameters.pdf")
     println("Plotting plots/density_parameters.pdf")
     plot(xlabel = L"x = \log a", ylabel = L"\Omega_i", legend_position = (0.05, 0.6), ylims=(-0.05, +1.3))
     plot!(x, Ωr.(par, x); label = L"\Omega_r")

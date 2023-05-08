@@ -10,38 +10,38 @@ using LaTeXStrings
 using Printf
 using QuadGK
 
-co_H_He_reion  = ΛCDM()
-co_H_He_reioff = ΛCDM(z_reion_H=NaN)
-co_H_reion     = ΛCDM(Yp=0)
-co_H_reioff    = ΛCDM(Yp=0, z_reion_H=NaN)
-co             = co_H_He_reion # default
+rec_H_He_reion  = Recombination(Background(Parameters()))
+rec_H_He_reioff = Recombination(Background(Parameters(z_reion_H=NaN)))
+rec_H_reion     = Recombination(Background(Parameters(Yp=0)))
+rec_H_reioff    = Recombination(Background(Parameters(Yp=0, z_reion_H=NaN)))
+rec             = rec_H_He_reion # default
 
 # TODO: gather into one common function?
-xswi = time_switch_Peebles(co)
-xdec = time_decoupling(co) # TODO: compute from dg = 0
-xrec = time_recombination(co)
-xre1 = time_reionization_H(co)
-xre2 = time_reionization_He(co)
-shor = sound_horizon(co, xdec) / Gpc
-println("Saha -> Peebles (Xe = 0.999):  ", format_time_variations(co, xswi))
-println("Decoupling (max(g)):           ", format_time_variations(co, xdec))
-println("Recombination (Xe = 0.1):      ", format_time_variations(co, xrec))
-println("H  reionization (z_reion_H):   ", format_time_variations(co, xre1))
-println("He reionization (z_reion_He):  ", format_time_variations(co, xre2))
+xswi = time_switch_Peebles(rec.bg.par)
+xdec = time_decoupling(rec) # TODO: compute from dg = 0
+xrec = time_recombination(rec)
+xre1 = time_reionization_H(rec.bg.par)
+xre2 = time_reionization_He(rec.bg.par)
+shor = sound_horizon(rec, xdec) / Gpc
+println("Saha -> Peebles (Xe = 0.999):  ", format_time_variations(rec.bg, xswi))
+println("Decoupling (max(g)):           ", format_time_variations(rec.bg, xdec))
+println("Recombination (Xe = 0.1):      ", format_time_variations(rec.bg, xrec))
+println("H  reionization (z_reion_H):   ", format_time_variations(rec.bg, xre1))
+println("He reionization (z_reion_He):  ", format_time_variations(rec.bg, xre2))
 println("Sound horizon at decoupling:   s = $shor Gpc, k = 2*π/s = $(2*π/shor) / Gpc")
-println("Free electron fraction: today: ", Xe(co, 0))
+println("Free electron fraction: today: ", Xe(rec, 0))
 
 if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(-10, 0), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
-    x = Cosmology.splinex(co.Xe_spline)
-    plot!(x, log10.(Xe.(co_H_reion,     x)),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
-    plot!(x, log10.(Xe.(co_H_reioff,    x)),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
-    plot!(x, log10.(Xe.(co_H_He_reion,  x)),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
-    plot!(x, log10.(Xe.(co_H_He_reioff, x)),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
-    plot!(x, log10.(Xe_Saha_H.(co_H_reioff, x)),       linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
-    plot!(x, log10.(Xe_Saha_H_He.(co_H_He_reioff, x)), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
+    x = Cosmology.splinex(rec.Xe_spline)
+    plot!(x, log10.(Xe.(rec_H_reion,     x)),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
+    plot!(x, log10.(Xe.(rec_H_reioff,    x)),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
+    plot!(x, log10.(Xe.(rec_H_He_reion,  x)),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
+    plot!(x, log10.(Xe.(rec_H_He_reioff, x)),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
+    plot!(x, log10.(Xe_Saha_H.(rec_H_reioff.bg.par, x)),       linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
+    plot!(x, log10.(Xe_Saha_H_He.(rec_H_He_reioff.bg.par, x)), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
 
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, label=L"\textrm{Saha+Peebles}")
@@ -69,29 +69,29 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(-10, 0), ylims=(-0.1, 1.3), yticks=-0.25:0.25:1.5, legend_position=:top, framestyle=:box)
 
-    x = Cosmology.splinex(co.Xe_spline)
-    plot!(x, Xe.(co_H_reion,     x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
-    plot!(x, Xe.(co_H_reioff,    x),           linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
-    plot!(x, Xe.(co_H_He_reion,  x),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
-    plot!(x, Xe.(co_H_He_reioff, x),           linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
-    plot!(x, Xe_Saha_H.(co_H_reioff, x),       linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
-    plot!(x, Xe_Saha_H_He.(co_H_He_reioff, x), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
+    x = Cosmology.splinex(rec.Xe_spline)
+    plot!(x, Xe.(rec_H_reion,     x),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
+    plot!(x, Xe.(rec_H_reioff,    x),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
+    plot!(x, Xe.(rec_H_He_reion,  x),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
+    plot!(x, Xe.(rec_H_He_reioff, x),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization off
+    plot!(x, Xe_Saha_H.(rec_H_reioff.bg.par, x),       linestyle=:dash,  color=2, label=nothing) # Saha,         H,    reionization off
+    plot!(x, Xe_Saha_H_He.(rec_H_He_reioff.bg.par, x), linestyle=:dash,  color=1, label=nothing) # Saha,         H+He, reionization off # TODO: extend for x > -7
 
     # Annotate stages
-    annotate!([-9.2], [1+2*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{++}$}}")])
-    annotate!([-8.1], [1+1*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{+ }$}}")])
-    annotate!([-7.4], [1+0*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}     $}}")])
-    annotate!([-4.6], [0+0*co.Yp / (4*(1-co.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}  $, $\textrm{He}     $}}")])
+    annotate!([-9.2], [1+2*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{++}$}}")])
+    annotate!([-8.1], [1+1*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}^{+ }$}}")])
+    annotate!([-7.4], [1+0*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}^+$, $\textrm{He}     $}}")])
+    annotate!([-4.6], [0+0*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))+0.03], [(L"\small{\textrm{$\textrm{H}  $, $\textrm{He}     $}}")])
 
     # Annotate reionization on/off
     annotate!([-1, -1], [0.95, 0.05], [("reionization"), ("reionizatioff")])
     annotate!([-8.5],   [0.95],       [("recombination(s)")])
 
     # Mark plateaus
-    hline!([1+2*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{++}"])
-    hline!([1+1*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{+}"])
-    hline!([1+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}"])
-    hline!([0+0*co.Yp / (4*(1-co.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{nothing}"])
+    hline!([1+2*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{++}"])
+    hline!([1+1*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}, \textrm{ He}^{+}"])
+    hline!([1+0*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{H}^{+}"])
+    hline!([0+0*rec.bg.par.Yp / (4*(1-rec.bg.par.Yp))], color = :gray, linestyle = :dash, z_order=:back, label=nothing) # label = [L"\textrm{fully ionized } \textrm{nothing}"])
 
     # Mark event times
     vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.5, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
@@ -104,17 +104,16 @@ if true || !isfile("plots/optical_depth.pdf")
 
     plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-7.5, 3.5), legend_position=:topright)
 
-    d2τpos(co, x) = d2τ(co, x) > 0 ? d2τ(co, x) : 1e-10 # "positive" d2τ: skip values where d2τ < 0. increase resolution here?
+    d2τpos(rec, x) = d2τ(rec, x) > 0 ? d2τ(rec, x) : 1e-10 # "positive" d2τ: skip values where d2τ < 0. increase resolution here?
 
-    τ(co, 0.0) # trigger spline computation
-    x = Cosmology.splinex(co.τ_spline)
-    plot!(x, log10.(τ.(co_H_reioff, x)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
-    plot!(x, log10.(-dτ.(co_H_reioff, x)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
-    plot!(x, log10.(d2τpos.(co_H_reioff, x)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
+    x = Cosmology.splinex(rec.τ_spline)
+    plot!(x, log10.(τ.(rec_H_reioff, x)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(-dτ.(rec_H_reioff, x)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(d2τpos.(rec_H_reioff, x)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
 
-    plot!(x, log10.(τ.(co, x)),      color=1, linestyle=:solid, label=L"\log_{10} [+\tau\phantom{''}(x)]")
-    plot!(x, log10.(-dτ.(co, x)),    color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")
-    plot!(x, log10.(d2τpos.(co, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]")
+    plot!(x, log10.(τ.(rec, x)),      color=1, linestyle=:solid, label=L"\log_{10} [+\tau\phantom{''}(x)]")
+    plot!(x, log10.(-dτ.(rec, x)),    color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")
+    plot!(x, log10.(d2τpos.(rec, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]")
 
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
@@ -131,10 +130,9 @@ if true || !isfile("plots/visibility_function_linear.pdf")
 
     plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-10, +10), legend_position=:topright)
 
-    g(co, 0.0) # trigger spline computation
-    x = Cosmology.splinex(co.g_spline)
-    ys = [g.(co_H_reioff, x) / 1, dg.(co_H_reioff, x) / 10, d2g.(co_H_reioff, x) / 100,
-          g.(co_H_He_reion,  x) / 1, dg.(co_H_He_reion,  x) / 10, d2g.(co_H_He_reion,  x) / 100]
+    x = Cosmology.splinex(rec.g_spline)
+    ys = [g.(rec_H_reioff, x) / 1, dg.(rec_H_reioff, x) / 10, d2g.(rec_H_reioff, x) / 100,
+          g.(rec_H_He_reion,  x) / 1, dg.(rec_H_He_reion,  x) / 10, d2g.(rec_H_He_reion,  x) / 100]
     cs = [1  2  3  1  2  3]
     as = [0.3  0.3  0.3  1.0  1.0  1.0]
     Ls = [nothing  nothing  nothing  L"\tilde{g}\phantom{''}(x) \,/\, 1"  L"\tilde{g}'\phantom{'}(x) \,/\, 10"  L"\tilde{g}''(x) \,/\, 100"]
@@ -146,8 +144,8 @@ if true || !isfile("plots/visibility_function_linear.pdf")
     hline!([-20], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
     hline!([-20], color=:black, linestyle=:solid, alpha=0.3, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
 
-    annotate!([-7.5], [9.0], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(co_H_He_reion, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:black)])
-    annotate!([-7.5], [7.7], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(co_H_reioff, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:gray)])
+    annotate!([-7.5], [9.0], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(rec_H_He_reion, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:black)])
+    annotate!([-7.5], [7.7], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(rec_H_reioff, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:gray)])
 
     # Mark event times
     vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.25, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
@@ -164,10 +162,9 @@ if true || !isfile("plots/visibility_function_log.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(-10, 0), ylims=(-15, +5), legend_position=:topright)
 
-    g(co, 0.0) # trigger spline computation
-    x = Cosmology.splinex(co.g_spline)
-    plot!(x, log10.(abs.(g.(co_H_He_reion, x))), color=1, alpha=1.0, label=nothing)
-    plot!(x, log10.(abs.(g.(co_H_reioff, x))), color=1, alpha=0.3, label=nothing)
+    x = Cosmology.splinex(rec.g_spline)
+    plot!(x, log10.(abs.(g.(rec_H_He_reion, x))), color=1, alpha=1.0, label=nothing)
+    plot!(x, log10.(abs.(g.(rec_H_reioff, x))), color=1, alpha=0.3, label=nothing)
 
     # Mark event times
     vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.25, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)
