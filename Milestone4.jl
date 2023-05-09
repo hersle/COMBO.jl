@@ -14,7 +14,7 @@ rec = Recombination(bg)
 xrm = equality_rm(par)
 krm = 1 / (c*η(bg,xrm))
 
-if true
+if false
     k = 10 .^ range(-4, 1, length=100) / Mpc # TODO: h in units
     plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]")
     plot!(log10.(k / (par.h0/Mpc)), log10.(P.(Perturbations.(rec,k),0,k) / (Mpc/par.h0)^3)) # TODO
@@ -23,7 +23,7 @@ if true
 end
 
 # Test source function
-if true
+if false
     plot(xlabel=L"x = \log a", ylabel=L"S(x,k)", xlims=(-8,0))
 
     for k in [340*par.H0/c]
@@ -36,13 +36,11 @@ if true
 end
 
 # test Θl0
-#=
 if true
-    l = unique(Int.(round.(10 .^ range(0, 3, length=50))))
+    ls = unique(Int.(round.(10 .^ range(0, 3, length=50))))
     plot(xlabel=L"\log_{10} l", ylabel=L"\log_{10} \Big[ \frac{l(l+1)}{2\pi} C_l \Big]")
-    plot!(log10.(l), @. log10(l*(l+1)/(2*π)*Cl(rec,l)))
+    plot!(log10.(ls), log10.(ls .* (ls.+1) / (2*π) .* Cls(rec,ls)))
     savefig("plots/power_spectrum_cmb.pdf")
 end
-=#
 
 end

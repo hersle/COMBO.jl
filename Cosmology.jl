@@ -15,6 +15,7 @@ using Base.Threads # parallelization
 using SpecialFunctions: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
 using QuadGK # quadrature (TODO: needed, or trapz instead?)
 using Trapz
+using StaticArrays
 
 export a, z
 export Parameters, Background, Recombination, Perturbations
@@ -32,7 +33,7 @@ export format_time_variations
 export time_tight_coupling, time_horizon_entry
 export δc, δb, vc, vb, Φ, Ψ, Θl, Nl, ΘPl, S
 
-export P_primordial, P, Cl
+export P_primordial, P, Cls
 
 struct Parameters
     # background parameters

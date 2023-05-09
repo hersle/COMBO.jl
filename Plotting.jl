@@ -1,4 +1,5 @@
 using Plots
+using LaTeXStrings
 
 Plots.__init__() # workaround with sysimage: https://github.com/JuliaLang/PackageCompiler.jl/issues/786
 try
