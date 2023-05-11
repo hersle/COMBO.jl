@@ -401,27 +401,35 @@ end
 =#
 
 # TODO: this is really quite stupid with "2 quantites"
-function perturbations_quantity(psplines, x, i_qty::Integer)
+
+#perturbation_quantity(pspl, x, i_qty) = pspl(x)[i_qty]
+function perturbation_quantity(perturbs, x, i_qty::Integer)
     #=
     if splinek
         return derivative(perturbations_splines(perturbs)[i_qty], x, k, nux=deriv, nuy=0)
     else
     =#
-        return psplines(x)[i_qty]
+        return perturbs.qty_splines(x)[i_qty]
     #end
 end
+
+#=
+function perturbation_quantity(perturbs, x::Float64, i_qty::Integer)
+    return perturbation_quantity(perturbs, [x], i_qty)[1]
+end
+=#
 
 # TODO: all these are type unstable!!!
 
 # raw quantities (from integration)
-Φ(perturbs::Perturbations, x)               = perturbations_quantity(perturbs.qty_splines, x, i_Φ)
-δc(perturbs::Perturbations, x)              = perturbations_quantity(perturbs.qty_splines, x, i_δc)
-δb(perturbs::Perturbations, x)              = perturbations_quantity(perturbs.qty_splines, x, i_δb)
-vc(perturbs::Perturbations, x)              = perturbations_quantity(perturbs.qty_splines, x, i_vc)
-vb(perturbs::Perturbations, x)              = perturbations_quantity(perturbs.qty_splines, x, i_vb)
-Θl(perturbs::Perturbations, x, l::Integer)  = perturbations_quantity(perturbs.qty_splines, x, i_Θl(l))
-Nl(perturbs::Perturbations, x, l::Integer)  = perturbations_quantity(perturbs.qty_splines, x, i_Nl(l))
-ΘPl(perturbs::Perturbations, x, l::Integer) = perturbations_quantity(perturbs.qty_splines, x, i_ΘPl(l))
+Φ(perturbs::Perturbations, x)               = perturbation_quantity(perturbs, x, i_Φ)
+δc(perturbs::Perturbations, x)              = perturbation_quantity(perturbs, x, i_δc)
+δb(perturbs::Perturbations, x)              = perturbation_quantity(perturbs, x, i_δb)
+vc(perturbs::Perturbations, x)              = perturbation_quantity(perturbs, x, i_vc)
+vb(perturbs::Perturbations, x)              = perturbation_quantity(perturbs, x, i_vb)
+Θl(perturbs::Perturbations, x, l::Integer)  = perturbation_quantity(perturbs, x, i_Θl(l))
+Nl(perturbs::Perturbations, x, l::Integer)  = perturbation_quantity(perturbs, x, i_Nl(l))
+ΘPl(perturbs::Perturbations, x, l::Integer) = perturbation_quantity(perturbs, x, i_ΘPl(l))
 
 # "composite" quantities (form raw quantities)
 function Ψ(perturbs::Perturbations, x; deriv=0)

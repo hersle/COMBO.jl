@@ -46,11 +46,11 @@ end
 # TODO: apply to recombination etc., too
 Base.broadcastable(bg::Background) = Ref(bg)
 
-η(bg::Background, x::Real) = bg.η_spline(x)
-t(bg::Background, x::Real) = bg.t_spline(x)
+η(bg::Background, x) = bg.η_spline(x)
+t(bg::Background, x) = bg.t_spline(x)
 
 # conformal distance
-χ(bg::Background, x::Real) = c * (η(bg, 0) - η(bg, x))
+χ(bg::Background, x) = c * (η(bg, 0) - η(bg, x))
 
 # radial coordinate (of light emitted at x)
 #   note: ALL three expressions
@@ -62,8 +62,8 @@ t(bg::Background, x::Real) = bg.t_spline(x)
 #   using complex numbers,
 #   because sinc(x) = sin(π*x) / (π*x) -> 1 as x -> 0,
 #   and sinh(x) = -i * sin(i*x)
-r(bg::Background, x::Real) = χ(bg, x) * real(sinc(√(complex(-bg.par.Ωk0)) * bg.par.H0 * χ(bg, x) / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x), so divide argument by π!
+r(bg::Background, x) = χ(bg, x) * real(sinc(√(complex(-bg.par.Ωk0)) * bg.par.H0 * χ(bg, x) / c / π)) # in Julia, sinc(x) = sin(π*x) / (π*x), so divide argument by π!
 
 # angular diameter distance and luminosity distance (of light emitted at x)
-dA(bg::Background, x::Real) = r(bg, x) * a(x)
-dL(bg::Background, x::Real) = r(bg, x) / a(x)
+dA(bg::Background, x) = r(bg, x) * a(x)
+dL(bg::Background, x) = r(bg, x) / a(x)

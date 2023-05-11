@@ -127,17 +127,17 @@ function spline_Xe(par::Parameters, xswitch::Real; x1::Float64=-20.0)
 end
 
 # TODO: don't duplicate in constructor
-Xe(rec::Recombination, x::Real) = (x < rec.xswitch ? Xe_Saha_H_He(rec.bg.par, x) : rec.Xe_spline(x)) + Xe_reionization(rec.bg.par, x)
+Xe(rec::Recombination, x) = (x < rec.xswitch ? Xe_Saha_H_He(rec.bg.par, x) : rec.Xe_spline(x)) + Xe_reionization(rec.bg.par, x)
 
-  τ(rec::Recombination, x::Real) = rec.τ_spline(x)
- dτ(rec::Recombination, x::Real) = ForwardDiff.derivative(x ->  τ(rec, x), x)
-d2τ(rec::Recombination, x::Real) = ForwardDiff.derivative(x -> dτ(rec, x), x)
+  τ(rec::Recombination, x) = rec.τ_spline(x)
+ dτ(rec::Recombination, x) = ForwardDiff.derivative(x ->  τ(rec, x), x)
+d2τ(rec::Recombination, x) = ForwardDiff.derivative(x -> dτ(rec, x), x)
 
-  g(rec::Recombination, x::Real) = -dτ(rec, x) * exp.(-τ(rec, x))
- dg(rec::Recombination, x::Real) = ForwardDiff.derivative(x ->  g(rec, x), x)
-d2g(rec::Recombination, x::Real) = ForwardDiff.derivative(x -> dg(rec, x), x)
+  g(rec::Recombination, x) = -dτ(rec, x) * exp.(-τ(rec, x))
+ dg(rec::Recombination, x) = ForwardDiff.derivative(x ->  g(rec, x), x)
+d2g(rec::Recombination, x) = ForwardDiff.derivative(x -> dg(rec, x), x)
 
-sound_horizon(rec::Recombination, x::Real) = rec.sound_horizon_spline(x)
+sound_horizon(rec::Recombination, x) = rec.sound_horizon_spline(x)
 
 time_decoupling(rec::Recombination) = find_zero(x -> dτ(rec,x)^2 - d2τ(rec,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
 time_recombination(rec::Recombination) = find_zero(x -> Xe(rec,x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3
