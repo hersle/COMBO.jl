@@ -133,7 +133,7 @@ Xe(rec::Recombination, x) = (x < rec.xswitch ? Xe_Saha_H_He(rec.bg.par, x) : rec
  dτ(rec::Recombination, x) = ForwardDiff.derivative(x ->  τ(rec, x), x)
 d2τ(rec::Recombination, x) = ForwardDiff.derivative(x -> dτ(rec, x), x)
 
-  g(rec::Recombination, x) = -dτ(rec, x) * exp.(-τ(rec, x))
+  g(rec::Recombination, x) = -dτ(rec, x) * exp(-τ(rec, x))
  dg(rec::Recombination, x) = ForwardDiff.derivative(x ->  g(rec, x), x)
 d2g(rec::Recombination, x) = ForwardDiff.derivative(x -> dg(rec, x), x)
 

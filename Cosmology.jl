@@ -12,9 +12,12 @@ using ODEInterfaceDiffEq # fast & stiff "radau" ODE integrator (for perturbation
 using ForwardDiff # TODO: make this work
 using Dierckx # splines
 using Base.Threads # parallelization
-using SpecialFunctions: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
+#using SpecialFunctions: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
+using Bessels: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
 using QuadGK # quadrature (TODO: needed, or trapz instead?)
 using Trapz
+using HCubature # TODO: needed?
+using Interpolations # TODO: needed?
 using StaticArrays
 
 export a, z

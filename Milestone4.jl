@@ -37,7 +37,7 @@ end
 
 # test Θl0
 if true
-    ls = unique(Int.(round.(10 .^ range(0, 3, length=50))))
+    ls = unique(Int.(round.(10 .^ range(0, 3.2, length=300))))
     plot(xlabel=L"\log_{10} l", ylabel=L"\log_{10} \Big[ \frac{l(l+1)}{2\pi} C_l \Big]")
     plot!(log10.(ls), log10.(ls .* (ls.+1) / (2*π) .* Cls(rec,ls)))
     savefig("plots/power_spectrum_cmb.pdf")
