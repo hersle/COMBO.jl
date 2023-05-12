@@ -295,7 +295,7 @@ function perturbations_mode_full(par::Parameters, ηspl, τspl, k::Real; x1=-20.
     #sol = solve(ODEProblem((dy,y,p,x) -> perturbations_mode_full_dy_dx!(par, bg, rec, k, x, y, dy), y1, (x1, x2)), KenCarp4(autodiff=false); abstol=1e-8, reltol=1e-8)
     #func(dy,y,_,x) = dy_dx!(par,bg,rec,bg.η_spline,rec.τ_spline,k,dy,y,x)
     prob = ODEProblem{true}(dy_dx!, y1, (x1, x2))
-    sol = solve(prob, KenCarp4(autodiff=false); abstol=1e-8, reltol=1e-8)
+    sol = solve(prob, KenCarp4(autodiff=false); abstol=1e-9, reltol=1e-9)
     #Profile.clear_malloc_data()
     #sol = solve(ODEProblem{true}((dy,y,_,x) -> dy_dx!(par,bg,rec,k,dy,y,x), y1, (x1, x2)), KenCarp4(autodiff=false); abstol=1e-8, reltol=1e-8, dense=false, save_everystep=false)
     t2 = now()

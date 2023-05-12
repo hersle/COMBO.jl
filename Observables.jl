@@ -26,35 +26,75 @@ function Cl_fancy(l::Integer, Sspl, η, par::Parameters)
     dΘ0_dx(x,k) :: Float64 = S(x, k) * jl(l, c*k*(η0 - η(x)))
     Θ0(k) = integrate(x -> dΘ0_dx(x,k), -20.0, 0.0, x -> 2*π*aH(par,x) / (10*c*k))
     dCl_dk(k) :: Float64 = 2/π * k^2 * P_primordial(par, k) * Θ0(k)^2
-    return integrate(dCl_dk, 1/(c*η0), 3000/(c*η0), k -> 2*π / (10*c*η0))
+    return integrate(dCl_dk, 1/(c*η0), 4000/(c*η0), k -> 2*π / (10*c*η0))
 end
 
-function Cl_quadgk(l::Integer, Sspl, η, par::Parameters; rtol=1e-3, order=8, kwargs...)
+function Cl_quadgk(l::Integer, Sspl, η, par::Parameters; x0=-20.0, rtol=1e-4, order=8, kwargs...)
     η0 = η(0.0)
     dΘ0_dx(x, k) ::Float64 = Sspl(x, k) * jl(l, c*k*(η0 - η(x)))
-    Θ0(k) = quadgk(x -> dΘ0_dx(x,k), -20.0, 0.0; rtol=rtol, order=order, kwargs...)[1]
+    Θ0(k) = quadgk(x -> dΘ0_dx(x,k), x0, 0.0; rtol=rtol, order=order, kwargs...)[1]
     dCl_dk(k) ::Float64 = 2/π * k^2 * P_primordial(par, k) * Θ0(k)^2
-    return quadgk(dCl_dk, 1/(c*η0), 3000/(c*η0); rtol=rtol, order=order, kwargs...)[1] # TODO: dynamic kmin
+    return quadgk(dCl_dk, 1/(c*η0), 4000/(c*η0); rtol=rtol, order=order, kwargs...)[1] # TODO: dynamic kmin
 end
 
 # TODO: type-stable, little-allocating trapz version
 function Cl_trapz(l, Sspl, η, par)
     kmin =    1 / (c*η(0))
-    kmax = 3000 / (c*η(0))
-    Δk = 2*π / (c*η(0)*20)
+    kmax = 4000 / (c*η(0))
+    Δk = 2*π / (c*η(0)*10)
     ks = range(kmin, kmax, step=Δk)
     xs = range(-20.0, 0.0, length=1000) # TODO: take from perturbation solution? TODO: see Callin eq (51) for spacing
+
+    # TODO: @code_warntype gives η(xs)::Any ???!?!? use η.(xs) instead?
+    #dΘ0_dk_grid = evalgrid(Sspl, xs, ks) .* jl.(l, c * ks' .* (η(0.0) .- η.(xs))) # (x,k) function
+    dΘ0_dk_grid = Sspl.(xs, ks') .* jl.(l, c * ks' .* (η(0.0) .- η.(xs))) # (x,k) function
+    Θ0 = trapz(xs, dΘ0_dk_grid, Val(1)) # integrate over x (1st coordinate)
+    dCl_dk_grid = 2/π * P_primordial.(par, ks) .* (ks .* Θ0) .^ 2
+    return trapz(ks, dCl_dk_grid) # integrate over k
+end
+
+#=
+function Cl_trapz(l, Sspl, η, par, Ny_per_osc=20, Nk_per_osc=10)
+    η0 = η(0.0)
+
+    # TODO: allocate x-array ONCE
+
+    Ny = 1000
+    dΘ0_dk_grid = Vector{Float64}(undef, Ny)
+    function Θ0(k)
+        # TODO: set ymin, ymax instead?
+        #xmin = -20.0
+        #xmax = 0.0
+        #y(x) = c*k*(η0-η(x))
+        #ymin = y(xmax)
+        #ymax = y(xmin)
+        #Δy = 2*π/Ny_per_osc
+        #Ny = Int(round((ymax-ymin) / Δy))
+        #Ny = max(Ny, 1000) # TODO: do the maximum with what is needed to resolve source function
+        #Ny = 1000
+        xs = range(xmin, xmax, length=Ny)
+        ys = y.(xs)
+        dΘ0_dk_grid .= Sspl.(xs, k) .* jl.(l, c*k * (η0 .- η.(xs))) # (x,k) function
+        return trapz(xs, dΘ0_dk_grid) # integrate over x
+    end
 
     # TODO: spline jl. all allocations are from it!
 
     # TODO: @code_warntype gives η(xs)::Any ???!?!? use η.(xs) instead?
     # TODO: jl allocates a lot. reduce somehow?
     #dΘ0_dk_grid = evalgrid(Sspl, xs, ks) .* jl.(l, c * ks' .* (η(0.0) .- η.(xs))) # (x,k) function
-    dΘ0_dk_grid = Sspl.(xs, log10.(ks)') .* jl.(l, c * ks' .* (η(0.0) .- η.(xs))) # (x,k) function
-    Θ0 = trapz(xs, dΘ0_dk_grid, Val(1)) # integrate over x
-    dCl_dk_grid = 2/π * P_primordial.(par, ks) .* (ks .* Θ0) .^ 2
+
+    kmin =    1 / (c*η(0))
+    kmax = 4000 / (c*η(0))
+    Δk = 2*π / (c*η0*Nk_per_osc)
+    ks = range(kmin, kmax, step=Δk)
+
+    println("$(length(ks)) k-values")
+
+    dCl_dk_grid = 2/π * P_primordial.(par, ks) .* (ks .* Θ0.(ks)) .^ 2
     return trapz(ks, dCl_dk_grid) # integrate over k
 end
+=#
 
 # TODO: for some reason it fails for l=8 and rtol=1e-1
 function Cl_cubature(l, Sspl, η, par; rtol=1e-3, kwargs...)
@@ -67,7 +107,7 @@ function Cl_cubature(l, Sspl, η, par; rtol=1e-3, kwargs...)
                2/π * k^2 * P_primordial(par, k)   # dCl_dk
     end
     kmin = 1 / (c*η0)
-    kmax = 3000 / (c*η0)
+    kmax = 4000 / (c*η0)
     xmin = -20.0
     xmax = 0.0
     return hcubature(integrand, (kmin, xmin, xmin), (kmax, xmax, xmax); rtol=rtol, kwargs...)[1]
@@ -75,15 +115,15 @@ end
 
 function S_spline(rec)
     kmin =    1 / (c*η(rec.bg,0))
-    kmax = 3000 / (c*η(rec.bg,0))
-    logks = range(log10(kmin), log10(kmax), length=250)
+    kmax = 4000 / (c*η(rec.bg,0))
+    logks = range(log10(kmin), log10(kmax), length=250) # TODO: 250
     ks = 10 .^ logks
 
     perturbs = [Perturbations(rec, k) for k in ks]
     xs = perturbs[argmax(length(perturb.qty_splines.t) for perturb in perturbs)].qty_splines.t # TODO: extend?
 
     # make uniform grids
-    xs = range(-20, 0, length=5000) # TODO: looks like this is enough?
+    xs = range(-20, 0, length=2000) # TODO: looks like this is enough?
 
     # TODO: evaluate quicker
     Sdata = Float64[S(perturb, x) for x in xs, perturb in perturbs]
@@ -102,7 +142,7 @@ function Cls(rec::Recombination, ls::Vector)
     # TODO: paralellize with threads?
     Clarr = Vector{Float64}(undef, length(ls))
     for (i, l) in enumerate(ls)
-        time = @elapsed(Clarr[i] = Cl_quadgk(l, Sspl, bg.η_spline, bg.par))
+        @time(time = @elapsed(Clarr[i] = Cl_trapz(l, Sspl, bg.η_spline, bg.par)))
         println("C(l=$l) = $(Clarr[i]) ($time seconds)")
     end
 

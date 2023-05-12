@@ -15,17 +15,17 @@ rec = Recombination(bg)
 xrm = equality_rm(par)
 krm = 1 / (c*η(bg,xrm))
 
-Dl(l, Cl) = l * (l+1) / (2*π) * Cl
+Dl(l, Cl) = l * (l+1) / (2*π) * Cl * (par.Tγ0 / 1e-6)^2 # convert to "Planck units"
 logerrm(y, Δy) = -log10(1-Δy/y)
 logerrp(y, Δy) = +log10(1+Δy/y)
 
 function plot_Cl(ls, Cls, datafilename, polarization, filename)
-    plot(xlabel=L"\log_{10} l", ylabel=L"\log_{10} \Big[ \frac{l(l+1)}{2\pi} C_l^{%$(polarization)} \Big]")
+    plot(xlabel=L"\log_{10} l", ylabel=L"C_l^\mathrm{%$(polarization)} \, T_{\gamma 0} \cdot \frac{l(l+1)}{2\pi} \,/\, (\mathrm{\mu} K)^2", legend_position=:topleft)
 
-    plot!(log10.(ls), log10.(Dl.(ls, Cls)), label="ΛCDM prediction")
+    plot!(log10.(ls), Dl.(ls, Cls), label="ΛCDM prediction", marker=:circle, markersize=1.0, markerstrokecolor=1)
 
     ls_data, Dls_data, ΔDlms_data, ΔDlps_data = read_planck_data(datafilename)
-    scatter!(log10.(ls_data), log10.(Dls_data); yerror=(logerrm.(Dls_data, ΔDlms_data), logerrp.(Dls_data, ΔDlps_data)), color=:black, markersize=1, label="Planck measurements")
+    scatter!(log10.(ls_data), Dls_data; yerror=(ΔDlms_data, ΔDlps_data), color=:black, marker=:square, markersize=1, label="Planck measurements")
     # TODO: don't do log units?
 
     savefig(filename)
@@ -34,9 +34,9 @@ end
 function read_planck_data(filename)
     data = readdlm(filename, comments=true) # e.g. "data/planck_Cl_TT_lowl.txt"
     l, Dl, ΔDlm, ΔDlp = data[:,1], data[:,2], data[:,3], data[:,4]
-    Dl   .*= (1e-6 / par.Tγ0)^2 # convert to my preferred units
-    ΔDlm .*= (1e-6 / par.Tγ0)^2
-    ΔDlp .*= (1e-6 / par.Tγ0)^2
+    #Dl   .*= (1e-6 / par.Tγ0)^2 # for converting to "dimensionless units"
+    #ΔDlm .*= (1e-6 / par.Tγ0)^2
+    #ΔDlp .*= (1e-6 / par.Tγ0)^2
     return l, Dl, ΔDlm, ΔDlp
 end
 
@@ -62,11 +62,10 @@ if false
 end
 
 # test Θl0
-if false
+if true
     l = unique(Int.(round.(10 .^ range(0, 3.4, length=300))))
     Cl = Cls(rec,l)
-
-    plot_Cl(ls, Cls, "plots/power_spectrum_cmb.pdf")
+    plot_Cl(l, Cl, "data/planck_Cl_TT.txt", "TT", "plots/power_spectrum_cmb.pdf")
 end
 
 end
