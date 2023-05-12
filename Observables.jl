@@ -31,12 +31,9 @@ end
 
 function Cl_quadgk(l::Integer, Sspl, η, par::Parameters; rtol=1e-3, order=8, kwargs...)
     η0 = η(0.0)
-    S(x, k) = Sspl(x, log10(k)) # TODO: needed?
-
-    # TODO: try to spline bessel
-    dΘ0_dx(x, k) :: Float64 = S(x, k) * jl(l, c*k*(η0 - η(x)))
+    dΘ0_dx(x, k) ::Float64 = Sspl(x, k) * jl(l, c*k*(η0 - η(x)))
     Θ0(k) = quadgk(x -> dΘ0_dx(x,k), -20.0, 0.0; rtol=rtol, order=order, kwargs...)[1]
-    dCl_dk(k) :: Float64 = 2/π * k^2 * P_primordial(par, k) * Θ0(k)^2
+    dCl_dk(k) ::Float64 = 2/π * k^2 * P_primordial(par, k) * Θ0(k)^2
     return quadgk(dCl_dk, 1/(c*η0), 3000/(c*η0); rtol=rtol, order=order, kwargs...)[1] # TODO: dynamic kmin
 end
 
@@ -77,7 +74,6 @@ function Cl_cubature(l, Sspl, η, par; rtol=1e-3, kwargs...)
 end
 
 function S_spline(rec)
-    # TODO: spline S(k, x)
     kmin =    1 / (c*η(rec.bg,0))
     kmax = 3000 / (c*η(rec.bg,0))
     logks = range(log10(kmin), log10(kmax), length=250)
@@ -86,37 +82,28 @@ function S_spline(rec)
     perturbs = [Perturbations(rec, k) for k in ks]
     xs = perturbs[argmax(length(perturb.qty_splines.t) for perturb in perturbs)].qty_splines.t # TODO: extend?
 
-    # TODO: make uniform grids
-    #xs = range(minimum(xs), maximum(xs), step=minimum(diff(xs)))
-    xs = range(-20, 0, length=5000)
-    println("$(length(xs)) x points")
+    # make uniform grids
+    xs = range(-20, 0, length=5000) # TODO: looks like this is enough?
 
     # TODO: evaluate quicker
-    Sdata = [S(perturb, x) for x in xs, perturb in perturbs]
-    println("Sdata size $(size(Sdata))")
+    Sdata = Float64[S(perturb, x) for x in xs, perturb in perturbs]
 
-    # TODO: convert k to log10(k) on call!
-    return scale(interpolate(Sdata, BSpline(Cubic(Line(OnGrid())))), (xs, logks))
+    println("Splining S(x, log10(k)) on uniform $(size(Sdata))-grid")
+    S_spline_x_logk = scale(interpolate(Sdata, BSpline(Cubic(Line(OnGrid())))), (xs, logks)) # (x, log10(k)) spline - must convert to S(x,k) spline upon calling it!
 
-    #return Spline2D(xs, logks, Sdata)
+    S_spline_x_k(x, k) = S_spline_x_logk(x, log10(k))
+    return S_spline_x_k
 end
 
-# TODO: this is extremely slow now. put splines behind function barriers
-# TODO: use preallocating spline evaluation function?
-
-# viable options
-# 1) interpolations + quadgk
 function Cls(rec::Recombination, ls::Vector)
     bg = rec.bg
-
     Sspl = S_spline(rec) # (x,log(k))
 
-    Clarr = []
-    for l in ls
-        #push!(Clarr, @time Cl_cubature(l, Sspl, bg.η_spline, bg.par))
-        push!(Clarr, @time Cl_quadgk(l, Sspl, bg.η_spline, bg.par))
-        #push!(Clarr, @time Cl_trapz(l, Sspl, bg.η_spline, bg.par))
-        println("C(l=$l) = $(Clarr[end])")
+    # TODO: paralellize with threads?
+    Clarr = Vector{Float64}(undef, length(ls))
+    for (i, l) in enumerate(ls)
+        time = @elapsed(Clarr[i] = Cl_quadgk(l, Sspl, bg.η_spline, bg.par))
+        println("C(l=$l) = $(Clarr[i]) ($time seconds)")
     end
 
     return Clarr

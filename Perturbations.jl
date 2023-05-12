@@ -440,12 +440,11 @@ end
 
 Π(perturbs::Perturbations, x) = Θl(perturbs, x, 2) + ΘPl(perturbs, x, 0) + ΘPl(perturbs, x, 2)
 
-# TODO: check for stability!
 function S(perturbs::Perturbations, x)
     rec = perturbs.rec
     par = rec.bg.par
     k = perturbs.k
-    # TODO: split up into S_Sachse_Wolfe etc.
+
     return g(rec,x) * (Θl(perturbs, x, 0) + Ψ(perturbs, x) + Π(perturbs,x)/4) +
            exp(-τ(rec,x)) * ForwardDiff.derivative(x -> Ψ(perturbs,x) - Φ(perturbs,x), x) -
            1/(c*k) * ForwardDiff.derivative(x -> aH(par,x) * g(rec,x) * vb(perturbs, x), x) +
