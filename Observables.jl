@@ -129,8 +129,7 @@ function S_spline(rec)
     Sdata = Float64[S(perturb, x) for x in xs, perturb in perturbs]
 
     println("Splining S(x, log10(k)) on uniform $(size(Sdata))-grid")
-    S_spline_x_logk = scale(interpolate(Sdata, BSpline(Cubic(Line(OnGrid())))), (xs, logks)) # (x, log10(k)) spline - must convert to S(x,k) spline upon calling it!
-
+    S_spline_x_logk = spline(Sdata, (xs, logks)) # (x, log10(k)) spline - must convert to S(x,k) spline upon calling it!
     S_spline_x_k(x, k) = S_spline_x_logk(x, log10(k))
     return S_spline_x_k
 end

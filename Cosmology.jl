@@ -4,21 +4,15 @@ module Cosmology
 # TODO: use autodiff
 
 include("Constants.jl")
-
 using .Constants # physical constants
+
 using Roots # root finding
 using DifferentialEquations # ODE integration
-using ODEInterfaceDiffEq # fast & stiff "radau" ODE integrator (for perturbations)
-using ForwardDiff # TODO: make this work
-using Dierckx # splines
+using ForwardDiff # compile-time analytical derivatives
 using Base.Threads # parallelization
-#using SpecialFunctions: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
 using Bessels: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
-using QuadGK # quadrature (TODO: needed, or trapz instead?)
-using Trapz
-using HCubature # TODO: needed?
-using Interpolations # TODO: needed?
-using StaticArrays
+using Trapz, QuadGK # quadrature
+using Interpolations # splines
 
 export a, z
 export Parameters, Background, Recombination, Perturbations
@@ -28,7 +22,7 @@ export equality_rm, equality_mΛ, acceleration_onset
 export dL, dA
 
 export Tγ, Xe_Saha_H, Xe_Saha_H_He, Xe_Peebles, Xe, τ, dτ, d2τ, g, dg, d2g, time_switch_Peebles
-export time_decoupling, time_recombination, sound_horizon
+export time_decoupling, time_recombination, s
 export time_reionization_H, time_reionization_He
 export multirange
 export format_time_variations
@@ -109,6 +103,8 @@ d2aH(par::Parameters, x::Real) = ForwardDiff.derivative(x -> daH(par, x), x)
 Ωr(par::Parameters, x::Real) = Ωγ(par, x) + Ων(par, x)
 Ωm(par::Parameters, x::Real) = Ωb(par, x) + Ωc(par, x)
 Ω( par::Parameters, x::Real) = Ωr(par, x) + Ωm(par, x) + Ωk(par, x) + ΩΛ(par, x)
+
+aeq(par::Parameters) = par.Ωr0 / par.Ωm0
 
 # time of equality between different species (as x = log(a))
 # TODO: rename time_...

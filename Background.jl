@@ -1,50 +1,38 @@
-#=
-struct Background{Tη <: ODESolution, Tt <: ODESolution}
-    par::Parameters # TODO: pass by reference?
-
-    η_spline::Tη # conformal time
-    t_spline::Tt # cosmic    time
-
-    #Background(par::Parameters, η_spline::Tη, t_spline::Tt) where {Tη <: ODESolution, Tt <: ODESolution} = new{Tη,Tt}(par, η_spline, t_spline)
-end
-=#
-
 struct Background
     par::Parameters # TODO: pass by reference?
-
     η_spline::ODESolution # conformal time
     t_spline::ODESolution # cosmic    time
 
-    #Background(par::Parameters, η_spline::Tη, t_spline::Tt) where {Tη <: ODESolution, Tt <: ODESolution} = new{Tη,Tt}(par, η_spline, t_spline)
+    function Background(par::Parameters; x1::Float64=-20.0, x2::Float64=+20.0)
+        η_spline = spline_η(par, x1, x2)
+        t_spline = spline_t(par, x1, x2)
+        new(par, η_spline, t_spline)
+    end
 end
 
-function Background(par::Parameters; x1::Float64=-20.0, x2::Float64=+20.0)
-    # integrate η (TODO: build from Parameters struct?)
+# Fix bg in vectorized calls like H.(bg, [-1.0, -2.0])
+Base.broadcastable(bg::Background) = Ref(bg)
+
+# Integrate conformal time from x1 to x2
+function spline_η(par, x1, x2)
     dη_dx(x, η) = 1 / aH(par, x)
-    aeq = par.Ωr0 / par.Ωm0
     if par.Ωm0 > 0
-        η1 = 2 / (par.H0*√(par.Ωm0)) * (√(a(x1)+aeq) - √(aeq)) # anal expr with Ωk=ΩΛ=0
+        η1 = 2 / (par.H0*√(par.Ωm0)) * (√(a(x1)+aeq(par)) - √(aeq(par))) # analytical solution with Ωk=ΩΛ=0
     else
-        η1 = 1 / aH(par, x1) # anal expr with Ωm=Ωk=ΩΛ=0
+        η1 = 1 / aH(par, x1) # analytical solution with Ωm=Ωk=ΩΛ=0
     end
     η_spline = solve(ODEProblem((η,_,x) -> dη_dx(x,η), η1, (x1, x2)), Tsit5(); abstol=1e-8, reltol=1e-8)
-
-    dt_dx(x, η) = 1 / H(par, x)
-    if par.Ωm0 > 0
-        t1 = 2 / (3*par.H0*√(par.Ωm0)) * (√(a(x1)+aeq) * (a(x1)-2*aeq) + 2*aeq^(3/2)) # anal expr with Ωk=ΩΛ=0
-    else
-        t1 = 1 / (2*H(par, x1)) # anal expr with Ωm=Ωk=ΩΛ=0
-    end
-    t_spline = solve(ODEProblem((t,_,x) -> dt_dx(x,t), t1, (x1, x2)), Tsit5(); abstol=1e-8, reltol=1e-8)
-
-    #return Background{typeof(η_spline), typeof(t_spline)}(par, η_spline, t_spline)
-    return Background(par, η_spline, t_spline)
 end
 
-# in vectorized calls, like H.(co, [1.0, 2.0]),
-# broadcast the same cosmology to all scalar calls
-# TODO: apply to recombination etc., too
-Base.broadcastable(bg::Background) = Ref(bg)
+function spline_t(par, x1, x2)
+    dt_dx(x, η) = 1 / H(par, x)
+    if par.Ωm0 > 0
+        t1 = 2 / (3*par.H0*√(par.Ωm0)) * (√(a(x1)+aeq(par)) * (a(x1)-2*aeq(par)) + 2*aeq(par)^(3/2)) # analytical solution with Ωk=ΩΛ=0
+    else
+        t1 = 1 / (2*H(par, x1)) # analytical solution with Ωm=Ωk=ΩΛ=0
+    end
+    t_spline = solve(ODEProblem((t,_,x) -> dt_dx(x,t), t1, (x1, x2)), Tsit5(); abstol=1e-8, reltol=1e-8)
+end
 
 η(bg::Background, x) = bg.η_spline(x)
 t(bg::Background, x) = bg.t_spline(x)

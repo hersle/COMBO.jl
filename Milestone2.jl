@@ -22,7 +22,7 @@ xdec = time_decoupling(rec) # TODO: compute from dg = 0
 xrec = time_recombination(rec)
 xre1 = time_reionization_H(rec.bg.par)
 xre2 = time_reionization_He(rec.bg.par)
-shor = sound_horizon(rec, xdec) / Gpc
+shor = s(rec, xdec) / Gpc
 println("Saha -> Peebles (Xe = 0.999):  ", format_time_variations(rec.bg, xswi))
 println("Decoupling (max(g)):           ", format_time_variations(rec.bg, xdec))
 println("Recombination (Xe = 0.1):      ", format_time_variations(rec.bg, xrec))
@@ -35,7 +35,7 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")
     plot(xlabel = L"x = \log a", ylabel = L"\log_{10} X_e", xlims=(-10, 0), ylims=(-4, 1.0), legendcolumns=2, legend_position=:topright)
 
-    x = Cosmology.splinex(rec.τ_spline)
+    x = range(-20, 0, length=1000)
     plot!(x, log10.(Xe.(rec_H_reion,     x)),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
     plot!(x, log10.(Xe.(rec_H_reioff,    x)),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
     plot!(x, log10.(Xe.(rec_H_He_reion,  x)),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
@@ -69,7 +69,7 @@ if true || !isfile("plots/free_electron_fraction_linear.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"X_e", xlims=(-10, 0), ylims=(-0.1, 1.3), yticks=-0.25:0.25:1.5, legend_position=:top, framestyle=:box)
 
-    x = Cosmology.splinex(rec.τ_spline)
+    x = range(-20, 0, length=1000)
     plot!(x, Xe.(rec_H_reion,     x),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization on
     plot!(x, Xe.(rec_H_reioff,    x),                  linestyle=:solid, color=2, label=nothing) # Saha+Peebles, H,    reionization off
     plot!(x, Xe.(rec_H_He_reion,  x),                  linestyle=:solid, color=1, label=nothing) # Saha+Peebles, H+He, reionization on
@@ -106,7 +106,7 @@ if true || !isfile("plots/optical_depth.pdf")
 
     d2τpos(rec, x) = d2τ(rec, x) > 0 ? d2τ(rec, x) : 1e-10 # "positive" d2τ: skip values where d2τ < 0. increase resolution here?
 
-    x = Cosmology.splinex(rec.τ_spline)
+    x = Cosmology.integration_points(rec.τ_spline)
     plot!(x, log10.(τ.(rec_H_reioff, x)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
     plot!(x, log10.(-dτ.(rec_H_reioff, x)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
     plot!(x, log10.(d2τpos.(rec_H_reioff, x)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
@@ -130,7 +130,7 @@ if true || !isfile("plots/visibility_function_linear.pdf")
 
     plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-10, +10), legend_position=:topright)
 
-    x = Cosmology.splinex(rec.τ_spline)
+    x = Cosmology.integration_points(rec.τ_spline)
     ys = [g.(rec_H_reioff, x) / 1, dg.(rec_H_reioff, x) / 10, d2g.(rec_H_reioff, x) / 100,
           g.(rec_H_He_reion,  x) / 1, dg.(rec_H_He_reion,  x) / 10, d2g.(rec_H_He_reion,  x) / 100]
     cs = [1  2  3  1  2  3]
@@ -152,7 +152,10 @@ if true || !isfile("plots/visibility_function_linear.pdf")
 
     # Zoom-in reionization plot
     # (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
-    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=(-3, -1), ylims=(-0.2, +0.2), subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
+    x = range(-3, -1, length=400) # re-plot with many points to resolve narrow peaks
+    ys = [g.(rec_H_reioff, x) / 1, dg.(rec_H_reioff, x) / 10, d2g.(rec_H_reioff, x) / 100,
+          g.(rec_H_He_reion,  x) / 1, dg.(rec_H_He_reion,  x) / 10, d2g.(rec_H_He_reion,  x) / 100]
+    plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=extrema(x), ylims=(-0.2, +0.2), subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
 
     savefig("plots/visibility_function_linear.pdf")
 end
@@ -162,7 +165,7 @@ if true || !isfile("plots/visibility_function_log.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(-10, 0), ylims=(-15, +5), legend_position=:topright)
 
-    x = Cosmology.splinex(rec.τ_spline)
+    x = Cosmology.integration_points(rec.τ_spline)
     plot!(x, log10.(abs.(g.(rec_H_He_reion, x))), color=1, alpha=1.0, label=nothing)
     plot!(x, log10.(abs.(g.(rec_H_reioff, x))), color=1, alpha=0.3, label=nothing)
 

@@ -1,31 +1,28 @@
-#struct Recombination{TXe <: ODESolution, Tτ <: ODESolution, Ts <: ODESolution}
 struct Recombination
     bg::Background
 
     xswitch::Float64
     Xe_spline::ODESolution # free electron fraction
     τ_spline::ODESolution # optical depth
-    sound_horizon_spline::ODESolution # sound horizon
+    s_spline::ODESolution # sound horizon
 
-    #Recombination(bg::Background, xswitch::Float64) where {Tη <: ODESolution, Tt <: ODESolution} = new{Tη,Tt}(par, η_spline, t_spline)
-end
+    function Recombination(bg::Background; x0=-20.0)
+        xswitch = time_switch_Peebles(bg.par) # TODO: why does this allocate?
+        Xe_spline = spline_Xe(bg.par, xswitch)
 
-function Recombination(bg::Background; x0=-20.0)
-    xswitch = time_switch_Peebles(bg.par) # TODO: why does this allocate?
-    Xe_spline = spline_Xe(bg.par, xswitch)
+        Xe(x) = (x < xswitch ? Xe_Saha_H_He(bg.par, x) : Xe_spline(x)) + Xe_reionization(bg.par, x)
+        ne(x) = nH(bg.par,x) * Xe(x)
+        dτ_dx(x) = -ne(x) * σT * c / H(bg.par,x)
+        τ_spline = solve(ODEProblem((τ,_,x) -> dτ_dx(x), 0.0, (0.0, x0)), Tsit5(); abstol=1e-10, reltol=1e-10)
 
-    Xe(x) = (x < xswitch ? Xe_Saha_H_He(bg.par, x) : Xe_spline(x)) + Xe_reionization(bg.par, x)
-    ne(x) = nH(bg.par,x) * Xe(x)
-    dτ_dx(x) = -ne(x) * σT * c / H(bg.par,x)
-    τ_spline = solve(ODEProblem((τ,_,x) -> dτ_dx(x), 0.0, (0.0, x0)), Tsit5(); abstol=1e-8, reltol=1e-8)
+        R(x) = 4*bg.par.Ωγ0 / (3*bg.par.Ωb0*a(x))
+        cs(x) = c * √(R(x) / (3*(1+R(x))))
+        ds_dx(x, s) = cs(x) / aH(bg.par, x)
+        s0 = cs(x0) / aH(bg.par, x0)
+        s_spline = solve(ODEProblem((s,_,x) -> ds_dx(x,s), s0, (x0, 0.0)), Tsit5(); abstol=1e-10, reltol=1e-10) # TODO: rename s
 
-    R(x) = 4*bg.par.Ωγ0 / (3*bg.par.Ωb0*a(x))
-    cs(x) = c * √(R(x) / (3*(1+R(x))))
-    ds_dx(x, s) = cs(x) / aH(bg.par, x)
-    s0 = cs(x0) / aH(bg.par, x0)
-    sound_horizon_spline = solve(ODEProblem((s,_,x) -> ds_dx(x,s), s0, (x0, 0.0)), Tsit5(); abstol=1e-8, reltol=1e-8) # TODO: rename s
-
-    Recombination(bg, xswitch, Xe_spline, τ_spline, sound_horizon_spline)
+        new(bg, xswitch, Xe_spline, τ_spline, s_spline)
+    end
 end
 
 Base.broadcastable(rec::Recombination) = Ref(rec)
@@ -137,7 +134,7 @@ d2τ(rec::Recombination, x) = ForwardDiff.derivative(x -> dτ(rec, x), x)
  dg(rec::Recombination, x) = ForwardDiff.derivative(x ->  g(rec, x), x)
 d2g(rec::Recombination, x) = ForwardDiff.derivative(x -> dg(rec, x), x)
 
-sound_horizon(rec::Recombination, x) = rec.sound_horizon_spline(x)
+s(rec::Recombination, x) = rec.s_spline(x)
 
 time_decoupling(rec::Recombination) = find_zero(x -> dτ(rec,x)^2 - d2τ(rec,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
 time_recombination(rec::Recombination) = find_zero(x -> Xe(rec,x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3
