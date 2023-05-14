@@ -18,7 +18,7 @@ rec             = rec_H_He_reion # default
 
 # TODO: gather into one common function?
 xswi = time_switch_Peebles(rec.bg.par)
-xdec = time_decoupling(rec) # TODO: compute from dg = 0
+xdec = time_decoupling(rec) # TODO: compute from g′ = 0
 xrec = time_recombination(rec)
 xre1 = time_reionization_H(rec.bg.par)
 xre2 = time_reionization_He(rec.bg.par)
@@ -104,16 +104,16 @@ if true || !isfile("plots/optical_depth.pdf")
 
     plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-7.5, 3.5), legend_position=:topright)
 
-    d2τpos(rec, x) = d2τ(rec, x) > 0 ? d2τ(rec, x) : 1e-10 # "positive" d2τ: skip values where d2τ < 0. increase resolution here?
+    x = Cosmology.integration_points(rec.τ)
+    τ′′pos(rec, x) = τ′′(rec, x) > 0 ? τ′′(rec, x) : 1e-10 # "positive" τ′′: skip values where τ′′ < 0. increase resolution here?
 
-    x = Cosmology.integration_points(rec.τ_spline)
-    plot!(x, log10.(τ.(rec_H_reioff, x)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
-    plot!(x, log10.(-dτ.(rec_H_reioff, x)),    color=2, alpha=0.5, linestyle=:dash, label=nothing)
-    plot!(x, log10.(d2τpos.(rec_H_reioff, x)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(+τ.(rec_H_reioff, x)),      color=1, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(-τ′.(rec_H_reioff, x)),     color=2, alpha=0.5, linestyle=:dash, label=nothing)
+    plot!(x, log10.(+τ′′pos.(rec_H_reioff, x)), color=3, alpha=0.5, linestyle=:dash, label=nothing)
 
-    plot!(x, log10.(τ.(rec, x)),      color=1, linestyle=:solid, label=L"\log_{10} [+\tau\phantom{''}(x)]")
-    plot!(x, log10.(-dτ.(rec, x)),    color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")
-    plot!(x, log10.(d2τpos.(rec, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]")
+    plot!(x, log10.(+τ.(rec, x)),      color=1, linestyle=:solid, label=L"\log_{10} [+\tau\phantom{''}(x)]")
+    plot!(x, log10.(-τ′.(rec, x)),     color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")
+    plot!(x, log10.(+τ′′pos.(rec, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]")
 
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
@@ -130,9 +130,9 @@ if true || !isfile("plots/visibility_function_linear.pdf")
 
     plot(xlabel = L"x = \log a", xlims=(-10, 0), ylims=(-10, +10), legend_position=:topright)
 
-    x = Cosmology.integration_points(rec.τ_spline)
-    ys = [g.(rec_H_reioff, x) / 1, dg.(rec_H_reioff, x) / 10, d2g.(rec_H_reioff, x) / 100,
-          g.(rec_H_He_reion,  x) / 1, dg.(rec_H_He_reion,  x) / 10, d2g.(rec_H_He_reion,  x) / 100]
+    x = Cosmology.integration_points(rec.τ)
+    ys = [g.(rec_H_reioff, x) / 1, g′.(rec_H_reioff, x) / 10, g′′.(rec_H_reioff, x) / 100,
+          g.(rec_H_He_reion,  x) / 1, g′.(rec_H_He_reion,  x) / 10, g′′.(rec_H_He_reion,  x) / 100]
     cs = [1  2  3  1  2  3]
     as = [0.3  0.3  0.3  1.0  1.0  1.0]
     Ls = [nothing  nothing  nothing  L"\tilde{g}\phantom{''}(x) \,/\, 1"  L"\tilde{g}'\phantom{'}(x) \,/\, 10"  L"\tilde{g}''(x) \,/\, 100"]
@@ -153,8 +153,8 @@ if true || !isfile("plots/visibility_function_linear.pdf")
     # Zoom-in reionization plot
     # (simple example: http://www.breloff.com/images/juliacon/plotswithplots.slides.html#Inset/Floating-Subplots)
     x = range(-3, -1, length=400) # re-plot with many points to resolve narrow peaks
-    ys = [g.(rec_H_reioff, x) / 1, dg.(rec_H_reioff, x) / 10, d2g.(rec_H_reioff, x) / 100,
-          g.(rec_H_He_reion,  x) / 1, dg.(rec_H_He_reion,  x) / 10, d2g.(rec_H_He_reion,  x) / 100]
+    ys = [g.(rec_H_reioff, x) / 1, g′.(rec_H_reioff, x) / 10, g′′.(rec_H_reioff, x) / 100,
+          g.(rec_H_He_reion,  x) / 1, g′.(rec_H_He_reion,  x) / 10, g′′.(rec_H_He_reion,  x) / 100]
     plot!(x, ys, color=cs, alpha=as, z_order=zs, label=nothing, xlims=extrema(x), ylims=(-0.2, +0.2), subplot=2, inset = (1, bbox(0.09, 0.44, 0.3, 0.5, :right)))
 
     savefig("plots/visibility_function_linear.pdf")
@@ -165,7 +165,7 @@ if true || !isfile("plots/visibility_function_log.pdf")
 
     plot(xlabel = L"x = \log a", ylabel = L"\log \tilde{g}", xlims=(-10, 0), ylims=(-15, +5), legend_position=:topright)
 
-    x = Cosmology.integration_points(rec.τ_spline)
+    x = Cosmology.integration_points(rec.τ)
     plot!(x, log10.(abs.(g.(rec_H_He_reion, x))), color=1, alpha=1.0, label=nothing)
     plot!(x, log10.(abs.(g.(rec_H_reioff, x))), color=1, alpha=0.3, label=nothing)
 

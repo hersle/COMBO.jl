@@ -2,38 +2,35 @@ struct Recombination
     bg::Background
 
     xswitch::Float64
-    Xe_spline::ODESolution # free electron fraction
-    τ_spline::ODESolution # optical depth
-    s_spline::ODESolution # sound horizon
+    Xe_Peebles::ODESolution # free electron fraction
+    τ::ODESolution # optical depth
+    s::ODESolution # sound horizon
 
     function Recombination(bg::Background; x0=-20.0)
         xswitch = time_switch_Peebles(bg.par) # TODO: why does this allocate?
-        Xe_spline = spline_Xe(bg.par, xswitch)
+        Xe_Peebles = spline_Xe_Peebles(bg.par, xswitch)
 
-        Xe(x) = (x < xswitch ? Xe_Saha_H_He(bg.par, x) : Xe_spline(x)) + Xe_reionization(bg.par, x)
-        ne(x) = nH(bg.par,x) * Xe(x)
-        dτ_dx(x) = -ne(x) * σT * c / H(bg.par,x)
-        τ_spline = solve(ODEProblem((τ,_,x) -> dτ_dx(x), 0.0, (0.0, x0)), Tsit5(); abstol=1e-10, reltol=1e-10)
+        τ = spline_τ(bg.par, Xe_Peebles, xswitch)
 
         R(x) = 4*bg.par.Ωγ0 / (3*bg.par.Ωb0*a(x))
         cs(x) = c * √(R(x) / (3*(1+R(x))))
         ds_dx(x, s) = cs(x) / aH(bg.par, x)
         s0 = cs(x0) / aH(bg.par, x0)
-        s_spline = solve(ODEProblem((s,_,x) -> ds_dx(x,s), s0, (x0, 0.0)), Tsit5(); abstol=1e-10, reltol=1e-10) # TODO: rename s
+        s = solve(ODEProblem((s,_,x) -> ds_dx(x,s), s0, (x0, 0.0)), Tsit5(); abstol=1e-10, reltol=1e-10) # TODO: rename s
 
-        new(bg, xswitch, Xe_spline, τ_spline, s_spline)
+        new(bg, xswitch, Xe_Peebles, τ, s)
     end
 end
 
 Base.broadcastable(rec::Recombination) = Ref(rec)
 
-ρcrit(par::Parameters, x::Real) = 3 * H(par, x)^2 / (8 * π * G)
-ρb(par::Parameters, x::Real) = Ωb(par, x) * ρcrit(par, x)
-nb(par::Parameters, x::Real) = ρb(par, x) / mH
-nH(par::Parameters, x::Real) = (1-par.Yp) * nb(par, x)
-nHe(par::Parameters, x::Real) = par.Yp/4 * nb(par, x)
-Tγ(par::Parameters, x::Real) = par.Tγ0 / a(x)
-fHe(Yp::Real) = Yp / (4*(1-Yp))
+ρcrit(par::Parameters, x) = 3 * H(par, x)^2 / (8 * π * G)
+ρb(par::Parameters, x)    = Ωb(par, x) * ρcrit(par, x)
+nb(par::Parameters, x)    = ρb(par, x) / mH
+nH(par::Parameters, x)    = (1-par.Yp) * nb(par, x)
+nHe(par::Parameters, x)   = par.Yp/4 * nb(par, x)
+Tγ(par::Parameters, x)    = par.Tγ0 / a(x)
+fHe(Yp) = Yp / (4*(1-Yp))
 
 function Xe_Saha_H(par::Parameters, x::Real)
     Tb = Tγ(par, x)
@@ -79,7 +76,7 @@ end
 
 # @code_warntype on Xe(co,x) says that this can return Any, unless its return type is explicitly stated (due to Union{...., Nothing}?)
 # TODO: handle in a better way?
-function Xe_Peebles_spline(par::Parameters, x1::Float64, Xe1::Float64)
+function Xe_Peebles_spline(par::Parameters, x1, Xe1)
     function dXe_dx(x, Xe)
         Tb = Tγ(par,x) # K # TODO: assumptions? separate baryon evolution?
         n_1s = (1-Xe) * nH(par,x) # 1/m^3
@@ -119,22 +116,29 @@ function Xe_reionization(par::Parameters, x::Real)
 end
 
 # TODO: check type stability here, now that I do branching on Saha/Peebles
-function spline_Xe(par::Parameters, xswitch::Real; x1::Float64=-20.0)
+function spline_Xe_Peebles(par::Parameters, xswitch::Real; x1::Float64=-20.0)
     return Xe_Peebles_spline(par, xswitch, Xe_Saha_H_He(par, xswitch)) # start Peebles from last value of Saha
 end
 
-# TODO: don't duplicate in constructor
-Xe(rec::Recombination, x) = (x < rec.xswitch ? Xe_Saha_H_He(rec.bg.par, x) : rec.Xe_spline(x)) + Xe_reionization(rec.bg.par, x)
+Xe(par::Parameters, Xe_Peebles::ODESolution, xswitch, x) = (x < xswitch ? Xe_Saha_H_He(par, x) : Xe_Peebles(x)) + Xe_reionization(par, x)
+Xe(rec::Recombination, x) = Xe(rec.bg.par, rec.Xe_Peebles, rec.xswitch, x)
 
-  τ(rec::Recombination, x) = rec.τ_spline(x)
- dτ(rec::Recombination, x) = ForwardDiff.derivative(x ->  τ(rec, x), x)
-d2τ(rec::Recombination, x) = ForwardDiff.derivative(x -> dτ(rec, x), x)
+function spline_τ(par::Parameters, Xe_Peebles::ODESolution, xswitch; x0=-20.0)
+    #Xe(x) = Xe(par, Xe_Peebles, x)
+    ne(x) = nH(par,x) * Xe(par, Xe_Peebles, xswitch, x)
+    dτ_dx(x) = -ne(x) * σT * c / H(par,x)
+    return solve(ODEProblem((τ,_,x) -> dτ_dx(x), 0.0, (0.0, x0)), Tsit5(); abstol=1e-10, reltol=1e-10)
+end
 
-  g(rec::Recombination, x) = -dτ(rec, x) * exp(-τ(rec, x))
- dg(rec::Recombination, x) = ForwardDiff.derivative(x ->  g(rec, x), x)
-d2g(rec::Recombination, x) = ForwardDiff.derivative(x -> dg(rec, x), x)
+τ(rec::Recombination, x) = rec.τ(x)
+τ′(rec::Recombination, x) = ForwardDiff.derivative(x ->  τ(rec, x), x)
+τ′′(rec::Recombination, x) = ForwardDiff.derivative(x -> τ′(rec, x), x)
 
-s(rec::Recombination, x) = rec.s_spline(x)
+g(rec::Recombination, x) = ForwardDiff.derivative(x -> exp(-τ(rec, x)), x)
+g′(rec::Recombination, x) = ForwardDiff.derivative(x ->  g(rec, x), x)
+g′′(rec::Recombination, x) = ForwardDiff.derivative(x -> g′(rec, x), x)
 
-time_decoupling(rec::Recombination) = find_zero(x -> dτ(rec,x)^2 - d2τ(rec,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
+s(rec::Recombination, x) = rec.s(x)
+
+time_decoupling(rec::Recombination) = find_zero(x -> τ′(rec,x)^2 - τ′′(rec,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
 time_recombination(rec::Recombination) = find_zero(x -> Xe(rec,x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3

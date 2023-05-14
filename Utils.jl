@@ -34,7 +34,7 @@ end
 
 function format_time_variations(bg::Background, x::Real)
     return @sprintf("x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr",
-                     x,          a(x),      z(x),      η(bg,x) / Gyr, t(bg,x) / Gyr)
+                     x,          a(x),      z(x),      bg.η(x) / Gyr, bg.t(x) / Gyr)
 end
 
 function fixed_point_iterate(xfunc::Function, x0; tol::Float64=1e-10, maxiters::Integer=100)

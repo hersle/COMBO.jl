@@ -1,12 +1,12 @@
 struct Background
     par::Parameters # TODO: pass by reference?
-    η_spline::ODESolution # conformal time
-    t_spline::ODESolution # cosmic    time
+    η::ODESolution # conformal time
+    t::ODESolution # cosmic    time
 
     function Background(par::Parameters; x1::Float64=-20.0, x2::Float64=+20.0)
-        η_spline = spline_η(par, x1, x2)
-        t_spline = spline_t(par, x1, x2)
-        new(par, η_spline, t_spline)
+        η = integrate_η(par, x1, x2)
+        t = integrate_t(par, x1, x2)
+        new(par, η, t)
     end
 end
 
@@ -14,7 +14,7 @@ end
 Base.broadcastable(bg::Background) = Ref(bg)
 
 # Integrate conformal time from x1 to x2
-function spline_η(par, x1, x2)
+function integrate_η(par, x1, x2)
     dη_dx(x, η) = 1 / aH(par, x)
     if par.Ωm0 > 0
         η1 = 2 / (par.H0*√(par.Ωm0)) * (√(a(x1)+aeq(par)) - √(aeq(par))) # analytical solution with Ωk=ΩΛ=0
@@ -24,7 +24,7 @@ function spline_η(par, x1, x2)
     η_spline = solve(ODEProblem((η,_,x) -> dη_dx(x,η), η1, (x1, x2)), Tsit5(); abstol=1e-8, reltol=1e-8)
 end
 
-function spline_t(par, x1, x2)
+function integrate_t(par, x1, x2)
     dt_dx(x, η) = 1 / H(par, x)
     if par.Ωm0 > 0
         t1 = 2 / (3*par.H0*√(par.Ωm0)) * (√(a(x1)+aeq(par)) * (a(x1)-2*aeq(par)) + 2*aeq(par)^(3/2)) # analytical solution with Ωk=ΩΛ=0
@@ -34,11 +34,11 @@ function spline_t(par, x1, x2)
     t_spline = solve(ODEProblem((t,_,x) -> dt_dx(x,t), t1, (x1, x2)), Tsit5(); abstol=1e-8, reltol=1e-8)
 end
 
-η(bg::Background, x) = bg.η_spline(x)
-t(bg::Background, x) = bg.t_spline(x)
+η(bg::Background, x) = bg.η(x)
+t(bg::Background, x) = bg.t(x)
 
 # conformal distance
-χ(bg::Background, x) = c * (η(bg, 0) - η(bg, x))
+χ(bg::Background, x) = c * (η(bg,0) - η(bg,0))
 
 # radial coordinate (of light emitted at x)
 #   note: ALL three expressions
