@@ -38,7 +38,7 @@ end
 t(bg::Background, x) = bg.t(x)
 
 # conformal distance
-χ(bg::Background, x) = c * (η(bg,0) - η(bg,0))
+χ(bg::Background, x) = c * (η(bg,0) - η(bg,x))
 
 # radial coordinate (of light emitted at x)
 #   note: ALL three expressions

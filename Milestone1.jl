@@ -159,7 +159,7 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     Ωm0bounds = (0.0, 1.0)
     Ωk0bounds = (-1.0, +1.0)
     nparams = 3 # h, Ωm0, Ωk0
-    nchains = 5 # TODO: 10
+    nchains = 10 # TODO: 10
     nsamples = 10000 # per chain # TODO: 10000
     params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], nsamples, nchains; burnin=1000)
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
