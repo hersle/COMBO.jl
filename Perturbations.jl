@@ -384,3 +384,10 @@ function S(perts::PerturbationMode, x)
            1/(c*k) * ForwardDiff.derivative(x -> aH(par,x) * g(rec,x) * vb(perts, x), x) +
            3/(4*c^2*k^2) * ForwardDiff.derivative(x -> aH(par,x) * ForwardDiff.derivative(x -> aH(par,x) * g(rec,x) * Π(perts,x), x), x)
 end
+
+function SE(perts::PerturbationMode, x)
+    rec = perts.rec
+    bg = rec.bg
+    k = perts.k
+    return 3 * g(rec,x) * Π(perts,x) / (2*c*k*(η(bg,0.0)-η(bg,x)))^2
+end

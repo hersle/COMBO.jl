@@ -17,19 +17,110 @@ end
 
 #integratex_default = (f, x1, x2) -> integrate_trapz(f, x1, x2; length=1000)
 #integratek_default = (f, k1, k2) -> integrate_trapz(f, k1, k2; step=1000)
-function Cl(l, S, η, par; )
-    η0 = η(0.0)
 
-    integratex = integrate_adaptive
-    integratek = integrate_adaptive
+Θl0(l::Integer, k, S, η; integrate=integrate_adaptive)::Float64 = integrate(x -> S(x, k) * jl(l, c*k*(η(0.0)-η(x))), -20.0, 0.0)
+ΘEl0(l::Integer, k, SE, η; integrate=integrate_adaptive)::Float64 = √((l+2)*(l+1)*(l+0)*(l-1)) * integrate(x -> SE(x, k) * jl(l, c*k*(η(0.0)-η(x))), -20.0, 0.0)
 
-    dΘ0_dx(x, k) :: Float64 = S(x, k) * jl(l, c*k*(η0-η(x)))
-    Θ0(k) = integratex(x -> dΘ0_dx(x, k), -20.0, 0.0)
-
-    dCl_dk(k) :: Float64 = 2/π * P_primordial(par, k) * (k * Θ0(k))^2
-    Cl = integratek(dCl_dk, 1/(c*η0), 4000/(c*η0))
-
+#=
+function Cl(l::Integer, η, par, Θ0A, Θ0B; integratek=integrate_adaptive)
+    dCl_dk(k)::Float64 = 2/π * P_primordial(par, k) * k^2 * Θ0A(k) * Θ0B(k) # TODO: function barrier on P_primordial?
+    Cl = integratek(dCl_dk, 1/(c*η(0)), 4000/(c*η(0)))
     return Cl
+end
+
+function Cl(rec::Recombination, ls::Vector{Int}, Θ0A, Θ0B)
+    println("Entered Cl")
+    Clarr = Vector{Float64}(undef, length(ls))
+    #Threads.@threads for i in 1:length(ls)
+    for i in 1:length(ls)
+        l = ls[i]
+        println("C(l=$l) = ")
+        Θ0Af(k::Float64)::Float64 = Θ0A(l,k)
+        Θ0Bf(k::Float64)::Float64 = Θ0B(l,k)
+        Clarr[i] = Cl(l, rec.bg.η, rec.bg.par, Θ0Af, Θ0Bf)
+        #time = @elapsed(Clarr[i] = Cl(l, rec.bg.η, rec.bg.par, k -> Θ0A(l,k), k -> Θ0A(l,k)))
+        #println("$(Clarr[i]) ($time seconds)")
+    end
+    return Clarr
+end
+
+function ClTT(rec::Recombination, η::ODESolution, ls::Vector{Int})
+    xs = range(-20, 0, length=2000) # TODO: looks like this is enough?
+    logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=250) # TODO: 250
+    Sspl = spline_S(rec, S, xs, logks) # (x,k)-callable
+    println("Splined S")
+    Θ0A(l,k) = Θl0(l, k, Sspl, η)^2
+    Θ0B(l,k) = 1.0
+    return Cl(rec, ls, Θ0A, Θ0B)
+end
+
+ClTT(rec::Recombination, ls::Vector{Int}) = ClTT(rec, rec.bg.η, ls)
+=#
+
+#=
+function ClTE(l::Integer, SE, η, par)
+    η0 = η(0.0)
+    integratex = integrate_adaptive
+    dΘ0_dx(x, k) :: Float64 = SE(x, k) * jl(l, c*k*(η0-η(x)))
+    Θ0(k) = √((l+2)*(l+1)*l*(l-1)) * integratex(x -> dΘ0_dx(x, k), -20.0, 0.0)
+    return Cl(l, S, η, par, k -> Θ0(k)^2, k -> 1.0)
+end
+=#
+
+# TODO: would be quicker without two overloaded functions
+function Cl(rec::Recombination, ls::Vector{Int}, Θ0A, Θ0B; integrate=integrate_adaptive, verbose=false)
+    bg = rec.bg
+    par = bg.par
+    η = bg.η
+
+    Clarr = Vector{Float64}(undef, length(ls))
+    #Threads.@threads for i in 1:length(ls)
+    for i in 1:length(ls)
+        l = ls[i]
+
+        time = @elapsed begin
+        dCl_dk(k)::Float64 = 2/π * P_primordial(par, k) * k^2 * Θ0A(l,k) * Θ0B(l,k) # TODO: function barrier on P_primordial?
+        Clarr[i] = integrate(dCl_dk, 1/(c*η(0)), 4000/(c*η(0)))
+        end
+        if verbose
+            println("Cl(l=$l) = $(Clarr[i]) ($time seconds)")
+        end
+    end
+    return Clarr
+end
+
+# TODO: loop over types, to spline only once?
+function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integrate_adaptive)
+    # TODO
+    bg = rec.bg
+    par = bg.par
+    η = bg.η
+    xs = range(-20, 0, length=2000) # TODO: looks like this is enough?
+    logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=250) # TODO: 250
+
+    Sspl, SEspl = spline_S(rec, [S, SE], xs, logks)
+    if type == :TT
+        factor = (l,k) -> Θl0(l,k,Sspl,η)^2
+    elseif type == :TE || type == :ET
+        factor = (l,k) -> Θl0(l,k,Sspl,η) * ΘEl0(l,k,SEspl,η)
+    elseif type == :EE
+        factor = (l,k) -> ΘEl0(l,k,SEspl,η)^2
+    else
+        throw(error("unknown Cl type: $type"))
+    end
+
+    Clarr = Vector{Float64}(undef, length(ls))
+    #Threads.@threads for i in 1:length(ls)
+    for i in 1:length(ls)
+        l = ls[i]
+
+        time = @elapsed begin
+        dCl_dk(k)::Float64 = 2/π * P_primordial(par, k) * k^2 * factor(l,k) # TODO: function barrier on P_primordial?
+        Clarr[i] = integrate(dCl_dk, 1/(c*η(0)), 4000/(c*η(0)))
+        end
+        println("Cl(l=$l) = $(Clarr[i]) ($time seconds)")
+    end
+    return Clarr
 end
 
 #=
@@ -94,39 +185,23 @@ function Cl_cubature(l, Sspl, η, par; rtol=1e-3, kwargs...)
 end
 =#
 
-function spline_S(rec)
-    kmin =    1 / (c*η(rec.bg,0))
-    kmax = 4000 / (c*η(rec.bg,0))
-    logks = range(log10(kmin), log10(kmax), length=250) # TODO: 250
-    ks = 10 .^ logks
+# TODO: spline multiple S in one pass?
+function spline_S(rec::Recombination, Sfunc::Function, xs::AbstractRange, logks::AbstractRange, perturbs::Vector{PerturbationMode})
+    Sdata = Float64[Sfunc(perturb, x) for x in xs, perturb in perturbs]
+    Sdata[xs .== 0, :] .= 0.0 # TODO: set by interpolation instead?
 
-    perturbs = [PerturbationMode(rec, k) for k in ks]
-    #index_with_most_points = argmax(length(perturb.qty_splines.t) for perturb in perturbs)
-    #xs = perturbs[index_with_most_points].y.t # TODO: extend?
-
-    # make uniform grids
-    xs = range(-20, 0, length=2000) # TODO: looks like this is enough?
-
-    # TODO: evaluate quicker
-    Sdata = Float64[S(perturb, x) for x in xs, perturb in perturbs]
-
-    println("Splining S(x, log10(k)) on uniform $(size(Sdata))-grid")
     S_spline_x_logk = spline((xs, logks), Sdata) # (x, log10(k)) spline - must convert to S(x,k) spline upon calling it!
     S_spline_x_k(x, k) = S_spline_x_logk(x, log10(k))
     return S_spline_x_k
 end
 
-function Cls(rec::Recombination, ls::Vector)
-    bg = rec.bg
-    S = spline_S(rec) # (x,log(k))
+# Useful for splining S and SE, while computing perturbations only once
+function spline_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs::AbstractRange, logks::AbstractRange)
+    ks = 10 .^ logks
+    perturbs = [PerturbationMode(rec, k) for k in ks]
+    return [spline_S(rec, Sfunc, xs, logks, perturbs) for Sfunc in Sfuncs]
+end
 
-    # TODO: paralellize with threads?
-    Clarr = Vector{Float64}(undef, length(ls))
-    Threads.@threads for i in 1:length(ls)
-        l = ls[i]
-        @time(time = @elapsed(Clarr[i] = Cl(l, S, bg.η, bg.par)))
-        println("C(l=$l) = $(Clarr[i]) ($time seconds)")
-    end
-
-    return Clarr
+function spline_S(rec::Recombination, Sfunc::Function, xs::AbstractRange, logks::AbstractRange)
+    return spline_S(rec, [Sfunc], xs, logks)[1]
 end

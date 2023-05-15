@@ -24,9 +24,10 @@ function plot_Cl(ls, Cls, datafilename, polarization, filename)
 
     plot!(log10.(ls), Dl.(ls, Cls), label="ΛCDM prediction", marker=:circle, markersize=1.0, markerstrokecolor=1)
 
-    ls_data, Dls_data, ΔDlms_data, ΔDlps_data = read_planck_data(datafilename)
-    scatter!(log10.(ls_data), Dls_data; yerror=(ΔDlms_data, ΔDlps_data), color=:black, marker=:square, markersize=1, label="Planck measurements")
-    # TODO: don't do log units?
+    if !isnothing(datafilename)
+        ls_data, Dls_data, ΔDlms_data, ΔDlps_data = read_planck_data(datafilename)
+        scatter!(log10.(ls_data), Dls_data; yerror=(ΔDlms_data, ΔDlps_data), color=:black, marker=:square, markersize=1, label="Planck measurements")
+    end
 
     savefig(filename)
 end
@@ -63,9 +64,10 @@ end
 
 # test Θl0
 if true
-    l = unique(Int.(round.(10 .^ range(0, 3.4, length=300))))
-    Cl = Cls(rec,l)
-    plot_Cl(l, Cl, "data/planck_Cl_TT.txt", "TT", "plots/power_spectrum_cmb.pdf")
+    l = unique(Int.(round.(10 .^ range(0, 3.4, length=200))))
+    plot_Cl(l, Cl(rec,l,:TT), "data/planck_Cl_TT.txt", "TT", "plots/power_spectrum_CMB_TT.pdf")
+    plot_Cl(l, Cl(rec,l,:TE), "data/planck_Cl_TE.txt", "TE", "plots/power_spectrum_CMB_TE.pdf")
+    plot_Cl(l, Cl(rec,l,:EE), "data/planck_Cl_EE.txt", "EE", "plots/power_spectrum_CMB_EE.pdf")
 end
 
 end
