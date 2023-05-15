@@ -15,30 +15,40 @@ rec = Recombination(bg)
 xrm = equality_rm(par)
 krm = 1 / (c*η(bg,xrm))
 
-Dl(l, Cl) = l * (l+1) / (2*π) * Cl * (par.Tγ0 / 1e-6)^2 # convert to "Planck units"
-logerrm(y, Δy) = -log10(1-Δy/y)
-logerrp(y, Δy) = +log10(1+Δy/y)
-
-function plot_Cl(ls, Cls, datafilename, polarization, filename)
+function plot_Dl(series, polarization, filename)
     plot(xlabel=L"\log_{10} l", ylabel=L"C_l^\mathrm{%$(polarization)} \, T_{\gamma 0} \cdot \frac{l(l+1)}{2\pi} \,/\, (\mathrm{\mu} K)^2", legend_position=:topleft)
 
-    plot!(log10.(ls), Dl.(ls, Cls), label="ΛCDM prediction", marker=:circle, markersize=1.0, markerstrokecolor=1)
-
-    if !isnothing(datafilename)
-        ls_data, Dls_data, ΔDlms_data, ΔDlps_data = read_planck_data(datafilename)
-        scatter!(log10.(ls_data), Dls_data; yerror=(ΔDlms_data, ΔDlps_data), color=:black, marker=:square, markersize=1, label="Planck measurements")
+    for (i, (l, Dl, ΔDl, settings)) in enumerate(series)
+        println("i=$i, l = $l")
+        plot!(log10.(l), Dl; yerror=ΔDl, color=i, markerstrokecolor=i, markersize=1, marker=:circle, settings...)
     end
 
     savefig(filename)
 end
 
-function read_planck_data(filename)
+function lgrid(n1=10, n2=20, n3=150)
+    return unique(Int.(round.(10 .^ vcat(
+        range(0.0, 1.0, length=n1),
+        range(1.0, 2.0, length=n2),
+        range(2.0, 3.4, length=n3)
+    ))))
+end
+
+function plot_Dl_against_Planck(type)
+    @assert type in (:TT, :TE, :EE)
+
+    l = lgrid()
+
+    plot_Dl([
+        (l, Dl(rec,l,type), nothing, Dict(:label => "Our ΛCDM prediction")),
+        (read_Planck_data("data/Planck_Dl_$type.txt")..., Dict(:label => "Planck's measurements", :color => :black, :marker => :square, :markerstrokecolor => :black, :markersize => 0.75, :markerstrokewidth => 0.50, :seriestype => :scatter)),
+    ], "$type", "plots/power_spectrum_CMB_$type.pdf")
+end
+
+function read_Planck_data(filename)
     data = readdlm(filename, comments=true) # e.g. "data/planck_Cl_TT_lowl.txt"
     l, Dl, ΔDlm, ΔDlp = data[:,1], data[:,2], data[:,3], data[:,4]
-    #Dl   .*= (1e-6 / par.Tγ0)^2 # for converting to "dimensionless units"
-    #ΔDlm .*= (1e-6 / par.Tγ0)^2
-    #ΔDlp .*= (1e-6 / par.Tγ0)^2
-    return l, Dl, ΔDlm, ΔDlp
+    return l, Dl, (ΔDlm, ΔDlp)
 end
 
 if false
@@ -64,11 +74,9 @@ end
 
 # test Θl0
 if true
-    l = unique(Int.(round.(10 .^ range(0, 3.4, length=200))))
-    # TODO: read planck data from file, and generalize to (l, [Cl1, Cl2], [label1, label2], etc.)
-    plot_Cl(l, Cl(rec,l,:TT), "data/Planck_Dl_TT.txt", "TT", "plots/power_spectrum_CMB_TT.pdf")
-    plot_Cl(l, Cl(rec,l,:TE), "data/Planck_Dl_TE.txt", "TE", "plots/power_spectrum_CMB_TE.pdf")
-    plot_Cl(l, Cl(rec,l,:EE), "data/Planck_Dl_EE.txt", "EE", "plots/power_spectrum_CMB_EE.pdf")
+    plot_Dl_against_Planck(:TT)
+    plot_Dl_against_Planck(:TE)
+    plot_Dl_against_Planck(:EE)
 end
 
 end
