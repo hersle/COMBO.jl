@@ -12,7 +12,7 @@ function integrate_trapz(f, x1, x2; step=nothing, length=nothing)
     return trapz(xs, f.(xs))
 end
 
-function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=9) # TODO: rtol=1e-3 and order=8 gives good results!
+function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=10) # TODO: rtol=1e-3 and order=8 gives good results!
     return quadgk(f, x1, x2; atol=atol, rtol=rtol, order=order)[1] # discard error
 end
 
@@ -113,8 +113,7 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integra
     end
 
     Clarr = Vector{Float64}(undef, length(ls))
-    #Threads.@threads for i in 1:length(ls)
-    for i in 1:length(ls)
+    Threads.@threads for i in 1:length(ls)
         l = ls[i]
 
         time = @elapsed begin
@@ -205,7 +204,7 @@ end
 # Useful for splining S and SE, while computing perturbations only once
 function spline_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs::AbstractRange, logks::AbstractRange)
     ks = 10 .^ logks
-    perturbs = [PerturbationMode(rec, k) for k in ks]
+    perturbs = [PerturbationMode(rec, k) for k in ks] # TODO: multi-threading
     return [spline_S(rec, Sfunc, xs, logks, perturbs) for Sfunc in Sfuncs]
 end
 
