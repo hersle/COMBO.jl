@@ -19,7 +19,6 @@ function plot_Dl(series, polarization, filename)
     plot(xlabel=L"\log_{10} l", ylabel=L"C_l^\mathrm{%$(polarization)} \, T_{\gamma 0} \cdot \frac{l(l+1)}{2\pi} \,/\, (\mathrm{\mu} K)^2", legend_position=:topleft)
 
     for (i, (l, Dl, ΔDl, settings)) in enumerate(series)
-        println("i=$i, l = $l")
         plot!(log10.(l), Dl; yerror=ΔDl, color=i, markerstrokecolor=i, markersize=1, marker=:circle, settings...)
     end
 
@@ -94,13 +93,13 @@ if false
     savefig("plots/source.pdf")
 end
 
-if false
+if true
     plot_Dl_against_Planck(:TT)
     plot_Dl_against_Planck(:TE)
     plot_Dl_against_Planck(:EE)
 end
 
-if true
+if false
     plot_Dl_varying_parameter(:h,           [0.57, 0.67, 0.77];       labelfunc = h    -> L"h = %$(h)")
     plot_Dl_varying_parameter(:Ωb0,         [0.02, 0.05, 0.08];       labelfunc = Ωb0  -> L"\Omega_{b0} = %$(Ωb0)")
     plot_Dl_varying_parameter(:Ωc0,         [0.217, 0.267, 0.317];    labelfunc = Ωc0  -> L"\Omega_{c0} = %$(Ωc0)")

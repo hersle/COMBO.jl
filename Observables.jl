@@ -16,11 +16,14 @@ function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=10) # TODO: rtol
     return quadgk(f, x1, x2; atol=atol, rtol=rtol, order=order)[1] # discard error
 end
 
+integratek(f, k1, k2; η0=1.4607052857688397e18) = integrate_trapz(f, k1, k2; step=2*π/(c*η0*10)) # TODO: non-default η0!!
+integratex(f, x1, x2) = integrate_trapz(f, x1, x2; step=0.01)
+
 dΘl0_dx(l::Integer, k, x, S, η) = S(x, k) * jl(l, c*k*(η(0)-η(x)))
-Θl0(l::Integer, k, S, η; integrate=integrate_adaptive)::Float64 = integrate(x -> dΘl0_dx(l,k,x,S,η), -20.0, 0.0)
+Θl0(l::Integer, k, S, η; integrate=integratex)::Float64 = integrate(x -> dΘl0_dx(l,k,x,S,η), -20.0, 0.0)
 
 dΘEl0_dx(l::Integer, k, x, SE, η) = √((l+2)*(l+1)*(l+0)*(l-1)) * SE(x, k) * jl(l, c*k*(η(0.0)-η(x)))
-ΘEl0(l::Integer, k, SE, η; integrate=integrate_adaptive)::Float64 = integrate(x -> dΘEl0_dx(l,k,x,SE,η), -20.0, 0.0)
+ΘEl0(l::Integer, k, SE, η; integrate=integratex)::Float64 = integrate(x -> dΘEl0_dx(l,k,x,SE,η), -20.0, 0.0)
 
 dCl_dk(l,k,ΘAΘB,par)::Float64 = 2/π * P_primordial(par, k) * k^2 * ΘAΘB(l,k) # TODO: function barrier on P_primordial?
 
@@ -71,7 +74,8 @@ end
 =#
 
 # TODO: would be quicker without two overloaded functions
-function Cl(rec::Recombination, ls::Vector{Int}, Θ0A, Θ0B; integrate=integrate_adaptive, verbose=false)
+#=
+function Cl(rec::Recombination, ls::Vector{Int}, Θ0A, Θ0B; integrate=integratek, verbose=false)
     bg = rec.bg
     par = bg.par
     η = bg.η
@@ -91,9 +95,10 @@ function Cl(rec::Recombination, ls::Vector{Int}, Θ0A, Θ0B; integrate=integrate
     end
     return Clarr
 end
+=#
 
 # TODO: loop over types, to spline only once?
-function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integrate_adaptive)
+function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integratek)
     # TODO
     bg = rec.bg
     par = bg.par
@@ -125,7 +130,7 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integra
 end
 
 Dl(l, Cl, Tγ0) = l * (l+1) / (2*π) * Cl * (Tγ0 / 1e-6)^2 # convert to "Planck units"
-function Dl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integrate_adaptive)
+function Dl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integratek)
     return Dl.(ls, Cl(rec, ls, type; integrate=integrate), rec.bg.par.Tγ0)
 end
 
