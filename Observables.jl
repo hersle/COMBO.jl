@@ -7,19 +7,22 @@ P(perturb::PerturbationMode, x::Real, k::Real) = abs(Δ(perturb,x,k))^2 * P_prim
 # https://discourse.julialang.org/t/rfc-ann-oscillatoryintegralsode-jl-levin-method-ordinarydiffeq/55601
 
 function integrate_trapz(f, x1, x2; step=nothing, length=nothing)
-    xs = range(x1, x2; step=step, length=length) # either step or length should be specified
+    @assert !isnothing(step) || !isnothing(length) "step or length must be specified"
+    xs = range(x1, x2; step=step, length=length)
     return trapz(xs, f.(xs))
 end
 
-function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=8) # TODO: rtol=1e-3 and order=8 gives good results!
+function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=9) # TODO: rtol=1e-3 and order=8 gives good results!
     return quadgk(f, x1, x2; atol=atol, rtol=rtol, order=order)[1] # discard error
 end
 
-#integratex_default = (f, x1, x2) -> integrate_trapz(f, x1, x2; length=1000)
-#integratek_default = (f, k1, k2) -> integrate_trapz(f, k1, k2; step=1000)
+dΘl0_dx(l::Integer, k, x, S, η) = S(x, k) * jl(l, c*k*(η(0)-η(x)))
+Θl0(l::Integer, k, S, η; integrate=integrate_adaptive)::Float64 = integrate(x -> dΘl0_dx(l,k,x,S,η), -20.0, 0.0)
 
-Θl0(l::Integer, k, S, η; integrate=integrate_adaptive)::Float64 = integrate(x -> S(x, k) * jl(l, c*k*(η(0.0)-η(x))), -20.0, 0.0)
-ΘEl0(l::Integer, k, SE, η; integrate=integrate_adaptive)::Float64 = √((l+2)*(l+1)*(l+0)*(l-1)) * integrate(x -> SE(x, k) * jl(l, c*k*(η(0.0)-η(x))), -20.0, 0.0)
+dΘEl0_dx(l::Integer, k, x, SE, η) = √((l+2)*(l+1)*(l+0)*(l-1)) * SE(x, k) * jl(l, c*k*(η(0.0)-η(x)))
+ΘEl0(l::Integer, k, SE, η; integrate=integrate_adaptive)::Float64 = integrate(x -> dΘEl0_dx(l,k,x,SE,η), -20.0, 0.0)
+
+dCl_dk(l,k,ΘAΘB,par)::Float64 = 2/π * P_primordial(par, k) * k^2 * ΘAΘB(l,k) # TODO: function barrier on P_primordial?
 
 #=
 function Cl(l::Integer, η, par, Θ0A, Θ0B; integratek=integrate_adaptive)
@@ -115,12 +118,16 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integra
         l = ls[i]
 
         time = @elapsed begin
-        dCl_dk(k)::Float64 = 2/π * P_primordial(par, k) * k^2 * factor(l,k) # TODO: function barrier on P_primordial?
-        Clarr[i] = integrate(dCl_dk, 1/(c*η(0)), 4000/(c*η(0)))
+        Clarr[i] = integrate(k -> dCl_dk(l,k,factor,par), 1/(c*η(0)), 4000/(c*η(0)))
         end
         println("Cl(l=$l) = $(Clarr[i]) ($time seconds)")
     end
     return Clarr
+end
+
+Dl(l, Cl, Tγ0) = l * (l+1) / (2*π) * Cl * (Tγ0 / 1e-6)^2 # convert to "Planck units"
+function Dl(rec::Recombination, ls::Vector{Int}, type::Symbol; integrate=integrate_adaptive)
+    return Dl.(ls, Cl(rec, ls, type; integrate=integrate), rec.bg.par.Tγ0)
 end
 
 #=
