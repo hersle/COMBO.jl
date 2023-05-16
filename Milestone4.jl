@@ -93,10 +93,10 @@ if false
     savefig("plots/source.pdf")
 end
 
-if true
-    plot_Dl_against_Planck(:TT)
-    plot_Dl_against_Planck(:TE)
-    plot_Dl_against_Planck(:EE)
+if false
+    @time plot_Dl_against_Planck(:TT)
+    @time plot_Dl_against_Planck(:TE)
+    @time plot_Dl_against_Planck(:EE)
 end
 
 if false
@@ -109,6 +109,43 @@ if false
     plot_Dl_varying_parameter(:As,          [2e-8, 2e-9, 2e-10];      labelfunc = As   -> L"A_s = 2 \cdot 10^{%$(Int(round(log10(As/2))))}")
     plot_Dl_varying_parameter(:Yp,          [0, 0.24, 0.48];          labelfunc = Yp   -> L"Y_p = %$(Yp)")
     plot_Dl_varying_parameter(:z_reion_H,   [NaN, 8];                 labelfunc = z    -> isnan(z) ? "reionizatioff" : "reionization")
+end
+
+if true
+    ls = 1, 10, 100, 1000
+    η0 = η(bg,0)
+    x = unique(vcat(range(-8, -3, length=1000), range(-3, 0, length=4000)))
+    k = range(1/(c*η0), 1200/(c*η0), length=3000)
+    Sspl, SEspl = Cosmology.spline_S(rec, [Cosmology.S, Cosmology.SE])
+    Θl0(l,k) = Cosmology.Θl0(l, k, Sspl, bg.η)
+    dCl_dk(l,k) = Cosmology.dCl_dk_TT(l,k,Sspl,SEspl,bg.η,par)
+
+    # plot dΘl0_dl = S * j?
+    plot(xlabel=L"x = \log a", ylabel=L"\partial \Theta_{l}(x,k) / \partial x", legend_position=:bottomright)
+    kcη0 = [400, 4000]
+    ks = kcη0 / (c*η0)
+    kMpc = ks / Mpc
+    ys = [Cosmology.dΘl0_dx.(10, k, x, Sspl, Ref(bg.η)) for k in ks]
+    plot!(x, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, label=[L"k=400/(c \eta_0)"  L"k=4000/(c \eta_0)"])
+    plot!(x, ys, linewidth=0.3, xlims=(-1, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, xticks=-1:0.1:0, subplot=2, inset=(1, bbox(0.15, 0.03, 0.7, 0.5, :right)), label=nothing)
+    savefig("plots/dThetal0_dx.pdf")
+
+    # plot Θl0 # TODO: ΘEl0?
+    # TODO: integrate Θl0 from k=0, forcing it to start from 0?
+    plot(xlabel=L"k / c \eta_0", ylabel=L"\Theta_l(x=0,k)", xticks=0:100:4000, ylims=(-0.1, +0.1), legend_position=:topright)
+    for l in ls
+        plot!(k*c*η0, Θl0.(l, k), linewidth=0.3, label=L"l=%$l")
+    end
+    savefig("plots/Theta0.pdf")
+
+    k = range(1/(c*η0), 300/(c*η0), length=2000)
+    for (i, l) in enumerate(ls)
+        plot(xlabel=L"k / c \eta_0", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / (c \eta_0)^{-1}", xlims=(0, 300), xticks=0:100:500, legend_position=:topright)
+        plot!(k*c*η0, dCl_dk.(l,k) / (c*η0), linewidth=0.5, color=i, label=L"l=%$l")
+        savefig("plots/dCl_dk_$l.pdf")
+    end
+
+    # plot dCl_dk
 end
 
 end
