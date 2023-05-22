@@ -16,45 +16,20 @@ function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=8) # TODO: rtol=
     return quadgk(f, x1, x2; atol=atol, rtol=rtol, order=order)[1] # discard error
 end
 
-dΘl0_dx(l, k, x, S, η) = S(x, k) * jl(l, c*k*(η(0)-η(x)))
-Θl0(l, k, S, η)::Float64 = integrate_trapz(x -> dΘl0_dx(l,k,x,S,η), -10.0, 0.0; step=0.02)
+dΘTl0_dx(l, xs, ks, STs, η) =                              STs .* jl.(l, c * ks' .* (η(0) .- η.(xs))) # TODO: pass array of η?
+dΘEl0_dx(l, xs, ks, SEs, η) = √((l+2)*(l+1)*(l+0)*(l-1)) * SEs .* jl.(l, c * ks' .* (η(0) .- η.(xs)))
 
-dΘEl0_dx(l::Integer, k, x, SE, η) = √((l+2)*(l+1)*(l+0)*(l-1)) * SE(x, k) * jl(l, c*k*(η(0.0)-η(x)))
-ΘEl0(l::Integer, k, SE, η)::Float64 = integrate_trapz(x -> dΘEl0_dx(l,k,x,SE,η), -10.0, 0.0; step=0.02)
+ΘTl0(l, xs, ks, STs, η) = trapz(xs, dΘTl0_dx(l,xs,ks,STs,η), Val(1)) # integrate over x (not k)
+ΘEl0(l, xs, ks, SEs, η) = trapz(xs, dΘEl0_dx(l,xs,ks,SEs,η), Val(1)) # integrate over x (not k)
 
-dCl_dk_generic(l,k,ΘAΘB,par)::Float64 = 2/π * P_primordial(par, k) * k^2 * ΘAΘB # TODO: function barrier on P_primordial?
-dCl_dk_TT(l,k,S,SE,η,par)::Float64 = dCl_dk_generic(l, k, Θl0(l,k,S,η)^2,              par)
-dCl_dk_TE(l,k,S,SE,η,par)::Float64 = dCl_dk_generic(l, k, Θl0(l,k,S,η)*ΘEl0(l,k,SE,η), par)
-dCl_dk_EE(l,k,S,SE,η,par)::Float64 = dCl_dk_generic(l, k, ΘEl0(l,k,SE,η)^2,            par)
+dCl_dk_generic(l,ks,ΘAΘBs,par) = 2/π * P_primordial.(par, ks) .* ks .^ 2 .* ΘAΘBs # TODO: function barrier on P_primordial?
+dCl_dk_TT(l,xs,ks,STs,SEs,η,par) = dCl_dk_generic(l, ks, ΘTl0(l,xs,ks,STs,η) .^ 2,                   par)
+dCl_dk_TE(l,xs,ks,STs,SEs,η,par) = dCl_dk_generic(l, ks, ΘTl0(l,xs,ks,STs,η) .* ΘEl0(l,xs,ks,SEs,η), par)
+dCl_dk_EE(l,xs,ks,STs,SEs,η,par) = dCl_dk_generic(l, ks, ΘEl0(l,xs,ks,SEs,η) .^ 2,                   par)
 
-function trapz_adaptive(x::AbstractRange, y)
-    Δx = x[2] - x[1]
-    I = 0.0
-    for i in 1:length(x)-1
-        #x1, x2 = x[i], x[i+1]
-        y1, y2 = y[i], y[i+1]
-        I += Δx * (y1+y2) / 2
-    end
-    return I
-end
-
-function trapz_adaptive(x::AbstractRange, y, P; tol=1e-5)
-    Δx = x[2] - x[1]
-    I1, I2 = 0.0, 0.0
-    for i in 1:length(x)-1
-        #x1, x2 = x[i], x[i+1]
-        y1, y2 = y[i], y[i+1]
-        I2 += Δx * (y1+y2) / 2
-        if i % P == 0 # just completed another period
-            ΔI = I2 - I1 # contribution over last period
-            if abs(ΔI) / I2 < tol
-                return I2
-            end
-            I1 = I2
-        end
-    end
-    return NaN
-end
+Cl_TT(l,xs,ks,STs,SEs,η,par) = trapz(ks, dCl_dk_TT(l,xs,ks,STs,SEs,η,par)) # integrate over k
+Cl_TE(l,xs,ks,STs,SEs,η,par) = trapz(ks, dCl_dk_TE(l,xs,ks,STs,SEs,η,par)) # integrate over k
+Cl_EE(l,xs,ks,STs,SEs,η,par) = trapz(ks, dCl_dk_EE(l,xs,ks,STs,SEs,η,par)) # integrate over k
 
 # TODO: loop over types, to spline only once?
 function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
@@ -63,14 +38,11 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     par = bg.par
     η = bg.η
     xs = range(-10, 0, step=0.02) # TODO: looks like this is enough?
-
-    Sspl = spline_S(rec, S)
-
     ks = range(1/(c*η(0)), 4000/(c*η(0)), step=2*π/(c*η(0)*10)) # TODO: 3000->4000, 6->10
-    STs = Sspl.(xs, ks')
 
-    ckηgrid = c * ks' .* (η(0) .- η.(xs))
-    dCl_prefactor = 2/π * P_primordial.(par, ks) .* ks .^ 2
+    STspl, SEspl = spline_S(rec, [S, SE]) # TODO: rename S -> ST?
+    STs = STspl.(xs, ks')
+    SEs = SEspl.(xs, ks')
 
     Clarr = Vector{Float64}(undef, length(ls))
     Threads.@threads for i in 1:length(ls)
@@ -78,19 +50,14 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
 
         time = @elapsed begin
         if type == :TT
-            dΘl0_dx = STs .* jl.(l, ckηgrid)
-            Θl0 = trapz(xs, dΘl0_dx, Val(1)) # integrate over x
-            dCl_dk = dCl_prefactor .* Θl0 .^ 2 # TODO: function barrier on P_primordial?
-            Clarr[i] = trapz(ks, dCl_dk) # integrate over k
-        elseif type == :TE || type == :ET
-            integrand = k -> dCl_dk_TE(l,k,Sspl,SEspl,η,par)
+            Clarr[i] = Cl_TT(l, xs, ks, STs, SEs, η, par)
+        elseif type == :TE
+            Clarr[i] = Cl_TE(l, xs, ks, STs, SEs, η, par)
         elseif type == :EE
-            integrand = k -> dCl_dk_EE(l,k,Sspl,SEspl,η,par)
+            Clarr[i] = Cl_EE(l, xs, ks, STs, SEs, η, par)
         else
             throw(error("unknown Cl type: $type"))
         end
-        #Clarr[i] = integrate_trapz(integrand, 1/(c*η(0)), 4000/(c*η(0)); step=2*π/(c*η(0)*10))
-        #Clarr[i] = integrate_adaptive(integrand, 1/(c*η(0)), 4000/(c*η(0)))
         end
         println("Cl(l=$l) = $(Clarr[i]) ($time seconds)")
     end
@@ -106,7 +73,6 @@ end
 function spline_S(rec::Recombination, Sfunc::Function, xs::AbstractRange, logks::AbstractRange, perturbs::Vector{PerturbationMode})
     Sdata = Float64[Sfunc(perturb, x) for x in xs, perturb in perturbs]
     Sdata[xs .== 0, :] .= 0.0 # TODO: set by interpolation instead?
-    #Sdata[:, logks .== 0] .= 0.0
 
     S_spline_x_logk = spline((xs, logks), Sdata) # (x, log(k)) spline - must convert to S(x,k) spline upon calling it!
     S_spline_x_k(x, k) = S_spline_x_logk(x, log10(k))
@@ -115,7 +81,7 @@ end
 
 # Useful for splining S and SE, while computing perturbations only once
 function spline_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs::AbstractRange, logks::AbstractRange)
-    ks = 10 .^ (logks)
+    ks = 10 .^ logks
     perturbs = [PerturbationMode(rec, k) for k in ks] # TODO: multi-threading
     return [spline_S(rec, Sfunc, xs, logks, perturbs) for Sfunc in Sfuncs]
 end
