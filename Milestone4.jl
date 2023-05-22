@@ -72,11 +72,30 @@ function read_Planck_data(filename)
     return l, Dl, (ΔDlm, ΔDlp)
 end
 
-if false
+function read_Pk_data(filename; last_column_is_upper_bound=false)
+    data = readdlm(filename, comments=true) # e.g. "data/planck_Cl_TT_lowl.txt"
+    k, Pk, lastcol = data[:,1], data[:,2], data[:,3]
+    ΔPk = last_column_is_upper_bound ? lastcol .- Pk : lastcol
+    return k, Pk, ΔPk
+end
+
+if true
     k = 10 .^ range(-4, 1, length=100) / Mpc # TODO: h in units
-    plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]")
-    plot!(log10.(k / (par.h0/Mpc)), log10.(P.(Perturbations.(rec,k),0,k) / (Mpc/par.h0)^3)) # TODO
-    vline!([log10(krm / (par.h0/Mpc))], color=:gray, linestyle=:dash)
+    plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]", legend_position=:bottomleft)
+
+    plot!(log10.(k / (par.h0/Mpc)), log10.(P.(PerturbationMode.(rec,k),0,k) / (Mpc/par.h0)^3), label="Our ΛCDM prediction") # TODO
+
+    series = [
+        ("data/Pk_SDSS_DR7_LRG.txt", false, "SDSS DR7 LRG data"),
+        ("data/Pk_WMAP_ACT.txt", true, "WMAP & ACT data"),
+        ("data/Pk_Lyman_alpha.txt", true, "Lyman-α data")
+    ]
+    for (i, (filename, last_column_is_upper_bound, label)) in enumerate(series)
+        k, Pk, ΔPk = read_Pk_data(filename; last_column_is_upper_bound=last_column_is_upper_bound)
+        scatter!(log10.(k), log10.(Pk), yerror=(log10.(Pk) .- log10.(Pk-ΔPk), log10.(Pk+ΔPk) .- log10.(Pk)), marker=:square, markersize=0.75, markerstrokewidth=0.5, color=i+1, markerstrokecolor=i+1, label=label)
+    end
+
+    vline!([log10(krm / (par.h0/Mpc))], color=:gray, linestyle=:dash, label=L"k_\textrm{eq}")
     savefig("plots/power_spectrum_matter.pdf")
 end
 
@@ -111,7 +130,7 @@ if false
     plot_Dl_varying_parameter(:z_reion_H,   [NaN, 8];                 labelfunc = z    -> isnan(z) ? "reionizatioff" : "reionization")
 end
 
-if true
+if false
     ls = 1, 10, 100, 1000
     η0 = η(bg,0)
     x = unique(vcat(range(-8, -3, length=1000), range(-3, 0, length=4000)))
