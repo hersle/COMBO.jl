@@ -138,10 +138,16 @@ if true
     end
     savefig("plots/Theta0.pdf")
 
-    k = range(1/(c*η0), 300/(c*η0), length=2000)
     for (i, l) in enumerate(ls)
-        plot(xlabel=L"k / c \eta_0", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / (c \eta_0)^{-1}", xlims=(0, 300), xticks=0:100:500, legend_position=:topright)
-        plot!(k*c*η0, dCl_dk.(l,k) / (c*η0), linewidth=0.5, color=i, label=L"l=%$l")
+        kmin = max(1, l-100) / (c*η0)
+        kmax = kmin + 300 / (c*η0)
+        k = range(kmin, kmax, length=2000)
+        x = k*c*η0
+        y = dCl_dk.(l,k) / (c*η0)
+        e10 = Int(round(log10(maximum(y))))
+        y ./= 10.0^e10
+        plot(xlabel=L"k / c \eta_0", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / 10^{%$(e10)} (c \eta_0)^{-1}", xticks=0:100:2000, legend_position=:topright)
+        plot!(x, y, linewidth=0.5, color=i, label=L"l=%$l")
         savefig("plots/dCl_dk_$l.pdf")
     end
 
