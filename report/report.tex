@@ -1301,7 +1301,7 @@ The more elegant way is to compute the present temperature and polarization mult
 \label{eq_Thetal0}
 \end{align}
 \end{subequations}
-with the source functions
+with spherical Bessel functions of the first kind $j_l(x)$ and the \textbf{source functions}
 \begin{subequations}
 \begin{align}
 	\tilde{S}^T(x,k) &= \tilde{g} \big( \Theta_0 + \Psi + \tfrac14 \Pi \big) + e^{-\tau} \big( \Psi - \Phi \big)^\prime - \frac{1}{ck} (\aH \tilde{g} v_b)^\prime + \frac{3}{4c^2k^2} \big( \aH (\aH \tilde{g} \Pi)^\prime \big)^\prime, \quad \big( {}^\prime = \tfrac{\partial}{\partial x} \big), \\
@@ -1317,6 +1317,38 @@ Finally, note that it is easier to see the $l$-variation of the power spectrum i
 \end{equation}
 
 \subsection{Implementation}
+
+\begin{itemize}
+\item
+To plot today's matter power spectrum $P(k)$,
+we simply choose a range of $k$ values,
+integrate the perturbation modes for all of them,
+and calculate \eqref{eq_Pk} at $x=0$.
+
+\item
+To plot today's CMB power spectrum $C_l$,
+we perform the $k$-integral \eqref{eq_Cl} with the trapezoid method over the grid $1/(c\eta_0) \leq k \leq 4000/(c\eta_0)$ with uniform spacing $\Delta k = 2 \pi / 10 c \eta_0$.
+For each $k$-integral, we perform the $x$-integrals \eqref{eq_Thetal0} also with the trapezoid method over the grid $-10 \leq x \leq 0$ with $1000$ uniformly spaced $x$-values \TODO{verify}.
+
+\item
+To evaluate the source functions \eqref{eq_S} at arbitrary $x$ and $k$, we make two-dimensional cubic splines of them
+after integrating $250$ logarithmically spaced perturbation modes over the integration interval.
+This is almost as accurate as integrating every $k$-mode,
+as the source function(s) $S(x,k)$ are vary relatively smoothly,
+unlike the rapidly oscillating product(s) $S(x,k) j_l(ck(\eta_0-\eta)$.
+
+\item
+Calculating the self-correlations $C_l^\text{TT}$ and $C_l^\text{EE}$ involves two nested integrals and takes around a minute,
+while the cross-correlation $C_l^\text{TE}$ involves three nested integrals and therefore takes closer to two minutes.
+This is with around $175$ $l$-values.
+\TODO{how about on a single thread?}
+
+\item
+The integration over $x$ and $k$ dominates the runtime of the computation of the CMB power spectrum.
+It could probably be sped up, for example if one could subtract the oscillating part of the integrals with known analytical expressions,
+or by employing specialized Levin-type quadrature \footnote{See \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.}.
+
+\end{itemize}
 
 \subsection{Results}
 
