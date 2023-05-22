@@ -27,6 +27,35 @@ dCl_dk_TT(l,k,S,SE,η,par)::Float64 = dCl_dk_generic(l, k, Θl0(l,k,S,η)^2,    
 dCl_dk_TE(l,k,S,SE,η,par)::Float64 = dCl_dk_generic(l, k, Θl0(l,k,S,η)*ΘEl0(l,k,SE,η), par)
 dCl_dk_EE(l,k,S,SE,η,par)::Float64 = dCl_dk_generic(l, k, ΘEl0(l,k,SE,η)^2,            par)
 
+function trapz_adaptive(x::AbstractRange, y)
+    Δx = x[2] - x[1]
+    I = 0.0
+    for i in 1:length(x)-1
+        #x1, x2 = x[i], x[i+1]
+        y1, y2 = y[i], y[i+1]
+        I += Δx * (y1+y2) / 2
+    end
+    return I
+end
+
+function trapz_adaptive(x::AbstractRange, y, P; tol=1e-5)
+    Δx = x[2] - x[1]
+    I1, I2 = 0.0, 0.0
+    for i in 1:length(x)-1
+        #x1, x2 = x[i], x[i+1]
+        y1, y2 = y[i], y[i+1]
+        I2 += Δx * (y1+y2) / 2
+        if i % P == 0 # just completed another period
+            ΔI = I2 - I1 # contribution over last period
+            if abs(ΔI) / I2 < tol
+                return I2
+            end
+            I1 = I2
+        end
+    end
+    return NaN
+end
+
 # TODO: loop over types, to spline only once?
 function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     # TODO
@@ -34,9 +63,14 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     par = bg.par
     η = bg.η
     xs = range(-10, 0, step=0.02) # TODO: looks like this is enough?
-    logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=250) # TODO: 250
 
-    Sspl, SEspl = spline_S(rec, [S, SE], xs, logks)
+    Sspl = spline_S(rec, S)
+
+    ks = range(1/(c*η(0)), 4000/(c*η(0)), step=2*π/(c*η(0)*10)) # TODO: 3000->4000, 6->10
+    STs = Sspl.(xs, ks')
+
+    ckηgrid = c * ks' .* (η(0) .- η.(xs))
+    dCl_prefactor = 2/π * P_primordial.(par, ks) .* ks .^ 2
 
     Clarr = Vector{Float64}(undef, length(ls))
     Threads.@threads for i in 1:length(ls)
@@ -44,7 +78,10 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
 
         time = @elapsed begin
         if type == :TT
-            integrand = k -> dCl_dk_TT(l,k,Sspl,SEspl,η,par)
+            dΘl0_dx = STs .* jl.(l, ckηgrid)
+            Θl0 = trapz(xs, dΘl0_dx, Val(1)) # integrate over x
+            dCl_dk = dCl_prefactor .* Θl0 .^ 2 # TODO: function barrier on P_primordial?
+            Clarr[i] = trapz(ks, dCl_dk) # integrate over k
         elseif type == :TE || type == :ET
             integrand = k -> dCl_dk_TE(l,k,Sspl,SEspl,η,par)
         elseif type == :EE
@@ -52,7 +89,7 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
         else
             throw(error("unknown Cl type: $type"))
         end
-        Clarr[i] = integrate_trapz(integrand, 1/(c*η(0)), 4000/(c*η(0)); step=2*π/(c*η(0)*10))
+        #Clarr[i] = integrate_trapz(integrand, 1/(c*η(0)), 4000/(c*η(0)); step=2*π/(c*η(0)*10))
         #Clarr[i] = integrate_adaptive(integrand, 1/(c*η(0)), 4000/(c*η(0)))
         end
         println("Cl(l=$l) = $(Clarr[i]) ($time seconds)")
@@ -69,15 +106,16 @@ end
 function spline_S(rec::Recombination, Sfunc::Function, xs::AbstractRange, logks::AbstractRange, perturbs::Vector{PerturbationMode})
     Sdata = Float64[Sfunc(perturb, x) for x in xs, perturb in perturbs]
     Sdata[xs .== 0, :] .= 0.0 # TODO: set by interpolation instead?
+    #Sdata[:, logks .== 0] .= 0.0
 
-    S_spline_x_logk = spline((xs, logks), Sdata) # (x, log10(k)) spline - must convert to S(x,k) spline upon calling it!
+    S_spline_x_logk = spline((xs, logks), Sdata) # (x, log(k)) spline - must convert to S(x,k) spline upon calling it!
     S_spline_x_k(x, k) = S_spline_x_logk(x, log10(k))
     return S_spline_x_k
 end
 
 # Useful for splining S and SE, while computing perturbations only once
 function spline_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs::AbstractRange, logks::AbstractRange)
-    ks = 10 .^ logks
+    ks = 10 .^ (logks)
     perturbs = [PerturbationMode(rec, k) for k in ks] # TODO: multi-threading
     return [spline_S(rec, Sfunc, xs, logks, perturbs) for Sfunc in Sfuncs]
 end
@@ -88,7 +126,7 @@ end
 
 function spline_S(rec::Recombination, Sfunc)
     η = rec.bg.η
-    xs = range(-10, 0, length=1000)
+    xs = range(-20, 0, step=0.01)
     logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=250)
     return spline_S(rec, Sfunc, xs, logks)
 end
