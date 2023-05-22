@@ -17,10 +17,10 @@ function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=8) # TODO: rtol=
 end
 
 dΘl0_dx(l, k, x, S, η) = S(x, k) * jl(l, c*k*(η(0)-η(x)))
-Θl0(l, k, S, η)::Float64 = integrate_trapz(x -> dΘl0_dx(l,k,x,S,η), -20.0, 0.0; step=0.02)
+Θl0(l, k, S, η)::Float64 = integrate_trapz(x -> dΘl0_dx(l,k,x,S,η), -10.0, 0.0; step=0.02)
 
 dΘEl0_dx(l::Integer, k, x, SE, η) = √((l+2)*(l+1)*(l+0)*(l-1)) * SE(x, k) * jl(l, c*k*(η(0.0)-η(x)))
-ΘEl0(l::Integer, k, SE, η)::Float64 = integrate_trapz(x -> dΘEl0_dx(l,k,x,SE,η), -20.0, 0.0; step=0.02)
+ΘEl0(l::Integer, k, SE, η)::Float64 = integrate_trapz(x -> dΘEl0_dx(l,k,x,SE,η), -10.0, 0.0; step=0.02)
 
 dCl_dk_generic(l,k,ΘAΘB,par)::Float64 = 2/π * P_primordial(par, k) * k^2 * ΘAΘB # TODO: function barrier on P_primordial?
 dCl_dk_TT(l,k,S,SE,η,par)::Float64 = dCl_dk_generic(l, k, Θl0(l,k,S,η)^2,              par)
@@ -33,7 +33,7 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     bg = rec.bg
     par = bg.par
     η = bg.η
-    xs = range(-20, 0, length=2000) # TODO: looks like this is enough?
+    xs = range(-10, 0, step=0.02) # TODO: looks like this is enough?
     logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=250) # TODO: 250
 
     Sspl, SEspl = spline_S(rec, [S, SE], xs, logks)
@@ -88,7 +88,7 @@ end
 
 function spline_S(rec::Recombination, Sfunc)
     η = rec.bg.η
-    xs = range(-20, 0, length=2000)
+    xs = range(-10, 0, length=1000)
     logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=250)
     return spline_S(rec, Sfunc, xs, logks)
 end

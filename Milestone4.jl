@@ -16,7 +16,7 @@ xrm = equality_rm(par)
 krm = 1 / (c*η(bg,xrm))
 
 function plot_Dl(series, polarization, filename)
-    plot(xlabel=L"\log_{10} l", ylabel=L"C_l^\mathrm{%$(polarization)} \, T_{\gamma 0} \cdot \frac{l(l+1)}{2\pi} \,/\, (\mathrm{\mu} K)^2", legend_position=:topleft)
+    plot(xlabel=L"\log_{10} l", ylabel=L"D_l^\mathrm{%$(polarization)}", legend_position=:topleft)
 
     for (i, (l, Dl, ΔDl, settings)) in enumerate(series)
         plot!(log10.(l), Dl; yerror=ΔDl, color=i, markerstrokecolor=i, markersize=1, marker=:circle, settings...)
