@@ -79,7 +79,7 @@ function read_Pk_data(filename; last_column_is_upper_bound=false)
     return k, Pk, ΔPk
 end
 
-if true
+if false
     k = 10 .^ range(-4, 1, length=100) / Mpc # TODO: h in units
     plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]", legend_position=:bottomleft)
 
@@ -112,7 +112,7 @@ if false
     savefig("plots/source.pdf")
 end
 
-if false
+if true
     @time plot_Dl_against_Planck(:TT)
     @time plot_Dl_against_Planck(:TE)
     @time plot_Dl_against_Planck(:EE)
@@ -125,7 +125,7 @@ if false
     plot_Dl_varying_parameter(:Tγ0,         [2.6255, 2.7255, 2.8255]; labelfunc = Tγ0  -> L"T_{\gamma 0} = %$(Tγ0) \textrm{ K}")
     plot_Dl_varying_parameter(:Neff,        [0, 3.046, 6.092];        labelfunc = Neff -> L"N_\textrm{eff} = %$(Neff)")
     plot_Dl_varying_parameter(:ns,          [0.76, 0.96, 1.16];       labelfunc = ns   -> L"n_s = %$(ns)")
-    plot_Dl_varying_parameter(:As,          [2e-8, 2e-9, 2e-10];      labelfunc = As   -> L"A_s = 2 \cdot 10^{%$(Int(round(log10(As/2))))}")
+    plot_Dl_varying_parameter(:As,          [1e-9, 2e-9, 4e-9];      labelfunc = As   -> L"A_s = %$(As/1e-9) \cdot 10^{-9}")
     plot_Dl_varying_parameter(:Yp,          [0, 0.24, 0.48];          labelfunc = Yp   -> L"Y_p = %$(Yp)")
     plot_Dl_varying_parameter(:z_reion_H,   [NaN, 8];                 labelfunc = z    -> isnan(z) ? "reionizatioff" : "reionization")
 end

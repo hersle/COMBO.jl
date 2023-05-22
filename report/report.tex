@@ -1262,17 +1262,63 @@ During rapid late-time oscillations, the discrepancies grow regardless of the $k
 \clearpage
 \section{Power spectra}
 
+Having calculated the linear perturbations to the homogeneous and isotropic background universe,
+we are finally in position to predict power spectra for matter and the cosmic microwave background (CMB).
+
+\subsection{Theory}
+
+The \textbf{matter power spectrum}
 \begin{equation}
-	P_\text{primordial}(k) = \frac{2\pi^2}{k^3} \cdot A_s \Big( \frac{k}{k_\text{pivot}} \Big)^{n_s-1}
+	P(x,k) = |\Delta(x,k)|^2 \, P_0(k)
+\label{eq_Pk}
+\end{equation}
+is given by the \TODO{name/gauge?} overdensity
+\begin{equation}
+	\Delta(x,k) = \frac23 \left( \frac{ck}{H_0} \right)^2 \frac{\Phi(x,k)}{\Omega_{m0}/a(x)}.
+\end{equation}
+and the primordial power spectrum after inflation,
+\begin{equation}
+	P_0(k) = \frac{2\pi^2}{k^3} \cdot A_s \cdot \left( \frac{k}{k_\text{pivot}} \right)^{n_s-1}.
 \label{eq_P_primordial}
 \end{equation}
 
+The \textbf{CMB power spectrum} is characterized by the sphere-expansion coefficients
 \begin{equation}
-	|\Delta|^2 = \cdot P_\text{primordial}(k)
-	\quad \text{where} \quad
-	\Delta(x,k) = \frac23 \Big( \frac{ck}{H_0} \Big)^2 \frac{\Phi(x,k)}{\Omega_{m0}/a(x)}
-\label{eq_P}
+	C^{\textrm{AB}}_l = \frac{2}{\pi} \int_0^\infty k^2 P_0(k) \, \Theta_l^\text{A}(0,k) \, \Theta_l^\text{B}(0,k) \, dk
+	\quad \text{where} \quad \text{$\text{A},\text{B} \in \{\text{T},\text{E}\}$}.
+\label{eq_Cl}
 \end{equation}
+where $\{\text{AB}\} \in \{\text{TT},\text{EE},\text{TE}\}$ denotes \textbf{T}emperature self-correlation, \textbf{E}-mode polarization self-correlation and cross-correlation, respectively.
+We want the power spectrum for $1 \leq l \lesssim 1000$.
+When we integrated the perturbations, we cut the system off at $l \lesssim 10$.
+The brute force way forward is therefore to significantly increase the size of the system, and necessarily also the computational requirements.
+The more elegant way is to compute the present temperature and polarization multipoles from \emph{line of sight integration}:
+\TODO{is $\Theta^T = \Theta$ and $\Theta^E = \Theta^P$?}
+\begin{subequations}
+\begin{align}
+	\Theta^T_l(x=0,k) &= \phantom{\sqrt{\frac{(l+2)!}{(l-2)!}}} \int_{-\infty}^0 \tilde{S}^T(x,k) j_l\big(ck\big(\eta_0-\eta\big)\big) dx, \\
+	\Theta^E_l(x=0,k) &= \sqrt{\frac{(l+2)!}{(l-2)!}} \int_{-\infty}^0 \tilde{S}^E(x,k) j_l\big(ck\big(\eta_0-\eta\big)\big) dx
+\label{eq_Thetal0}
+\end{align}
+\end{subequations}
+with the source functions
+\begin{subequations}
+\begin{align}
+	\tilde{S}^T(x,k) &= \tilde{g} \big( \Theta_0 + \Psi + \tfrac14 \Pi \big) + e^{-\tau} \big( \Psi - \Phi \big)^\prime - \frac{1}{ck} (\aH \tilde{g} v_b)^\prime + \frac{3}{4c^2k^2} \big( \aH (\aH \tilde{g} \Pi)^\prime \big)^\prime, \quad \big( {}^\prime = \tfrac{\partial}{\partial x} \big), \\
+	\tilde{S}^E(x,k) &= \phantom{\tilde{g} \big( \Theta_0 + \Psi + \tfrac14 \Pi \big) + e^{-\tau} \big( \Psi - \Phi \big)^\prime - \frac{1}{ck} (\aH \tilde{g} v_b)^\prime +{}} \frac{3}{4 c^2 k^2} \frac{\tilde{g} \Pi}{(\eta_0-\eta)^2}.
+\label{eq_S}
+\end{align}
+\end{subequations}
+
+Finally, note that it is easier to see the $l$-variation of the power spectrum in the conventional quantity
+\begin{equation}
+	D_l = \frac{l (l+1)}{2 \pi} \left(\frac{T_{\gamma 0}}{\mu \textrm{K}}\right)^2 C_l.
+\label{eq_Dl}
+\end{equation}
+
+\subsection{Implementation}
+
+\subsection{Results}
 
 \begin{figure}
 \centering
@@ -1304,7 +1350,7 @@ During rapid late-time oscillations, the discrepancies grow regardless of the $k
 \includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TT.pdf} \\
 \includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TE.pdf} \\
 \includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_EE.pdf}
-\caption{CMB power spectra}
+\caption{CMB power spectra with the fiducial Planck cosmology parameters \eqref{eq_planck2018}}
 \label{fig_power_spectrum_cmb}
 \end{figure}
 
@@ -1319,7 +1365,7 @@ During rapid late-time oscillations, the discrepancies grow regardless of the $k
 \includegraphics[width=0.49\textwidth]{../plots/power_spectrum_CMB_varying_As.pdf} \hfill
 \includegraphics[width=0.49\textwidth]{../plots/power_spectrum_CMB_varying_Yp.pdf}
 %\includegraphics[width=0.49\textwidth]{../plots/power_spectrum_CMB_varying_z_reion_H.pdf} \\
-\caption{CMB power spectra for varying parameters}
+\caption{CMB power spectra for $\Lambda$CDM models where one independent parameter is varied away from the Planck parameters \eqref{eq_planck2018} at the time, but still constrained by the relations there.}
 \label{fig_power_spectrum_cmb_varying_parameters}
 \end{figure}
 
