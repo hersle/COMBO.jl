@@ -374,6 +374,7 @@ end
 
 Π(perts::PerturbationMode, x) = Θl(perts, x, 2) + ΘPl(perts, x, 0) + ΘPl(perts, x, 2)
 
+# TODO: rename S -> ST?
 S_SW(perts::PerturbationMode, x) = g(perts.rec,x) * (Θl(perts, x, 0) + Ψ(perts, x) + Π(perts,x)/4)
 S_ISW(perts::PerturbationMode, x) = exp(-τ(perts.rec,x)) * ForwardDiff.derivative(x -> Ψ(perts,x) - Φ(perts,x), x)
 S_Doppler(perts::PerturbationMode, x) = -1/(c*perts.k) * ForwardDiff.derivative(x -> aH(perts.rec.bg.par,x) * g(perts.rec,x) * vb(perts, x), x)

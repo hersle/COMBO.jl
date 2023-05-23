@@ -19,8 +19,8 @@ end
 dΘTl0_dx(l, xs, ks, STs, η) =                              STs .* jl.(l, c * ks' .* (η(0) .- η.(xs))) # TODO: pass array of η?
 dΘEl0_dx(l, xs, ks, SEs, η) = √((l+2)*(l+1)*(l+0)*(l-1)) * SEs .* jl.(l, c * ks' .* (η(0) .- η.(xs)))
 
-ΘTl0(l, xs, ks, STs, η) = trapz(xs, dΘTl0_dx(l,xs,ks,STs,η), Val(1)) # integrate over x (not k)
-ΘEl0(l, xs, ks, SEs, η) = trapz(xs, dΘEl0_dx(l,xs,ks,SEs,η), Val(1)) # integrate over x (not k)
+ΘTl0(l, xs, ks, STs, η) = trapz(xs, dΘTl0_dx(l,xs,ks,STs,η), Val(1)) # integrate over x (axis #1), not k (axis #2)
+ΘEl0(l, xs, ks, SEs, η) = trapz(xs, dΘEl0_dx(l,xs,ks,SEs,η), Val(1)) # integrate over x (axis #1), not k (axis #2)
 
 dCl_dk_generic(l,ks,ΘAΘBs,par) = 2/π * P_primordial.(par, ks) .* ks .^ 2 .* ΘAΘBs # TODO: function barrier on P_primordial?
 dCl_dk_TT(l,xs,ks,STs,SEs,η,par) = dCl_dk_generic(l, ks, ΘTl0(l,xs,ks,STs,η) .^ 2,                   par)
@@ -33,7 +33,7 @@ Cl_TE(l,xs,ks,STs,SEs,η,par) = trapz_extra(0.0, 0.0, ks, dCl_dk_TE(l,xs,ks,STs,
 Cl_EE(l,xs,ks,STs,SEs,η,par) = trapz_extra(0.0, 0.0, ks, dCl_dk_EE(l,xs,ks,STs,SEs,η,par)) # integrate over k (manually add k=0)
 
 # TODO: loop over types, to spline only once?
-function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
+function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; spline_S_before_gridding=true)
     # TODO
     bg = rec.bg
     par = bg.par
@@ -41,8 +41,7 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     xs = range(-10, 0, step=0.02) # TODO: looks like this is enough?
     ks = range(1/(c*η(0)), 4000/(c*η(0)), step=2*π/(c*η(0)*10))
 
-    STspl, SEspl = spline_S(rec, [S, SE]) # TODO: rename S -> ST?
-    STs, SEs = STspl.(xs, ks'), SEspl.(xs, ks')
+    STs, SEs = grid_S(rec, [S, SE], xs, ks; spline_first=spline_S_before_gridding)
 
     Clarr = Vector{Float64}(undef, length(ls))
     Threads.@threads for i in 1:length(ls)
@@ -69,21 +68,11 @@ function Dl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     return Dl.(ls, Cl(rec, ls, type), rec.bg.par.Tγ0)
 end
 
-# TODO: spline multiple S in one pass?
-function spline_S(rec::Recombination, Sfunc::Function, xs::AbstractRange, logks::AbstractRange, perturbs::Vector{PerturbationMode})
-    Sdata = Float64[Sfunc(perturb, x) for x in xs, perturb in perturbs]
-    Sdata[xs .== 0, :] .= 0.0 # TODO: set by interpolation instead?
-
-    S_spline_x_logk = spline((xs, logks), Sdata) # (x, log(k)) spline - must convert to S(x,k) spline upon calling it!
-    S_spline_x_k(x, k) = S_spline_x_logk(x, log10(k))
-    return S_spline_x_k
-end
-
 # Useful for splining S and SE, while computing perturbations only once
 function spline_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs::AbstractRange, logks::AbstractRange)
-    ks = 10 .^ logks
-    perturbs = [PerturbationMode(rec, k) for k in ks] # TODO: multi-threading
-    return [spline_S(rec, Sfunc, xs, logks, perturbs) for Sfunc in Sfuncs]
+    Sgrids = grid_S(rec, Sfuncs, xs, 10 .^ logks)
+    Sspls = [spline((xs, logks), Sgrid) for Sgrid in Sgrids] # (x, log(k)) callables
+    return [(x, k) -> Sspl(x, log10(k)) for Sspl in Sspls] # (x, k) callables (this is what the "user" wants!)
 end
 
 function spline_S(rec::Recombination, Sfunc::Function, xs::AbstractRange, logks::AbstractRange)
@@ -93,6 +82,23 @@ end
 function spline_S(rec::Recombination, Sfunc)
     η = rec.bg.η
     xs = range(-20, 0, step=0.01)
-    logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=250)
+    logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=300)
     return spline_S(rec, Sfunc, xs, logks)
+end
+
+function grid_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs, ks; spline_first=false)
+    if spline_first
+        Sspls = spline_S(rec, Sfuncs)
+        return [Sspl.(xs, ks') for Sspl in Sspls]
+    else
+        perturbs = Vector{PerturbationMode}(undef, length(ks))
+        Threads.@threads for i in 1:length(ks)
+            perturbs[i] = PerturbationMode(rec, ks[i])
+        end
+        return [[Sfunc(perturb, x) for x in xs, perturb in perturbs] for Sfunc in Sfuncs]
+    end
+end
+
+function grid_S(rec::Recombination, Sfunc::Function, xs, ks; spline_first=false)
+    return grid_S(rec, [Sfunc], xs, ks; spline_first=spline_first)[1]
 end
