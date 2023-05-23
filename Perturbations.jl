@@ -374,20 +374,9 @@ end
 
 Π(perts::PerturbationMode, x) = Θl(perts, x, 2) + ΘPl(perts, x, 0) + ΘPl(perts, x, 2)
 
-function S(perts::PerturbationMode, x)
-    rec = perts.rec
-    par = rec.bg.par
-    k = perts.k
-
-    return g(rec,x) * (Θl(perts, x, 0) + Ψ(perts, x) + Π(perts,x)/4) +
-           exp(-τ(rec,x)) * ForwardDiff.derivative(x -> Ψ(perts,x) - Φ(perts,x), x) -
-           1/(c*k) * ForwardDiff.derivative(x -> aH(par,x) * g(rec,x) * vb(perts, x), x) +
-           3/(4*c^2*k^2) * ForwardDiff.derivative(x -> aH(par,x) * ForwardDiff.derivative(x -> aH(par,x) * g(rec,x) * Π(perts,x), x), x)
-end
-
-function SE(perts::PerturbationMode, x)
-    rec = perts.rec
-    bg = rec.bg
-    k = perts.k
-    return 3 * g(rec,x) * Π(perts,x) / (2*c*k*(η(bg,0.0)-η(bg,x)))^2
-end
+S_SW(perts::PerturbationMode, x) = g(perts.rec,x) * (Θl(perts, x, 0) + Ψ(perts, x) + Π(perts,x)/4)
+S_ISW(perts::PerturbationMode, x) = exp(-τ(perts.rec,x)) * ForwardDiff.derivative(x -> Ψ(perts,x) - Φ(perts,x), x)
+S_Doppler(perts::PerturbationMode, x) = -1/(c*perts.k) * ForwardDiff.derivative(x -> aH(perts.rec.bg.par,x) * g(perts.rec,x) * vb(perts, x), x)
+S_polarization(perts::PerturbationMode, x) = 3/(4*c^2*perts.k^2) * ForwardDiff.derivative(x -> aH(perts.rec.bg.par,x) * ForwardDiff.derivative(x -> aH(perts.rec.bg.par,x) * g(perts.rec,x) * Π(perts,x), x), x)
+S(perts::PerturbationMode, x) = S_SW(perts, x) + S_ISW(perts, x) + S_Doppler(perts, x) + S_polarization(perts, x)
+SE(perts::PerturbationMode, x) = 3 * g(perts.rec,x) * Π(perts,x) / (2*c*perts.k*(η(perts.rec.bg,0.0)-η(perts.rec.bg,x)))^2
