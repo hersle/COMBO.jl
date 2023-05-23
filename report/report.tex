@@ -1312,7 +1312,7 @@ with spherical Bessel functions of the first kind $j_l(x)$ and the \textbf{sourc
 
 Finally, note that it is easier to see the $l$-variation of the power spectrum in the conventional quantity
 \begin{equation}
-	D_l = \frac{l (l+1)}{2 \pi} \left(\frac{T_{\gamma 0}}{\mu \textrm{K}}\right)^2 C_l.
+	D_l^\text{AB} = \frac{l (l+1)}{2 \pi} \left(\frac{T_{\gamma 0}}{\mu \textrm{K}}\right)^2 C_l^\text{AB}.
 \label{eq_Dl}
 \end{equation}
 
@@ -1347,10 +1347,7 @@ This is with around $175$ $l$-values.
 The integration over $x$ and $k$ dominates the runtime of the computation of the CMB power spectrum.
 It could probably be sped up, for example if one could subtract the oscillating part of the integrals with known analytical expressions,
 or by employing specialized Levin-type quadrature \footnote{See \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.}.
-
 \end{itemize}
-
-\subsection{Results}
 
 \begin{figure}
 \centering
@@ -1370,21 +1367,113 @@ or by employing specialized Levin-type quadrature \footnote{See \href{https://gi
 \label{fig_dCl_dk}
 \end{figure}
 
+\subsection{Results}
+
 \begin{figure}
 \centering
 \includegraphics[width=0.7\textwidth]{../plots/power_spectrum_matter.pdf}
-\caption{Matter power spectrum}
+\caption{
+	Today's matter power spectrum \eqref{eq_Pk} at $x=0$ with the Planck parameters \eqref{eq_planck2018},
+	compared to data from SDSS, WMAP, ACT and eBOSS (Lyman-$\alpha$ forest?) \TODO{refs}.
+	The dashed line shows the $k$-value $k_\text{eq} = 1/(c \, \eta_\text{eq})$ for the perturbation mode that enters the horizon exactly at radiation-matter equality \eqref{eq_equality_radiation_matter}.
+}
 \label{fig_power_spectrum_matter}
 \end{figure}
+
+\Cref{fig_power_spectrum_matter} shows the matter power spectrum computed from integrated perturbation modes.
+The agreement with data is rather good.
+\begin{itemize}
+\item
+Modes with $k=k_\text{eq}$ enter the horizon exactly at radiation-matter equality.
+This creates a turnover in the power spectrum, diving it into two regimes.
+
+\item
+Modes with $k<k_\text{eq}$ enter the horizon later.
+As shown in \cref{fig_perturb_all}, the potentials change very little for such modes,
+so the power spectrum \eqref{eq_Pk} roughly predicts $P = |\Delta|^2 P_0 \propto \Phi_0^2 k^{n_s} \propto k^{n_s} \approx k^1$,
+corresponding to the line with positive slope in the logarithmic plot.
+
+\item
+Modes with $k>k_\text{eq}$ enter the horizon sooner.
+As shown in \cref{fig_perturb_all}, the potentials for such modes do change significantly from early to late times.
+In particular, the potential $\Phi$ decays more for increasing $k$ (smaller-scale modes),
+so $P = |\Delta|^2 P_0 \propto \Phi_0^2 k^{n_s}$ instead falls off
+in what seems to be a $P \propto k^{-3}$ fall with $\Phi_0 \propto k^{-2}$,
+in agreement with the analytical expression in \cite[equation (8.71)]{dodelsonModernCosmology2021}.
+\end{itemize}
 
 \begin{figure}
 \centering
 \includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TT.pdf} \\
-\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TE.pdf} \\
-\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_EE.pdf}
-\caption{CMB power spectra with the fiducial Planck cosmology parameters \eqref{eq_planck2018}}
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_EE.pdf} \\
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TE.pdf}
+\caption{
+	Today's CMB power spectra \eqref{eq_Dl} for self- and cross-correlation between temperature and polarization with the Planck parameters \eqref{eq_planck2018},
+	compared to data from Planck \TODO{refs}.
+}
 \label{fig_power_spectrum_cmb}
 \end{figure}
+
+\Cref{fig_power_spectrum_cmb} shows CMB power spectra found by performing the integrals for the coefficients \eqref{eq_Cl}.
+The agreement is relatively good, except for the first peaks that are a little lower than Planck's.  \TODO{why?}
+
+Let us take some time to explain the shape of the ``main'' TT power spectrum:
+\begin{itemize}
+\item
+The low-$l$ regime to the left of the first peak is called the Sachs-Wolfe plateau.
+At these large angular (and spatial) scales, the modes have entered the horizon only very recently.
+They are therefore unaffected by the causal physics that have acted throughout the universe's history,
+so this plateau directly reflects the initial conditions and lets us probe inflation.
+Assuming a primordial power spectrum that gives equal power to all scales,
+the power spectrum therefore appears relatively flat in this regime.
+
+\item
+The first peak at $l \approx 10^{2.3}$ reflects the first compression due to baryonic acoustic oscillations.
+This peak represents baryons where oscillations due to pressure counteracting gravity
+has just reached the maximum of \emph{one} compression \emph{at} the time of recombination, from which the photons stream freely.
+Thus, photons must climb out of deep wells, so the temperature fluctuations appear large at this scale.
+
+\item
+The first trough at $l \approx 10^{2.6}$ reflects a mode for which the compression/decompression is ``zeroed'' at the time of recombination.
+Thus, there are smaller differences in photons streaming towards us at this angular and spatial scales.
+
+\item
+The second peak at $l \approx 10^{2.7}$ is a mode that has reached maximum decompression when the photons are released at recombination.
+These photons do not have to climb out of potential wells, so they appear hot at these angular/spatial scales.
+
+\item
+The next odd and even peaks also represent oscillations at maximum compression and decompression, respectively,
+but are lower than the first peaks because baryon acoustic oscillations are damped.
+For large $l \gtrsim 1000$, the peaks become successively lower.
+This is because on small scales (large $k$ and $l$), the baryon acoustic oscillations are diffusion damped:
+photons and baryons are \emph{imperfectly coupled}, so the photons do not follow the baryons perfectly and keep cold and hot regions separate;
+instead, they diffuse away from the baryons, hence mixing hot and cold regions, and washing out temperature anisotropies.
+The damping is stronger on smaller scales (large $l$) because diffusion washes out anisotropies over short distances before they do so over large distances.
+\end{itemize}
+
+Polarization spectrum:
+\begin{itemize}
+\item
+Polarization is associated with presence of quadrupole $\Theta_2$,
+must be large enough $k$ to enter horizon before equality.
+Have that $\Theta_2$ is in phase with $\Theta_1$, both of which are out of phase with $\Theta_0$.
+Since $\Theta_0$ contributes the most to $C_l^\text{TT}$ and $\Theta_2$ contributes the most to $C_l^\text{EE}$,
+we see that one has peaks when the other has troughs.
+$\Theta_2$
+Almost perfectly out of phase with the temperature power spectrum (why?)
+\TODO{The main EE power spectrum has peaks that are out of
+phase with those in the TT spectrum because the polarization anisotropies are sourced by the
+fluid velocity}
+
+\end{itemize}
+Cross-correlation: \TODO{???}
+
+\begin{itemize}
+\item
+\TODO{The TE part of the polarization and temperature patterns comes from correlations
+between density and velocity perturbations on the last-scattering surface, which can be both positive
+and negative, and is of larger amplitude than the EE signal}
+\end{itemize}
 
 \begin{figure}
 \centering
@@ -1400,6 +1489,51 @@ or by employing specialized Levin-type quadrature \footnote{See \href{https://gi
 \caption{CMB power spectra for $\Lambda$CDM models where one independent parameter is varied away from the Planck parameters \eqref{eq_planck2018} at the time, but still constrained by the relations there.}
 \label{fig_power_spectrum_cmb_varying_parameters}
 \end{figure}
+
+Finally, \cref{fig_power_spectrum_cmb_varying_parameters} explores the rough dependence of the CMB power spectrum on the different cosmological parameters \eqref{eq_planck2018}.
+\begin{itemize}
+\item
+Increasing $h$ changes several things:
+The peaks of the power spectrum shifts to larger scales, which can be explained by photons and sound waves being able to travel longer physical distances in a given time ``for free''.
+Intuitively, we can think that more expansion seeks to ``move'' things further apart, hence shifting the spectrum to larger scales.
+The power spectrum is also suppressed, as the universe is younger, so anisotropies have had less time to build up.
+\TODO{bullshit???}
+
+\item
+Increasing the baryon density $\Omega_{b0}$ amplifies the difference between the odd and even acoustic peaks in the power spectrum.
+A very obvious way to explain this trend: if there were no baryons, there would be no baryonic acoustic oscillations.
+When there are more baryons, the gravitational pull during acoustic oscillations is stronger and makes the compressional odd peaks more pronounced.
+The even peaks are suppressed or damped, as it is harder to decompress the fluid ``up from'' the deeper wells (due to increased matter).
+
+\item
+Increasing the cold dark matter density $\Omega_{c0}$ has the opposite effect of suppressing the power spectrum particularly the first peaks.
+The wells are deeper, so it is tougher for the photon pressure to decompress, and the power spectrum is generally more suppressed.
+
+\item
+Increasing today's photon temperature $T_{\gamma 0}$, and thus the photon density $\Omega_{\gamma 0}$, increases temperature fluctuations.
+The pressure and decompression generally becomes more violent, leading to less damping and more pronounced temperature fluctuations.
+
+\item
+Increasing the effective number of \emph{massless} neutrinos $N_\text{eff}$ increases the radiation content in the universe.
+Consequently, the expansion rate \eqref{eq_conformal_hubble_dominated_radiation} at recombination increases.
+
+\TODO{ISW effect}
+\emph{Massive} neutrinos, on the other hand, are generally known to wash out structure growth.
+
+% https://www.arxiv-vanity.com/papers/1303.5379/
+% https://arxiv.org/pdf/1303.5379.pdf
+% TODO: screw the peak shift, rather focus on:
+Increase neutrinos > enhance early ISW effect > amplify first peak but suppress later peaks
+
+\item
+Increasing $Y_p$ decreases the number density of free electrons $n_e$ (although $X_e$ increases, clarify this easily by referring to some equation!),
+hence increasing the photons' mean free path and the effect of diffusion damping,
+yielding a more suppressed tail.
+\end{itemize}
+
+\TODO{understand radiation driving, baryon loading, diffusion damping}
+
+Parameter degeneracies: $\Omega_{s0} h^2$, $N_\text{eff}$ and $Y_p$?
 
 \clearpage
 \section{Conclusions}
