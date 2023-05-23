@@ -61,7 +61,7 @@ struct Parameters
     ns::Float64 # power spectrum spectral index (for k = k_pivot)
     k_pivot::Float64
 
-    function Parameters(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046, Yp=0.24, z_reion_H=8.0, Δz_reion_H=0.5, z_reion_He=3.5, Δz_reion_He=0.5, As=2e-9, ns=0.96, k_pivot=0.05/Mpc)
+    function Parameters(; h=0.67, Ωb0=0.05, Ωc0=0.267, Ωk0=0, Tγ0=2.7255, Neff=3.046, Yp=0.245, z_reion_H=8.0, Δz_reion_H=0.5, z_reion_He=3.5, Δz_reion_He=0.5, As=2.1e-9, ns=0.965, k_pivot=0.05/Mpc)
         H0  = h * 100*km/Mpc # 1/s
         Ωm0 = Ωb0 + Ωc0
         Ωγ0 = π^2/15 * (kB*Tγ0)^4 / (ħ^3*c^5) * 8*π*G / (3*H0^2)
