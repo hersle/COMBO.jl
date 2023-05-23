@@ -27,9 +27,10 @@ dCl_dk_TT(l,xs,ks,STs,SEs,η,par) = dCl_dk_generic(l, ks, ΘTl0(l,xs,ks,STs,η) 
 dCl_dk_TE(l,xs,ks,STs,SEs,η,par) = dCl_dk_generic(l, ks, ΘTl0(l,xs,ks,STs,η) .* ΘEl0(l,xs,ks,SEs,η), par)
 dCl_dk_EE(l,xs,ks,STs,SEs,η,par) = dCl_dk_generic(l, ks, ΘEl0(l,xs,ks,SEs,η) .^ 2,                   par)
 
-Cl_TT(l,xs,ks,STs,SEs,η,par) = trapz(ks, dCl_dk_TT(l,xs,ks,STs,SEs,η,par)) # integrate over k
-Cl_TE(l,xs,ks,STs,SEs,η,par) = trapz(ks, dCl_dk_TE(l,xs,ks,STs,SEs,η,par)) # integrate over k
-Cl_EE(l,xs,ks,STs,SEs,η,par) = trapz(ks, dCl_dk_EE(l,xs,ks,STs,SEs,η,par)) # integrate over k
+trapz_extra(x0, y0, x, y) = trapz(x, y) + (x[1]-x0) * (y0 + y[1]) / 2 # trapezoid integral of (x, y) extended with another leftmost point (x0, y0)
+Cl_TT(l,xs,ks,STs,SEs,η,par) = trapz_extra(0.0, 0.0, ks, dCl_dk_TT(l,xs,ks,STs,SEs,η,par)) # integrate over k (manually add k=0)
+Cl_TE(l,xs,ks,STs,SEs,η,par) = trapz_extra(0.0, 0.0, ks, dCl_dk_TE(l,xs,ks,STs,SEs,η,par)) # integrate over k (manually add k=0)
+Cl_EE(l,xs,ks,STs,SEs,η,par) = trapz_extra(0.0, 0.0, ks, dCl_dk_EE(l,xs,ks,STs,SEs,η,par)) # integrate over k (manually add k=0)
 
 # TODO: loop over types, to spline only once?
 function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
@@ -38,11 +39,10 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     par = bg.par
     η = bg.η
     xs = range(-10, 0, step=0.02) # TODO: looks like this is enough?
-    ks = range(1/(c*η(0)), 4000/(c*η(0)), step=2*π/(c*η(0)*10)) # TODO: 3000->4000, 6->10
+    ks = range(1/(c*η(0)), 4000/(c*η(0)), step=2*π/(c*η(0)*10))
 
     STspl, SEspl = spline_S(rec, [S, SE]) # TODO: rename S -> ST?
-    STs = STspl.(xs, ks')
-    SEs = SEspl.(xs, ks')
+    STs, SEs = STspl.(xs, ks'), SEspl.(xs, ks')
 
     Clarr = Vector{Float64}(undef, length(ls))
     Threads.@threads for i in 1:length(ls)
