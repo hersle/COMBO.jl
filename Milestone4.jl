@@ -16,7 +16,7 @@ xrm = equality_rm(par)
 krm = 1 / (c*η(bg,xrm))
 
 function plot_Dl(series, polarization, filename)
-    plot(xlabel=L"\log_{10} l", ylabel=L"D_l^\mathrm{%$(polarization)}", legend_position=:topleft)
+    plot(xlabel=L"\log_{10} l", ylabel=L"D_l^\mathrm{%$(polarization)} / (\mathrm{\mu K})^2", legend_position=:topleft)
 
     for (i, (l, Dl, ΔDl, settings)) in enumerate(series)
         plot!(log10.(l), Dl; yerror=ΔDl, color=i, markerstrokecolor=i, markersize=1, marker=:circle, settings...)
@@ -34,12 +34,11 @@ function lgrid(; n1=10, n2=20, n3=150)
 end
 
 function plot_Dl_against_Planck(type)
-    @assert type in (:TT, :TE, :EE)
-
     l = lgrid()
+    Dl_predicted = Dl(rec,l,type)
 
     plot_Dl([
-        (l, Dl(rec,l,type), nothing, Dict(:label => "Our ΛCDM prediction")),
+        (l, Dl_predicted/1e-6^2, nothing, Dict(:label => "Our ΛCDM prediction")),
         (read_Planck_data("data/Planck_Dl_$type.txt")..., Dict(:label => "Planck's measurements", :color => :black, :marker => :square, :markerstrokecolor => :black, :markersize => 0.75, :markerstrokewidth => 0.50, :seriestype => :scatter)),
     ], "$type", "plots/power_spectrum_CMB_$type.pdf")
 end
@@ -61,13 +60,13 @@ function plot_Dl_varying_parameter(paramkey, values; labelfunc=val -> nothing, t
         #   the feature disabled with values[1] in "cold" blue
         color = [:blue, :black, :red][i]
 
-        push!(series, (l, Dl(rec,l,type), nothing, Dict(:color => color, :marker => :none, :label => labelfunc(value))))
+        push!(series, (l, Dl(rec,l,type)/1e-6^2, nothing, Dict(:color => color, :marker => :none, :label => labelfunc(value))))
     end
     plot_Dl(series, "$type", "plots/power_spectrum_CMB_varying_$paramkey.pdf")
 end
 
 function read_Planck_data(filename)
-    data = readdlm(filename, comments=true) # e.g. "data/planck_Cl_TT_lowl.txt"
+    data = readdlm(filename, Float64, comments=true) # e.g. "data/planck_Cl_TT_lowl.txt"
     l, Dl, ΔDlm, ΔDlp = data[:,1], data[:,2], data[:,3], data[:,4]
     return l, Dl, (ΔDlm, ΔDlp)
 end

@@ -63,7 +63,7 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; spline_S_before_g
     return Clarr
 end
 
-Dl(l, Cl, Tγ0) = l * (l+1) / (2*π) * Cl * (Tγ0 / 1e-6)^2 # convert to "Planck units"
+Dl(l, Cl, Tγ0) = l * (l+1) / (2*π) * Cl * Tγ0^2 # convert to "Planck units"
 function Dl(rec::Recombination, ls::Vector{Int}, type::Symbol)
     return Dl.(ls, Cl(rec, ls, type), rec.bg.par.Tγ0)
 end
