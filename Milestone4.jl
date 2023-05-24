@@ -99,7 +99,8 @@ if false
 end
 
 # Test source function
-if false
+if true
+    #=
     plot(xlabel=L"x = \log a", ylabel=L"S(x,k)", xlims=(-8,0))
 
     for k in [340*par.H0/c]
@@ -109,6 +110,25 @@ if false
     end
 
     savefig("plots/source.pdf")
+    =#
+
+    gr() # use gr backend, as pgfplots produces a huge filesize on this one...
+
+    η0 = η(bg,0)
+    xs = range(-8, -0, step=0.01) # TODO: 0.02?
+    ks = range(1/(c*η0), 4000/(c*η0), length=200) # TODO: 400?
+    logks = log10.(ks*c*η0)
+    S1 = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=false) # TODO: true?
+    #S2 = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=true) # TODO: true?
+    #println("max(S2-
+    z = asinh.(S1)
+    maxz = maximum(abs.(z))
+
+    plot(xlabel=L"x = \log \, a", ylabel=L"k/c\eta_0", title=L"\mathrm{asinh}(\tilde{S}(x,k))", xlims=extrema(xs), ylims=extrema(ks*c*η0) , clims=(-maxz, +maxz), lw=0, size=(800, 500))
+    heatmap!(xs, ks*c*η0, transpose(z), label=nothing, color=cgrad(:RdBu, rev=true), fill=true, levels=50, lw=0)
+    savefig("plots/source.pdf")
+
+    pgfplotsx() # back to pgfplots backend
 end
 
 if false
