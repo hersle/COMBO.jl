@@ -68,6 +68,7 @@
 \textbf{Code:} All code is available at \href{https://github.com/hersle/AST5220-project}{github.com/hersle/AST5220-project}.
 
 \section{Introduction}
+\label{sec_intro}
 
 \TODO{WIP for now, eventually weave this together with the remaining milestones}
 
@@ -523,6 +524,7 @@ Our Hubble parameter is significantly larger than Planck's and exemplifies the H
 
 \clearpage
 \section{Recombination and reionization history}
+\label{sec_recombination}
 
 Photons (of the CMB) observed today were emitted at various times in the past.
 In this section, our main goal is to accurately compute the optical depth and visibility function of the universe,
@@ -859,6 +861,7 @@ For example, this agrees with the famous acoustic peak around $s \approx 105\,\m
 
 \clearpage
 \section{Perturbations}
+\label{sec_perturbations}
 
 \newcommand\N{\mathcal{N}}
 \newcommand\aH{\mathcal{H}}
@@ -1272,9 +1275,9 @@ The \textbf{matter power spectrum}
 	P(x,k) = |\Delta(x,k)|^2 \, P_0(k)
 \label{eq_Pk}
 \end{equation}
-is given by the \TODO{name/gauge?} overdensity
+is given by the overdensity
 \begin{equation}
-	\Delta(x,k) = \frac23 \left( \frac{ck}{H_0} \right)^2 \frac{\Phi(x,k)}{\Omega_{m0}/a(x)}.
+	\Delta(x,k) = \frac23 \left( \frac{ck}{H_0} \right)^2 \frac{\Phi(x,k)}{\Omega_{m0}/a(x)}
 \end{equation}
 and the primordial power spectrum after inflation,
 \begin{equation}
@@ -1288,31 +1291,67 @@ The \textbf{CMB power spectrum} is characterized by the sphere-expansion coeffic
 	\quad \text{where} \quad \text{$\text{A},\text{B} \in \{\text{T},\text{E}\}$}.
 \label{eq_Cl}
 \end{equation}
-where $\{\text{AB}\} \in \{\text{TT},\text{EE},\text{TE}\}$ denotes \textbf{T}emperature self-correlation, \textbf{E}-mode polarization self-correlation and cross-correlation, respectively.
-We want the power spectrum for $1 \leq l \lesssim 1000$.
-When we integrated the perturbations, we cut the system off at $l \lesssim 10$.
-The brute force way forward is therefore to significantly increase the size of the system, and necessarily also the computational requirements.
-The more elegant way is to compute the present temperature and polarization multipoles from \emph{line of sight integration}:
+where $\{\text{AB}\} \in \{\text{TT},\text{EE},\text{TE}\}$ denotes \textbf{t}emperature self-correlation, \textbf{E}-mode polarization self-correlation and their cross-correlation, respectively.
+We want this power spectrum, and hence today's multipoles $\Theta^A_l$, for $1 \leq l \lesssim 2500$.
+From our previous work,
+an obvious brute-force way of finding these is to simply extend the cutoff of the perturbation system we integrate in \cref{sec_perturbations} from $l \lesssim 10$ to $l \lesssim 2500$.
+However, this results in an enormous system of differential equations that is very inefficient to integrate.
+A much more elegant method is to compute them from the \emph{line of sight integrals}
 \TODO{is $\Theta^T = \Theta$ and $\Theta^E = \Theta^P$?}
 \begin{subequations}
 \begin{align}
-	\Theta^T_l(x=0,k) &= \phantom{\sqrt{\frac{(l+2)!}{(l-2)!}}} \int_{-\infty}^0 \tilde{S}^T(x,k) j_l\big(ck\big(\eta_0-\eta\big)\big) dx, \\
-	\Theta^E_l(x=0,k) &= \sqrt{\frac{(l+2)!}{(l-2)!}} \int_{-\infty}^0 \tilde{S}^E(x,k) j_l\big(ck\big(\eta_0-\eta\big)\big) dx
+	\Theta^\text{T}_l(x=0,k) &= \phantom{\sqrt{\frac{(l+2)!}{(l-2)!}}} \int_{-\infty}^0 \tilde{S}^\text{T}(x,k) j_l\big(ck(\eta_0-\eta)\big) dx, \\
+	\Theta^\text{E}_l(x=0,k) &= \sqrt{\frac{(l+2)!}{(l-2)!}} \int_{-\infty}^0 \tilde{S}^\text{E}(x,k) j_l\big(ck(\eta_0-\eta)\big) dx,
 \label{eq_Thetal0}
 \end{align}
 \end{subequations}
-with spherical Bessel functions of the first kind $j_l(x)$ and the \textbf{source functions}
+with the spherical Bessel functions of the first kind $j_l(x)$ and the \textbf{source functions}
 \begin{subequations}
 \begin{align}
-	\tilde{S}^T(x,k) &= \tilde{g} \big( \Theta_0 + \Psi + \tfrac14 \Pi \big) + e^{-\tau} \big( \Psi - \Phi \big)^\prime - \frac{1}{ck} (\aH \tilde{g} v_b)^\prime + \frac{3}{4c^2k^2} \big( \aH (\aH \tilde{g} \Pi)^\prime \big)^\prime, \quad \big( {}^\prime = \tfrac{\partial}{\partial x} \big), \\
-	\tilde{S}^E(x,k) &= \phantom{\tilde{g} \big( \Theta_0 + \Psi + \tfrac14 \Pi \big) + e^{-\tau} \big( \Psi - \Phi \big)^\prime - \frac{1}{ck} (\aH \tilde{g} v_b)^\prime +{}} \frac{3}{4 c^2 k^2} \frac{\tilde{g} \Pi}{(\eta_0-\eta)^2}.
+	\tilde{S}^\text{T}(x,k) &= \overbrace{\vphantom{\frac1c} \tilde{g} \big( \Theta_0 + \Psi + \tfrac14 \Pi \big)}^\text{Sachs-Wolfe (SW) term} + \overbrace{\vphantom{\frac1c} e^{-\tau} \big( \Psi - \Phi \big)^\prime}^{\substack{\text{Integrated Sachs-}\\\text{Wolfe (ISW) term}}} - \overbrace{\frac{1}{ck} (\aH \tilde{g} v_b)^\prime}^{\text{Doppler term}} + \overbrace{\frac{3}{4c^2k^2} \big( \aH (\aH \tilde{g} \Pi)^\prime \big)^\prime}^{\text{Polarization term}}, \quad \big( {}^\prime = \tfrac{\partial}{\partial x} \big), \\
+	\tilde{S}^\text{E}(x,k) &= \frac{3}{4 c^2 k^2} \frac{\tilde{g} \Pi}{(\eta_0-\eta)^2}.
 \label{eq_S}
 \end{align}
 \end{subequations}
 
-Finally, note that it is easier to see the $l$-variation of the power spectrum in the conventional quantity
+The terms in the temperature source function named after the effects they describe or the people who originally studied them:
+\begin{itemize}
+\item
+The \textbf{Sachs-Wolfe effect} describes gravitational redshift of photons that climb out of potential wells
+at the last scattering surface (and during reionization) (see \cref{fig_visibility_function}).
+Roughly speaking, the visibility function can be approximated as a spike $\tilde{g}(x) \approx \delta(x-x_\text{rec})$ at recombination,
+so it contributes
 \begin{equation}
-	D_l^\text{AB} = \frac{l (l+1)}{2 \pi} \left(\frac{T_{\gamma 0}}{\mu \textrm{K}}\right)^2 C_l^\text{AB}.
+	\Theta_l(0,k) \approx \int \delta\big(x-x_\text{rec}\big) \big( \Theta_0 + \Psi + \tfrac14 \Pi \big) \, j_l\big(ck(\eta_0-\eta\big) dx = \big(\Theta_0 + \Psi + \tfrac14 \Pi \big) \, j_l\big(ck(\eta_0-\eta\big) \Big|_{x=x_\text{rec}}.
+\end{equation}
+Moreover, $j_l(y)$ spikes and becomes nonzero at $y \gtrsim l$, so with $\eta_0 \gg \eta_\text{rec}$ we expect that $\Theta_l(0,k \gtrsim l \, c \eta_0)$.
+
+\item
+The \textbf{integrated Sachs-Wolfe (ISW) effect} also describes gravitational redshift of photons,
+but of photons traveling through wells that deepen \emph{as} the photons travel through them,
+as described by the $(\Psi-\Phi)^\prime$ term.
+This leads to additional energy loss.
+As we saw in \cref{fig_perturb_all}, the potentials $\Psi$ and $\Phi$ mostly decay during radiation and dark energy domination, and not during matter domination.
+Thus, the \textbf{early-time ISW} describes photons in wells that still sink after after recombination, but before matter domination, and shows up on small scales (large $l$ and $k$) that enter the horizon during radiation domination, in time for their potentials to drop.
+On the other hand, the \textbf{late-time} ISW describes the same effect for potentials that decay as dark energy takes over, and shows up on large scales (small $l$ and $k$).
+
+\item
+The \textbf{Doppler term} contains $(\dot{a} \tilde{g} v_b)^\prime$,
+and essentially describes change in the ``photon emitter'' with distance from (last) scattering.
+Thus, photons emitted at different times are redshifted by different amounts.
+
+\item
+The \textbf{polarization term} contains $\Pi$ and has to do with polarization.
+Unlike in Thompson scattering,
+the outgoing photon's energy in general Compton scattering
+depends on the angle between the incident photons.
+Thus, the quadrupole structure (which we associated with polarization in \cref{sec_perturbations})
+affects today's observed temperature anisotropies \cite{kableDeconstructingPlanckTT2020}.
+\end{itemize}
+
+Finally, note that it is conventional and easier to see variations in the power spectrum in terms of
+\begin{equation}
+	D_l^\text{AB} = \frac{l (l+1)}{2 \pi} C_l^\text{AB} T_{\gamma 0}^2 .
 \label{eq_Dl}
 \end{equation}
 
