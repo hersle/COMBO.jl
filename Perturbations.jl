@@ -252,7 +252,7 @@ function perturbations_mode_full(par::Parameters, η::ODESolution, τ::ODESoluti
     t1 = now()
     y1 = perturbations_initial_conditions(par, η, τ, x1, k)
     prob = ODEProblem{true}(dy_dx!, y1, (x1, x2))
-    sol = solve(prob, KenCarp4(autodiff=false); abstol=1e-9, reltol=1e-9)
+    sol = solve(prob, KenCarp4(autodiff=false); abstol=1e-8, reltol=1e-8)
     t2 = now()
     println("Integrated perturbation mode k=$(k*Mpc)/Mpc with $(length(sol.t)) points in $(t2-t1)")
     return sol

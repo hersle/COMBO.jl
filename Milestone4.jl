@@ -112,65 +112,64 @@ if false
     savefig("plots/source.pdf")
 end
 
-if true
+if false
     @time plot_Dl_against_Planck(:TT)
     @time plot_Dl_against_Planck(:TE)
     @time plot_Dl_against_Planck(:EE)
 end
 
 if false
+    # TODO: use correct parameters!
     plot_Dl_varying_parameter(:h,           [0.57, 0.67, 0.77];       labelfunc = h    -> L"h = %$(h)")
     plot_Dl_varying_parameter(:Ωb0,         [0.02, 0.05, 0.08];       labelfunc = Ωb0  -> L"\Omega_{b0} = %$(Ωb0)")
     plot_Dl_varying_parameter(:Ωc0,         [0.217, 0.267, 0.317];    labelfunc = Ωc0  -> L"\Omega_{c0} = %$(Ωc0)")
     plot_Dl_varying_parameter(:Tγ0,         [2.6255, 2.7255, 2.8255]; labelfunc = Tγ0  -> L"T_{\gamma 0} = %$(Tγ0) \textrm{ K}")
     plot_Dl_varying_parameter(:Neff,        [0, 3.046, 6.092];        labelfunc = Neff -> L"N_\textrm{eff} = %$(Neff)")
     plot_Dl_varying_parameter(:ns,          [0.76, 0.96, 1.16];       labelfunc = ns   -> L"n_s = %$(ns)")
-    plot_Dl_varying_parameter(:As,          [1e-9, 2e-9, 4e-9];      labelfunc = As   -> L"A_s = %$(As/1e-9) \cdot 10^{-9}")
+    plot_Dl_varying_parameter(:As,          [1e-9, 2e-9, 4e-9];       labelfunc = As   -> L"A_s = %$(As/1e-9) \cdot 10^{-9}")
     plot_Dl_varying_parameter(:Yp,          [0, 0.24, 0.48];          labelfunc = Yp   -> L"Y_p = %$(Yp)")
     plot_Dl_varying_parameter(:z_reion_H,   [NaN, 8];                 labelfunc = z    -> isnan(z) ? "reionizatioff" : "reionization")
 end
 
-if false
-    ls = 1, 10, 100, 1000
+if true
+    ls = [1, 10, 100, 1000]
     η0 = η(bg,0)
-    x = unique(vcat(range(-8, -3, length=1000), range(-3, 0, length=4000)))
-    k = range(1/(c*η0), 1200/(c*η0), length=3000)
-    Sspl, SEspl = Cosmology.spline_S(rec, [Cosmology.S, Cosmology.SE])
-    Θl0(l,k) = Cosmology.Θl0(l, k, Sspl, bg.η)
-    dCl_dk(l,k) = Cosmology.dCl_dk_TT(l,k,Sspl,SEspl,bg.η,par)
 
     # plot dΘl0_dl = S * j?
     plot(xlabel=L"x = \log a", ylabel=L"\partial \Theta_{l}(x,k) / \partial x", legend_position=:bottomright)
-    kcη0 = [400, 4000]
-    ks = kcη0 / (c*η0)
-    kMpc = ks / Mpc
-    ys = [Cosmology.dΘl0_dx.(10, k, x, Sspl, Ref(bg.η)) for k in ks]
-    plot!(x, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, label=[L"k=400/(c \eta_0)"  L"k=4000/(c \eta_0)"])
-    plot!(x, ys, linewidth=0.3, xlims=(-1, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, xticks=-1:0.1:0, subplot=2, inset=(1, bbox(0.15, 0.03, 0.7, 0.5, :right)), label=nothing)
+    kcη0s = [40, 400, 4000]
+    xs = range(-10, 0, step=0.01) # TODO: 0.02?
+    ks = kcη0s / (c*η0)
+    STs = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=false) # TODO: true?
+    dΘTl0_dxs = Cosmology.dΘTl0_dx(10, xs, ks, STs, bg.η)
+    ys = [dΘTl0_dxs[:,i] for i in 1:length(ks)]
+    plot!(xs, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, label=reshape([L"k=%$(kcη0)/(c\eta_0)" for kcη0 in kcη0s], 1, :))
+    plot!(xs, ys, linewidth=0.3, xlims=(-1, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, xticks=-1:0.1:0, subplot=2, inset=(1, bbox(0.15, 0.03, 0.7, 0.5, :right)), label=nothing)
     savefig("plots/dThetal0_dx.pdf")
+
 
     # plot Θl0 # TODO: ΘEl0?
     # TODO: integrate Θl0 from k=0, forcing it to start from 0?
     plot(xlabel=L"k / c \eta_0", ylabel=L"\Theta_l(x=0,k)", xticks=0:100:4000, ylims=(-0.1, +0.1), legend_position=:topright)
+    ks = range(1/(c*η0), 1200/(c*η0), step=2*π/(c*η0*10))
+    STs = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=true)
     for l in ls
-        plot!(k*c*η0, Θl0.(l, k), linewidth=0.3, label=L"l=%$l")
+        plot!(ks*c*η0, Cosmology.ΘTl0(l, xs, ks, STs, bg.η), linewidth=0.3, label=L"l=%$l")
     end
     savefig("plots/Theta0.pdf")
 
-    for (i, l) in enumerate(ls)
-        kmin = max(1, l-100) / (c*η0)
-        kmax = kmin + 300 / (c*η0)
-        k = range(kmin, kmax, length=2000)
-        x = k*c*η0
-        y = dCl_dk.(l,k) / (c*η0)
-        e10 = Int(round(log10(maximum(y))))
-        y ./= 10.0^e10
-        plot(xlabel=L"k / c \eta_0", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / 10^{%$(e10)} (c \eta_0)^{-1}", xticks=0:100:2000, legend_position=:topright)
-        plot!(x, y, linewidth=0.5, color=i, label=L"l=%$l")
-        savefig("plots/dCl_dk_$l.pdf")
-    end
 
     # plot dCl_dk
+    for (i, l) in enumerate(ls)
+        kcη0min = max(0, l-100)
+        kcη0max = kcη0min + 300
+        y = Cosmology.dCl_dk_TT(l,xs,ks,STs,nothing,bg.η,par) / (c*η0)
+        e10 = Int(round(log10(maximum(y))))
+        y ./= 10.0^e10
+        plot(xlabel=L"k / c \eta_0", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / 10^{%$(e10)} (c \eta_0)^{-1}", xlims=(kcη0min, kcη0max), xticks=0:100:2000, legend_position=:topright)
+        plot!(c*ks*η0, y, linewidth=0.5, color=i, label=L"l=%$l")
+        savefig("plots/dCl_dk_$l.pdf")
+    end
 end
 
 end

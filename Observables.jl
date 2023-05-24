@@ -38,7 +38,7 @@ function Cl(rec::Recombination, ls::Vector{Int}, type::Symbol; spline_S_before_g
     bg = rec.bg
     par = bg.par
     η = bg.η
-    xs = range(-10, 0, step=0.02) # TODO: looks like this is enough?
+    xs = range(-10, 0, step=0.01) # TODO: looks like this is enough?
     ks = range(1/(c*η(0)), 4000/(c*η(0)), step=2*π/(c*η(0)*10))
 
     STs, SEs = grid_S(rec, [S, SE], xs, ks; spline_first=spline_S_before_gridding)
