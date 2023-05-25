@@ -99,7 +99,7 @@ if false
 end
 
 # Test source function
-if true
+if false
     #=
     plot(xlabel=L"x = \log a", ylabel=L"S(x,k)", xlims=(-8,0))
 
@@ -131,7 +131,7 @@ if true
     pgfplotsx() # back to pgfplots backend
 end
 
-if false
+if true
     @time plot_Dl_against_Planck(:TT)
     @time plot_Dl_against_Planck(:TE)
     @time plot_Dl_against_Planck(:EE)
@@ -150,12 +150,12 @@ if false
     plot_Dl_varying_parameter(:z_reion_H,   [NaN, 8];                  labelfunc = z    -> isnan(z) ? "reionizatioff" : "reionization")
 end
 
-if false
+if true
     ls = [1, 10, 100, 1000]
     η0 = η(bg,0)
 
     # plot dΘl0_dl = S * j?
-    plot(xlabel=L"x = \log a", ylabel=L"\partial \Theta_{l}(x,k) / \partial x", legend_position=:bottomright)
+    plot(xlabel=L"x = \log a", ylabel=L"\partial \Theta_{10}(x,k) / \partial x", legend_position=:bottomright)
     kcη0s = [40, 400, 4000]
     xs = range(-10, 0, step=0.01) # TODO: 0.02?
     ks = kcη0s / (c*η0)

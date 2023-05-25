@@ -1277,16 +1277,16 @@ A much more elegant method is to compute them from the \emph{line of sight integ
 \begin{align}
 	\Theta^\text{T}_l(x=0,k) &= \phantom{\sqrt{\frac{(l+2)!}{(l-2)!}}} \int_{-\infty}^0 \tilde{S}^\text{T}(x,k) j_l\big(ck(\eta_0-\eta)\big) dx, \\
 	\Theta^\text{E}_l(x=0,k) &= \sqrt{\frac{(l+2)!}{(l-2)!}} \int_{-\infty}^0 \tilde{S}^\text{E}(x,k) j_l\big(ck(\eta_0-\eta)\big) dx,
-\label{eq_Thetal0}
 \end{align}
+\label{eq_Thetal0}
 \end{subequations}
 with the spherical Bessel functions of the first kind $j_l(x)$ and the \textbf{source functions}
 \begin{subequations}
 \begin{align}
 	\tilde{S}^\text{T}(x,k) &= \overbrace{\vphantom{\frac1c} \tilde{g} \big( \Theta_0 + \Psi + \tfrac14 \Pi \big)}^\text{Sachs-Wolfe (SW) term} + \overbrace{\vphantom{\frac1c} e^{-\tau} \big( \Psi - \Phi \big)^\prime}^{\substack{\text{Integrated Sachs-}\\\text{Wolfe (ISW) term}}} - \overbrace{\frac{1}{ck} (\aH \tilde{g} v_b)^\prime}^{\text{Doppler term}} + \overbrace{\frac{3}{4c^2k^2} \big( \aH (\aH \tilde{g} \Pi)^\prime \big)^\prime}^{\text{Polarization term}}, \quad \big( {}^\prime = \tfrac{\partial}{\partial x} \big), \\
 	\tilde{S}^\text{E}(x,k) &= \frac{3}{4 c^2 k^2} \frac{\tilde{g} \Pi}{(\eta_0-\eta)^2}.
-\label{eq_S}
 \end{align}
+\label{eq_S}
 \end{subequations}
 
 The terms in the temperature source function named after the effects they describe or the people who originally studied them:
@@ -1334,50 +1334,75 @@ Finally, note that it is conventional and easier to see variations in the power 
 
 \begin{itemize}
 \item
-To plot today's matter power spectrum $P(k)$,
-we simply choose a range of $k$ values,
+To compute today's matter power spectrum $P(k)$,
+we simply choose a range of $k$-values,
 integrate the perturbation modes for all of them,
-and calculate \eqref{eq_Pk} at $x=0$.
+and calculate it directly from equation \eqref{eq_Pk} at $x=0$.
 
 \item
-To plot today's CMB power spectrum $C_l$,
-we perform the $k$-integral \eqref{eq_Cl} with the trapezoid method over the grid $1/(c\eta_0) \leq k \leq 4000/(c\eta_0)$ with uniform spacing $\Delta k = 2 \pi / 10 c \eta_0$.
-For each $k$-integral, we perform the $x$-integrals \eqref{eq_Thetal0} also with the trapezoid method over the grid $-10 \leq x \leq 0$ with $1000$ uniformly spaced $x$-values \TODO{verify}.
+To compute today's CMB power spectrum coefficients $C_l^\text{AB}$,
+we must generally perform three nested integrals:
+two inner integrals over $x$ to obtain $\Theta_l^\text{A}(0,k)$ and $\Theta_l^\text{B}(0,k)$,
+and one outer integral over $k$ to obtain $C_l^\text{AB}$.
+For the self-correlations with $\text{A}=\text{B}$, however,
+we instead only perform one $x$-integral and square it.
 
 \item
-To evaluate the source functions \eqref{eq_S} at arbitrary $x$ and $k$, we make two-dimensional cubic splines of them
-after integrating $250$ logarithmically spaced perturbation modes over the integration interval.
-This is almost as accurate as integrating every $k$-mode,
-as the source function(s) $S(x,k)$ are vary relatively smoothly,
-unlike the rapidly oscillating product(s) $S(x,k) j_l(ck(\eta_0-\eta)$.
+We integrate with the trapezoid method over the grids
+$1/(c\eta_0) \leq k \leq 4000/(c\eta_0)$ and $-10 \leq x \leq 0$
+with uniform spacing $\Delta x = 0.01$ and $\Delta k = 2 \pi / 10 c \eta_0$
+and $N_x = 1001$ and $N_k = 6365$ points.
+Some $\Theta_l(0,k)$ and their integrands are shown in \cref{fig_Theta0}.
+It shows that our $\Delta x$-spacing resolves oscillations very well for large-scale modes,
+but only crudely for smaller-scale modes.
+However, we have verified that the resulting CMB spectrum changes negligibly with finer $\Delta x$.
+As most of the oscillations are around $0$, cruder grids pick up the most important contributions.
+Moreover, the $d C_l/dk$ integrand in \cref{fig_dCl_dk} suggests that
+the contribution from smaller-scale modes to $C_l$ falls off for increasing $k$, anyway,
+so the crude $x$-integration does not affect the end result significantly.
 
 \item
-Calculating the self-correlations $C_l^\text{TT}$ and $C_l^\text{EE}$ involves two nested integrals and takes around a minute,
-while the cross-correlation $C_l^\text{TE}$ involves three nested integrals and therefore takes closer to two minutes.
-This is with around $175$ $l$-values.
-\TODO{how about on a single thread?}
+To evaluate the source functions \eqref{eq_S} at all $x$ and $k$ required by the integrals,
+we can simply integrate every required perturbation $k$-mode and evaluate it at the necessary $x$.
+This is most accurate, but unnecessarily slow, as it requires integrating $6365$ perturbation modes.
+Compared to the products $S(x,k) \cdot j_l(ck(\eta_0-\eta))$,
+the source functions $S(x,k)$ vary relatively smoothly,
+so a more efficient way is to instead \emph{spline} $S(x,k)$ on a smaller $k$-grid,
+and then evaluate that spline on the larger grid for the integration.
+We find the splining to be accurate if we use $400$ $k$-values with constant logarithmic spacing $\Delta \log k$,
+compared to, say, linear or quadratic spacing $\Delta k$ or $\Delta k^2$.
 
 \item
-The integration over $x$ and $k$ dominates the runtime of the computation of the CMB power spectrum.
-It could probably be sped up, for example if one could subtract the oscillating part of the integrals with known analytical expressions,
-or by employing specialized Levin-type quadrature \footnote{See \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.}.
+With around $175$ $l$-values and no parallelization,
+calculating the self-correlations $C_l^\text{TT}$ and $C_l^\text{EE}$ takes around two minutes each,
+while the cross-correlation $C_l^\text{TE}$ takes around four minutes.
+It is the integration over $x$ and $k$ that dominates the runtime,
+so it would be very interesting to look for ways to speed this up.
+One can, for example, drastically reduce the runtime by increasing $\Delta x$ to get an almost identical power spectrum,
+but we feel that going much higher than $\Delta x = 0.01$ means computing the power spectrum in a more ``dishonest'' way,
+as we don't capture the oscillations so well.
+For example, one could try to split up oscillating integrals like
+$\int f(x) dx = \int f_\text{osc}(x) dx + \int f_\text{smooth}(x) dx$,
+where the first term is some analytically known integral that captures most of the oscillations,
+and the second is the remainder that varies more smoothly and can be tackled numerically with less resources.
+This would also help to do the $x$-integral in a more ``honest'' way.
+One could also try to handle the oscillating integrals with specialized Levin-type quadrature\footnote{See \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.}.
 \end{itemize}
 
-\begin{figure}
+\begin{figure}[h!]
 \centering
 \includegraphics[width=0.49\textwidth]{../plots/dThetal0_dx.pdf} \hfill
 \includegraphics[width=0.49\textwidth]{../plots/Theta0.pdf}
-\caption{$\Theta_0$}
+\caption{Today's temperature monopoles \eqref{eq_Thetal0} (for different $l$) and its integrand (for $l=10$) evaluated with the trapezoid method on a grid with uniform spacing $\Delta x = 0.01$.}
 \label{fig_Theta0}
-\end{figure}
 
-\begin{figure}
-\centering
+\bigskip \bigskip \bigskip
+
 \includegraphics[width=0.49\textwidth]{../plots/dCl_dk_1.pdf} \hfill
 \includegraphics[width=0.49\textwidth]{../plots/dCl_dk_10.pdf} \\
 \includegraphics[width=0.49\textwidth]{../plots/dCl_dk_100.pdf} \hfill
 \includegraphics[width=0.49\textwidth]{../plots/dCl_dk_1000.pdf}
-\caption{$dCl / dk$}
+\caption{The integrand of the CMB power spectrum coefficients \eqref{eq_Cl} for a few different $l$ on a grid with uniform spacing $\Delta k = 2\pi/(10c\eta_0)$, capturing each oscillation with roughly $10$ points.}
 \label{fig_dCl_dk}
 \end{figure}
 

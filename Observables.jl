@@ -16,6 +16,7 @@ function integrate_adaptive(f, x1, x2; atol=0, rtol=1e-3, order=8) # TODO: rtol=
     return quadgk(f, x1, x2; atol=atol, rtol=rtol, order=order)[1] # discard error
 end
 
+# TODO: use dynamic x grid depending on k and l?
 dΘTl0_dx(l, xs, ks, STs, η) =                              STs .* jl.(l, c * ks' .* (η(0) .- η.(xs))) # TODO: pass array of η?
 dΘEl0_dx(l, xs, ks, SEs, η) = √((l+2)*(l+1)*(l+0)*(l-1)) * SEs .* jl.(l, c * ks' .* (η(0) .- η.(xs)))
 
@@ -86,7 +87,7 @@ function spline_S(rec::Recombination, Sfunc)
     return spline_S(rec, Sfunc, xs, logks)
 end
 
-function grid_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs, ks; spline_first=false)
+function grid_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs, ks; spline_first=false) :: Vector{Matrix{Float64}}
     if spline_first
         Sspls = spline_S(rec, Sfuncs)
         return [Sspl.(xs, ks') for Sspl in Sspls]
@@ -95,6 +96,7 @@ function grid_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs, ks; spline_f
         Threads.@threads for i in 1:length(ks)
             perturbs[i] = PerturbationMode(rec, ks[i])
         end
+        # TODO: force S(x=0) = 0
         return [[Sfunc(perturb, x) for x in xs, perturb in perturbs] for Sfunc in Sfuncs]
     end
 end
