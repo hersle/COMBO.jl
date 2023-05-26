@@ -13,10 +13,9 @@ par = Parameters()
 bg = Background(par)
 rec = Recombination(bg)
 xrm = equality_rm(par)
-krm = 1 / (c*η(bg,xrm))
 
 function plot_Dl(series, polarization, filename)
-    plot(xlabel=L"\log_{10} l", ylabel=L"D_l^\mathrm{%$(polarization)} / (\mathrm{\mu K})^2", legend_position=:topleft)
+    plot(xlabel=L"\log_{10} l", ylabel=L"D_l^\mathrm{%$(polarization)} / (\mathrm{\mu K})^2", xlims=(0, 3.4), legend_position=:topleft)
 
     for (i, (l, Dl, ΔDl, settings)) in enumerate(series)
         plot!(log10.(l), Dl; yerror=ΔDl, color=i, markerstrokecolor=i, markersize=1, marker=:circle, settings...)
@@ -79,22 +78,22 @@ function read_Pk_data(filename; last_column_is_upper_bound=false)
 end
 
 if false
-    k = 10 .^ range(-4, 1, length=100) / Mpc # TODO: h in units
-    plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]", legend_position=:bottomleft)
+    k = 10 .^ range(-4, +2.0, length=200) / Mpc # TODO: h in units
+    plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]", xlims=(-3, 1), ylims=(0, 5), legend_position=:topright)
 
-    plot!(log10.(k / (par.h0/Mpc)), log10.(P.(PerturbationMode.(rec,k),0,k) / (Mpc/par.h0)^3), label="Our ΛCDM prediction") # TODO
+    plot!(log10.(k / (par.h0/Mpc)), log10.(P.(PerturbationMode.(rec,k),0,k) / (Mpc/par.h0)^3), label="Our ΛCDM prediction")
 
     series = [
         ("data/Pk_SDSS_DR7_LRG.txt", false, "SDSS DR7 LRG data"),
         ("data/Pk_WMAP_ACT.txt", true, "WMAP & ACT data"),
-        ("data/Pk_Lyman_alpha.txt", true, "Lyman-α data")
+        ("data/Pk_Lyman_alpha.txt", true, "eBOSS data")
     ]
     for (i, (filename, last_column_is_upper_bound, label)) in enumerate(series)
         k, Pk, ΔPk = read_Pk_data(filename; last_column_is_upper_bound=last_column_is_upper_bound)
-        scatter!(log10.(k), log10.(Pk), yerror=(log10.(Pk) .- log10.(Pk-ΔPk), log10.(Pk+ΔPk) .- log10.(Pk)), marker=:square, markersize=0.75, markerstrokewidth=0.5, color=i+1, markerstrokecolor=i+1, label=label)
+        scatter!(log10.(k), log10.(Pk), yerror=(log10.(Pk) .- log10.(Pk-ΔPk), log10.(Pk+ΔPk) .- log10.(Pk)), marker=:square, markersize=1.50, markerstrokewidth=1.0, color=i+1, markerstrokecolor=i+1, label=label)
     end
 
-    vline!([log10(krm / (par.h0/Mpc))], color=:gray, linestyle=:dash, label=L"k_\textrm{eq}")
+    vline!(log10.([1 / (c*η(bg,xrm)), a(xrm)*H(par,xrm)/c] ./ (par.h0/Mpc)), color=:gray, linestyle=[:dash, :dot], label=[L"k=1/c \, \eta_\textrm{eq}", L"k=\mathcal{H}(a_\textrm{eq}) / c"])
     savefig("plots/power_spectrum_matter.pdf")
 end
 
@@ -131,13 +130,13 @@ if false
     pgfplotsx() # back to pgfplots backend
 end
 
-if true
+if false
     @time plot_Dl_against_Planck(:TT)
     @time plot_Dl_against_Planck(:TE)
     @time plot_Dl_against_Planck(:EE)
 end
 
-if false
+if true
     # TODO: use correct parameters!
     plot_Dl_varying_parameter(:h,           [0.57, 0.67, 0.77];        labelfunc = h    -> L"h = %$(h)")
     plot_Dl_varying_parameter(:Ωb0,         [0.02, 0.05, 0.08];        labelfunc = Ωb0  -> L"\Omega_{b0} = %$(Ωb0)")
@@ -148,22 +147,23 @@ if false
     plot_Dl_varying_parameter(:As,          [1.05e-9, 2.1e-9, 4.2e-9]; labelfunc = As   -> L"A_s = %$(As/1e-9) \cdot 10^{-9}")
     plot_Dl_varying_parameter(:Yp,          [0, 0.245, 0.49];          labelfunc = Yp   -> L"Y_p = %$(Yp)")
     plot_Dl_varying_parameter(:z_reion_H,   [NaN, 8];                  labelfunc = z    -> isnan(z) ? "reionizatioff" : "reionization")
+    #plot_Dl_varying_parameter(:Ωk0,         [-0.5, 0, +0.5];           labelfunc = Ωk0  -> L"\Omega_{k0} = %$(Ωk0)")
 end
 
-if true
+if false
     ls = [1, 10, 100, 1000]
     η0 = η(bg,0)
 
     # plot dΘl0_dl = S * j?
-    plot(xlabel=L"x = \log a", ylabel=L"\partial \Theta_{10}(x,k) / \partial x", legend_position=:bottomright)
-    kcη0s = [40, 400, 4000]
+    plot(xlabel=L"x = \log a", ylabel=L"\partial \Theta_{10}(x,k) / \partial x", legend_position=:topright)
+    kcη0s = [10, 100, 1000]
     xs = range(-10, 0, step=0.01) # TODO: 0.02?
     ks = kcη0s / (c*η0)
     STs = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=false) # TODO: true?
     dΘTl0_dxs = Cosmology.dΘTl0_dx(10, xs, ks, STs, bg.η)
     ys = [dΘTl0_dxs[:,i] for i in 1:length(ks)]
-    plot!(xs, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, label=reshape([L"k=%$(kcη0)/(c\eta_0)" for kcη0 in kcη0s], 1, :))
-    plot!(xs, ys, linewidth=0.3, xlims=(-1, 0), ylims=(-0.02, +0.02), yticks=-0.02:0.01:+0.02, xticks=-1:0.1:0, subplot=2, inset=(1, bbox(0.15, 0.03, 0.7, 0.5, :right)), label=nothing)
+    plot!(xs, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-1, +1), yticks=-1.0:0.20:+1.0, label=reshape([L"k=%$(kcη0)/(c\eta_0)" for kcη0 in kcη0s], 1, :))
+    plot!(xs, ys, linewidth=0.3, xlims=(-1, 0), ylims=(-0.03, +0.03), yticks=-0.03:0.01:+0.03, xticks=-1:0.1:0, subplot=2, inset=(1, bbox(0.10, 0.43, 0.7, 0.5, :right)), label=nothing)
     savefig("plots/dThetal0_dx.pdf")
 
 
