@@ -60,12 +60,21 @@
 %\keywords{cosmology -- Einstein-Boltzmann equations}
 
 \maketitle
+\tableofcontents
 %
 %________________________________________________________________
 
 %\tableofcontents
 
-\textbf{Code:} All code is available at \href{https://github.com/hersle/AST5220-project}{github.com/hersle/AST5220-project}.
+\bigskip \bigskip \bigskip
+
+\noindent
+\textbf{Code:}
+All code is available at \href{https://github.com/hersle/AST5220-project}{https://github.com/hersle/AST5220-project}.
+I chose to implement this project from scratch in Julia,
+as it is an interesting programming language I wanted to learn more about.
+
+\clearpage
 
 \section{Introduction}
 \label{sec_intro}
@@ -379,148 +388,6 @@ and the conformal Hubble parameter \eqref{eq_conformal_hubble_dominated_radiatio
 	\bottomrule
 \end{tabular}
 \end{table}
-
-\clearpage
-
-\section{Cosmological constraints from supernovae}
-\label{sec_supernova}
-
-In this section, we forget most of the Planck cosmological parameters \eqref{eq_planck2018} for a moment;
-neglecting neutrinos by fixing $N_\text{eff}=0$ and keeping only $T_{\gamma0}$, hence fixing $\Omega_{r0}$.
-Instead, we constrain the independent parameters $h$, $\Omega_{m0}$ and $\Omega_{k0}$,
-and hence the dependent $\Omega_{\Lambda 0}=1-\Omega_{k0}-\Omega_{m0}-\Omega_{r0}$,
-using observed supernovae luminosity distances from \cite{betouleImprovedCosmologicalConstraints2014}.
-To do so, we do a Markov chain Monte Carlo (MCMC) analysis
-by stepping through cosmologies with various parameters using the Metropolis-Hastings algorithm
-and comparing their predicted luminosity distances to the data.
-
-\subsection{Theory}
-
-\subsubsection{Cosmological distances}
-
-From the FLRW metric \eqref{eq_flrw} and conformal time \eqref{eq_cosmic_conformal_time},
-we can show how to compute distances in the universe.
-Consider a photon traveling on a radial path with $d\theta = d\phi = 0$,
-from emission at $(\eta,r)$ to our observation at $(\eta_0, 0)$,
-along the null geodesic
-\begin{equation*}
-	0 = ds^2 = a^2(t) \left[ -c^2 d\eta^2 + \frac{dr^2}{1-kr^2} \right].
-\end{equation*}
-On the comoving grid (in $[\ldots]$), it travels the \textbf{comoving distance}
-\begin{equation}
-	\chi = \int_{\eta}^{\eta_0} c \, d\eta = c \, \big(\eta_0 - \eta\big) = \int_r^0 \frac{-dr}{\sqrt{1-kr^2}} = \frac{\asin\big(\sqrt{k}r\big)}{\sqrt{k}},
-\label{eq_comoving_distance}
-\end{equation}
-so it came from the radial coordinate%
-\footnote{This holds for all $k$ as $\sinc(x) = \sin x / x$ takes complex arguments, with $\sin(ix) = i \sinh x$ and $\sinc(0) = 1$.}
-\begin{equation}
-	r = \frac{\sin\Big(\sqrt{k}\chi\Big)}{\sqrt{k}} = \chi \sinc\Big(\sqrt{k}\chi\Big).
-\label{eq_radial_coordinate}
-\end{equation}
-
-Given the observed redshift $z$ of light,
-we can then compute its scale factor $a = (z+1)^{-1}$ at emission,
-the corresponding conformal time \eqref{eq_cosmic_conformal_time},
-the comoving distance \eqref{eq_comoving_distance}, the radial coordinate \eqref{eq_radial_coordinate}
-and thus the corresponding \textbf{angular diameter distance} and \textbf{luminosity distance}
-\begin{equation}
-	d_A = a r
-	\qquad \text{and} \qquad
-	d_L = \frac{r}{a} = \frac{d_A}{a^2}.
-\label{eq_distances}
-\end{equation}
-
-\subsubsection{Statistics}
-
-From \cite{betouleImprovedCosmologicalConstraints2014},
-we have measured luminosity distances $d_{L}^\text{obs}(z_i)$ and their
-corresponding measurement uncertainties $\sigma_i^\text{obs}$
-for $N=31$ different redshifts $z_i$.
-Given the three cosmological parameters $h$, $\Omega_{m0}$ and $\Omega_{k0}$,
-we can then fit the data to corresponding theoretically predicted distances $d_L(z_i; h, \Omega_{m0}, \Omega_{k0})$.
-Assuming the different measurements are Gaussian distributed and uncorrelated,
-the likelihood function that rates the fit is $L \propto e^{-\chi^2/2}$, where the $\chi^2$-function is
-\begin{equation}
-	\chi^2(h,\Omega_{m0},\Omega_{k0}) = \sum_{i=1}^{N} \left( \frac{d_L(z_i; h, \Omega_{m0}, \Omega_{k0}) - d_{L}^\text{obs}(z_i)}{\sigma_i^\text{obs}} \right)^2.
-\label{eq_chi2}
-\end{equation}
-
-The Metropolis-Hastings algorithm steps through various combinations of $\mathbf{p} = (h,\Omega_{m0},\Omega_{k0})$ in parameter space, measuring their likelihood $L(\mathbf{p})$.
-Each iteration $i$, it randomly shifts the parameters from their current values with a normal distribution,
-and then records their new values as a random sample of their probability distribution with probability $\min\big\{L_{i+1}/L_i, 100\%\big\}$.
-
-By the central limit theorem, once the algorithm has gathered many samples $\mathbf{p}_i$,
-they should scatter around the \emph{best fit}
-with maximum $L(\mathbf{p}_\text{best}) = \max\{L(\mathbf{p}_i)\}$
-like a multivariate Gaussian with the same dimension $D$ as the parameter space.
-We can then produce \emph{confidence regions} for the parameters
-by identifying contours that enclose a given fraction $F$ of the samples.
-For a multivariate Gaussian distribution, a fraction $F$ is enclosed by an ellipsoid
-for which
-\begin{equation}
-	\chi^2_i - \chi^2_\text{best} < q_{\chi^2_D}(F),
-\label{eq_confidence_region}
-\end{equation}
-where $q_{\chi^2_D}(F)$ is the inverse cumulative distribution function of the $\chi^2$-distribution with $D$ degrees of freedom.
-We have $D=3$ independent parameters, and look for standard $68.3\%$ and $95.4\%$ confidence regions
-with $q_{\chi^2_3}(68.3\%) \approx 3.53$ and $q_{\chi^2_3}(95.4\%) \approx 8.00$.
-
-\subsection{Implementation}
-
-\begin{itemize}
-	\item We roll our own homemade Metropolis-Hastings algorithm.
-	      It takes a function that computes the likelihood $L(\mathbf{p})$ for a set of parameters $\mathbf{p}$.
-	      Unless specified explicitly, it sets step sizes of the parameters as a proportion of their lower and upper bounds,
-		  and adaptively scales them if the algorithm accepts samples at a rate too far from the ``optimal'' acceptance rate around $25\%$ \cite{gelmanWeakConvergenceOptimal1997}.
-		  The algorithm can run multiple chains from different initial parameter guesses,
-		  each with a requested number of (accepted) samples after removing a given number of burn-in samples.
-	\item We exclude parameters outside their specified bounds by assigning $L=0$ to them.
-	\item As mentioned in \cref{sec_background_cosmology_theory},
-	      our implementation of the background cosmology parametrized by the scale factor
-	      \textbf{cannot handle cosmologies with turnaround} $\dot{a} = 0$.
-	      These cosmologies can arise now that we allow $\Omega_{k0} \neq 0$,
-	      for example with $\Omega_{r0}=0$, $\Omega_{m0} = 0.2$ and $\Omega_{k0} = -0.9$ and $\Omega_{\Lambda0} = 1.7$.
-	      We identify such cosmologies as described in \cref{sec_background_cosmology_implementation}, and exclude them by setting $L=0$.
-\end{itemize}
-
-\subsection{Results}
-
-\begin{figure}[!b]
-	\centering
-	\includegraphics[scale=0.7]{../plots/supernova_distance.pdf}
-	\caption{Observed and predicted luminosity distances \eqref{eq_distances} from \cite{betouleImprovedCosmologicalConstraints2014} and the Planck cosmology \eqref{eq_planck2018}.}
-	\label{fig_luminosity_distances}
-\end{figure}
-
-\Cref{fig_luminosity_distances} shows observed and predicted luminosity distances from the Planck 2018 cosmology \eqref{eq_planck2018}.
-The prediction steers wide of most error bars, so the agreement is not very good!
-This shows that supernovae are promising sources for generating orthogonal constraints on cosmological parameters complementary to the widely ``accepted'' Planck values, for example.
-The plot also shows the much better agreement from the best fit parameters that we find next.
-
-\begin{figure}[b]
-	\centering
-	\includegraphics[scale=0.7]{../plots/supernova_hubble.pdf}
-	\includegraphics[scale=0.7]{../plots/supernova_omegas.pdf}
-	\caption{%
-		Probability distribution of today's reduced Hubble parameter $h$,
-		and confidence regions \eqref{eq_confidence_region} for $\Omega_{m0}$ and $\Omega_{\Lambda0}$,
-		from $10 \times 10000$ Metropolis-Hastings samples with $L \propto e^{-\chi^2/2}$ and the $\chi^2$ sum \eqref{eq_chi2},
-		comparing predicted luminosity distances \eqref{eq_distances} to observations from \cite{betouleImprovedCosmologicalConstraints2014}.
-		The algorithm restricts the parameters to the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$, and accordingly (with negligible radiation today) $\Omega_{\Lambda0} \in [-1, 2]$.
-	}
-	\label{fig_supernova_mcmc}
-\end{figure}
-
-\Cref{fig_supernova_mcmc} shows our MCMC constraints on $h$, $\Omega_{m0}$ and $\Omega_\Lambda$,
-from the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$
-that accommodate a wide region around the Planck values \eqref{eq_planck2018}, for example.
-In addition, curved universes with a turnaround $\dot{a} = 0$ are forbidden
-(\cite[Figure 11]{amanullahSpectraLightCurves2010} shows that such cosmologies are disconnected from the best fit regions, anyway).
-
-Note that the constraint in the $\Omega_{m0}$-$\Omega_{\Lambda0}$-plane is highly orthogonal to the line of flat universes,
-so supernova data can give good constraints when combined with some other argument in favor of flatness, for example.
-Our best fits for $\Omega_{m0}$ and $\Omega_{\Lambda0}$ agrees relatively well with a similar analysis in \cite[Fig. 15]{betouleImprovedCosmologicalConstraints2014}.
-Our Hubble parameter is significantly larger than Planck's and exemplifies the Hubble tension.
 
 \clearpage
 \section{Recombination and reionization history}
@@ -1645,6 +1512,150 @@ Parameter degeneracies: $\Omega_{s0} h^2$, $N_\text{eff}$ and $Y_p$?
 
 \clearpage
 \section{Conclusions}
+
+\clearpage
+\appendix
+\section{Cosmological constraints from supernovae}
+\label{sec_supernova}
+
+In this section, we forget most of the Planck cosmological parameters \eqref{eq_planck2018} for a moment;
+neglecting neutrinos by fixing $N_\text{eff}=0$ and keeping only $T_{\gamma0}$, hence fixing $\Omega_{r0}$.
+Instead, we constrain the independent parameters $h$, $\Omega_{m0}$ and $\Omega_{k0}$,
+and hence the dependent $\Omega_{\Lambda 0}=1-\Omega_{k0}-\Omega_{m0}-\Omega_{r0}$,
+using observed supernovae luminosity distances from \cite{betouleImprovedCosmologicalConstraints2014}.
+To do so, we do a Markov chain Monte Carlo (MCMC) analysis
+by stepping through cosmologies with various parameters using the Metropolis-Hastings algorithm
+and comparing their predicted luminosity distances to the data.
+
+\subsection{Theory}
+
+\subsubsection{Cosmological distances}
+
+From the FLRW metric \eqref{eq_flrw} and conformal time \eqref{eq_cosmic_conformal_time},
+we can show how to compute distances in the universe.
+Consider a photon traveling on a radial path with $d\theta = d\phi = 0$,
+from emission at $(\eta,r)$ to our observation at $(\eta_0, 0)$,
+along the null geodesic
+\begin{equation*}
+	0 = ds^2 = a^2(t) \left[ -c^2 d\eta^2 + \frac{dr^2}{1-kr^2} \right].
+\end{equation*}
+On the comoving grid (in $[\ldots]$), it travels the \textbf{comoving distance}
+\begin{equation}
+	\chi = \int_{\eta}^{\eta_0} c \, d\eta = c \, \big(\eta_0 - \eta\big) = \int_r^0 \frac{-dr}{\sqrt{1-kr^2}} = \frac{\asin\big(\sqrt{k}r\big)}{\sqrt{k}},
+\label{eq_comoving_distance}
+\end{equation}
+so it came from the radial coordinate%
+\footnote{This holds for all $k$ as $\sinc(x) = \sin x / x$ takes complex arguments, with $\sin(ix) = i \sinh x$ and $\sinc(0) = 1$.}
+\begin{equation}
+	r = \frac{\sin\Big(\sqrt{k}\chi\Big)}{\sqrt{k}} = \chi \sinc\Big(\sqrt{k}\chi\Big).
+\label{eq_radial_coordinate}
+\end{equation}
+
+Given the observed redshift $z$ of light,
+we can then compute its scale factor $a = (z+1)^{-1}$ at emission,
+the corresponding conformal time \eqref{eq_cosmic_conformal_time},
+the comoving distance \eqref{eq_comoving_distance}, the radial coordinate \eqref{eq_radial_coordinate}
+and thus the corresponding \textbf{angular diameter distance} and \textbf{luminosity distance}
+\begin{equation}
+	d_A = a r
+	\qquad \text{and} \qquad
+	d_L = \frac{r}{a} = \frac{d_A}{a^2}.
+\label{eq_distances}
+\end{equation}
+
+\subsubsection{Statistics}
+
+From \cite{betouleImprovedCosmologicalConstraints2014},
+we have measured luminosity distances $d_{L}^\text{obs}(z_i)$ and their
+corresponding measurement uncertainties $\sigma_i^\text{obs}$
+for $N=31$ different redshifts $z_i$.
+Given the three cosmological parameters $h$, $\Omega_{m0}$ and $\Omega_{k0}$,
+we can then fit the data to corresponding theoretically predicted distances $d_L(z_i; h, \Omega_{m0}, \Omega_{k0})$.
+Assuming the different measurements are Gaussian distributed and uncorrelated,
+the likelihood function that rates the fit is $L \propto e^{-\chi^2/2}$, where the $\chi^2$-function is
+\begin{equation}
+	\chi^2(h,\Omega_{m0},\Omega_{k0}) = \sum_{i=1}^{N} \left( \frac{d_L(z_i; h, \Omega_{m0}, \Omega_{k0}) - d_{L}^\text{obs}(z_i)}{\sigma_i^\text{obs}} \right)^2.
+\label{eq_chi2}
+\end{equation}
+
+The Metropolis-Hastings algorithm steps through various combinations of $\mathbf{p} = (h,\Omega_{m0},\Omega_{k0})$ in parameter space, measuring their likelihood $L(\mathbf{p})$.
+Each iteration $i$, it randomly shifts the parameters from their current values with a normal distribution,
+and then records their new values as a random sample of their probability distribution with probability $\min\big\{L_{i+1}/L_i, 100\%\big\}$.
+
+By the central limit theorem, once the algorithm has gathered many samples $\mathbf{p}_i$,
+they should scatter around the \emph{best fit}
+with maximum $L(\mathbf{p}_\text{best}) = \max\{L(\mathbf{p}_i)\}$
+like a multivariate Gaussian with the same dimension $D$ as the parameter space.
+We can then produce \emph{confidence regions} for the parameters
+by identifying contours that enclose a given fraction $F$ of the samples.
+For a multivariate Gaussian distribution, a fraction $F$ is enclosed by an ellipsoid
+for which
+\begin{equation}
+	\chi^2_i - \chi^2_\text{best} < q_{\chi^2_D}(F),
+\label{eq_confidence_region}
+\end{equation}
+where $q_{\chi^2_D}(F)$ is the inverse cumulative distribution function of the $\chi^2$-distribution with $D$ degrees of freedom.
+We have $D=3$ independent parameters, and look for standard $68.3\%$ and $95.4\%$ confidence regions
+with $q_{\chi^2_3}(68.3\%) \approx 3.53$ and $q_{\chi^2_3}(95.4\%) \approx 8.00$.
+
+\subsection{Implementation}
+
+\begin{itemize}
+	\item We roll our own homemade Metropolis-Hastings algorithm.
+	      It takes a function that computes the likelihood $L(\mathbf{p})$ for a set of parameters $\mathbf{p}$.
+	      Unless specified explicitly, it sets step sizes of the parameters as a proportion of their lower and upper bounds,
+		  and adaptively scales them if the algorithm accepts samples at a rate too far from the ``optimal'' acceptance rate around $25\%$ \cite{gelmanWeakConvergenceOptimal1997}.
+		  The algorithm can run multiple chains from different initial parameter guesses,
+		  each with a requested number of (accepted) samples after removing a given number of burn-in samples.
+	\item We exclude parameters outside their specified bounds by assigning $L=0$ to them.
+	\item As mentioned in \cref{sec_background_cosmology_theory},
+	      our implementation of the background cosmology parametrized by the scale factor
+	      \textbf{cannot handle cosmologies with turnaround} $\dot{a} = 0$.
+	      These cosmologies can arise now that we allow $\Omega_{k0} \neq 0$,
+	      for example with $\Omega_{r0}=0$, $\Omega_{m0} = 0.2$ and $\Omega_{k0} = -0.9$ and $\Omega_{\Lambda0} = 1.7$.
+	      We identify such cosmologies as described in \cref{sec_background_cosmology_implementation}, and exclude them by setting $L=0$.
+\end{itemize}
+
+\subsection{Results}
+
+\begin{figure}[!b]
+	\centering
+	\includegraphics[scale=0.7]{../plots/supernova_distance.pdf}
+	\caption{Observed and predicted luminosity distances \eqref{eq_distances} from \cite{betouleImprovedCosmologicalConstraints2014} and the Planck cosmology \eqref{eq_planck2018}.}
+	\label{fig_luminosity_distances}
+\end{figure}
+
+\Cref{fig_luminosity_distances} shows observed and predicted luminosity distances from the Planck 2018 cosmology \eqref{eq_planck2018}.
+The prediction steers wide of most error bars, so the agreement is not very good!
+This shows that supernovae are promising sources for generating orthogonal constraints on cosmological parameters complementary to the widely ``accepted'' Planck values, for example.
+The plot also shows the much better agreement from the best fit parameters that we find next.
+
+\begin{figure}[b]
+	\centering
+	\includegraphics[scale=0.7]{../plots/supernova_hubble.pdf}
+	\includegraphics[scale=0.7]{../plots/supernova_omegas.pdf}
+	\caption{%
+		Probability distribution of today's reduced Hubble parameter $h$,
+		and confidence regions \eqref{eq_confidence_region} for $\Omega_{m0}$ and $\Omega_{\Lambda0}$,
+		from $10 \times 10000$ Metropolis-Hastings samples with $L \propto e^{-\chi^2/2}$ and the $\chi^2$ sum \eqref{eq_chi2},
+		comparing predicted luminosity distances \eqref{eq_distances} to observations from \cite{betouleImprovedCosmologicalConstraints2014}.
+		The algorithm restricts the parameters to the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$, and accordingly (with negligible radiation today) $\Omega_{\Lambda0} \in [-1, 2]$.
+	}
+	\label{fig_supernova_mcmc}
+\end{figure}
+
+\Cref{fig_supernova_mcmc} shows our MCMC constraints on $h$, $\Omega_{m0}$ and $\Omega_\Lambda$,
+from the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$
+that accommodate a wide region around the Planck values \eqref{eq_planck2018}, for example.
+In addition, curved universes with a turnaround $\dot{a} = 0$ are forbidden
+(\cite[Figure 11]{amanullahSpectraLightCurves2010} shows that such cosmologies are disconnected from the best fit regions, anyway).
+
+Note that the constraint in the $\Omega_{m0}$-$\Omega_{\Lambda0}$-plane is highly orthogonal to the line of flat universes,
+so supernova data can give good constraints when combined with some other argument in favor of flatness, for example.
+Our best fits for $\Omega_{m0}$ and $\Omega_{\Lambda0}$ agrees relatively well with a similar analysis in \cite[Fig. 15]{betouleImprovedCosmologicalConstraints2014}.
+Our Hubble parameter is significantly larger than Planck's and exemplifies the Hubble tension.
+
+\clearpage
 
 \TODO{use article template?}
 
