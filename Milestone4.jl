@@ -136,7 +136,7 @@ if false
     @time plot_Dl_against_Planck(:EE)
 end
 
-if true
+if false
     # TODO: use correct parameters!
     plot_Dl_varying_parameter(:h,           [0.57, 0.67, 0.77];        labelfunc = h    -> L"h = %$(h)")
     plot_Dl_varying_parameter(:Ωb0,         [0.02, 0.05, 0.08];        labelfunc = Ωb0  -> L"\Omega_{b0} = %$(Ωb0)")
@@ -150,7 +150,7 @@ if true
     #plot_Dl_varying_parameter(:Ωk0,         [-0.5, 0, +0.5];           labelfunc = Ωk0  -> L"\Omega_{k0} = %$(Ωk0)")
 end
 
-if false
+if true
     ls = [1, 10, 100, 1000]
     η0 = η(bg,0)
 
@@ -162,14 +162,14 @@ if false
     STs = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=false) # TODO: true?
     dΘTl0_dxs = Cosmology.dΘTl0_dx(10, xs, ks, STs, bg.η)
     ys = [dΘTl0_dxs[:,i] for i in 1:length(ks)]
-    plot!(xs, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-1, +1), yticks=-1.0:0.20:+1.0, label=reshape([L"k=%$(kcη0)/(c\eta_0)" for kcη0 in kcη0s], 1, :))
+    plot!(xs, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-1, +1), yticks=-1.0:0.20:+1.0, label=reshape([L"k=%$(kcη0)/(c\eta_0)^{-1}" for kcη0 in kcη0s], 1, :))
     plot!(xs, ys, linewidth=0.3, xlims=(-1, 0), ylims=(-0.03, +0.03), yticks=-0.03:0.01:+0.03, xticks=-1:0.1:0, subplot=2, inset=(1, bbox(0.10, 0.43, 0.7, 0.5, :right)), label=nothing)
     savefig("plots/dThetal0_dx.pdf")
 
 
     # plot Θl0 # TODO: ΘEl0?
     # TODO: integrate Θl0 from k=0, forcing it to start from 0?
-    plot(xlabel=L"k / c \eta_0", ylabel=L"\Theta_l(x=0,k)", xticks=0:100:4000, ylims=(-0.1, +0.1), legend_position=:topright)
+    plot(xlabel=L"k / (c \eta_0)^{-1}", ylabel=L"\Theta_l(x=0,k)", xticks=0:100:4000, ylims=(-0.1, +0.1), legend_position=:topright)
     ks = range(1/(c*η0), 1200/(c*η0), step=2*π/(c*η0*10))
     STs = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=true)
     for l in ls
@@ -185,7 +185,7 @@ if false
         y = Cosmology.dCl_dk_TT(l,xs,ks,STs,nothing,bg.η,par) / (c*η0)
         e10 = Int(round(log10(maximum(y))))
         y ./= 10.0^e10
-        plot(xlabel=L"k / c \eta_0", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / 10^{%$(e10)} (c \eta_0)^{-1}", xlims=(kcη0min, kcη0max), xticks=0:100:2000, legend_position=:topright)
+        plot(xlabel=L"k / (c \eta_0)^{-1}", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / 10^{%$(e10)} (c \eta_0)^{-1}", xlims=(kcη0min, kcη0max), xticks=0:100:2000, legend_position=:topright)
         plot!(c*ks*η0, y, linewidth=0.5, color=i, label=L"l=%$l")
         savefig("plots/dCl_dk_$l.pdf")
     end
