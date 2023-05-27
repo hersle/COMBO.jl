@@ -1157,13 +1157,13 @@ and the primordial power spectrum after inflation,
 \label{eq_P_primordial}
 \end{equation}
 
-The \textbf{CMB power spectrum} is characterized by the sphere-expansion coefficients
+The \textbf{CMB power spectrum} is given by the sphere-expansion coefficients
 \begin{equation}
-	C^{\textrm{AB}}_l = \frac{2}{\pi} \int_0^\infty k^2 P_0(k) \, \Theta_l^\text{A}(0,k) \, \Theta_l^\text{B}(0,k) \, dk
-	\quad \text{where} \quad \text{$\text{A},\text{B} \in \{\text{T},\text{E}\}$}.
+	C^{\textrm{AB}}_l = \frac{2}{\pi} \int_0^\infty k^2 P_0(k) \, \Theta_l^\text{A}(0,k) \, \Theta_l^\text{B}(0,k) \, dk,
+	%\quad \text{where} \quad \text{$\text{A},\text{B} \in \{\text{T},\text{E}\}$}.
 \label{eq_Cl}
 \end{equation}
-where $\{\text{AB}\} \in \{\text{TT},\text{EE},\text{TE}\}$ denotes \textbf{t}emperature self-correlation, \textbf{E}-mode polarization self-correlation and their cross-correlation, respectively.
+where $\{\text{AB}\} \in \{\text{TT},\text{EE},\text{TE}\}$ denotes \textbf{t}emperature self-correlation, \textbf{E}-mode polarization self-correlation and their cross-correlation.
 We want this power spectrum, and hence today's multipoles $\Theta^A_l$, for $1 \leq l \lesssim 2500$.
 From our previous work,
 an obvious brute-force way of finding these is to simply extend the cutoff of the perturbation system we integrate in \cref{sec_perturbations} from $l \lesssim 10$ to $l \lesssim 2500$.
@@ -1172,8 +1172,8 @@ A much more elegant method is to compute them from the \emph{line of sight integ
 \TODO{is $\Theta^T = \Theta$ and $\Theta^E = \Theta^P$ from perturbations?}
 \begin{subequations}
 \begin{align}
-	\Theta^\text{T}_l(x=0,k) &= \phantom{\sqrt{\frac{(l+2)!}{(l-2)!}}} \int_{-\infty}^0 \tilde{S}^\text{T}(x,k) j_l\big(ck(\eta_0-\eta)\big) dx, \\
-	\Theta^\text{E}_l(x=0,k) &= \sqrt{\frac{(l+2)!}{(l-2)!}} \int_{-\infty}^0 \tilde{S}^\text{E}(x,k) j_l\big(ck(\eta_0-\eta)\big) dx,
+	\Theta^\text{T}_l(x=0,k) &= \phantom{\sqrt{\frac{(l+2)!}{(l-2)!}}} \int_{-\infty}^0 \tilde{S}^\text{T}(x,k) j_l\big(ck(\eta_0-\eta(x))\big) dx, \\
+	\Theta^\text{E}_l(x=0,k) &= \sqrt{\frac{(l+2)!}{(l-2)!}} \int_{-\infty}^0 \tilde{S}^\text{E}(x,k) j_l\big(ck(\eta_0-\eta(x))\big) dx,
 \end{align}
 \label{eq_Thetal0}
 \end{subequations}
@@ -1186,35 +1186,44 @@ with the spherical Bessel functions of the first kind $j_l(x)$ and the \textbf{s
 \label{eq_S}
 \end{subequations}
 
-The terms in the temperature source function named after the effects they describe or the people who originally studied them:
+The terms in the $\tilde{S}^\text{T}$ are named after the effects they describe or those who originally studied them:
 \begin{itemize}
 \item
-The \textbf{Sachs-Wolfe effect} describes gravitational redshift of photons that climb out of potential wells
-at the last scattering surface (and during reionization) (see \cref{fig_visibility_function}).
-Roughly speaking, the visibility function can be approximated as a spike $\tilde{g}(x) \approx \delta(x-x_\text{rec})$ at recombination,
-so it contributes
+The \textbf{Sachs-Wolfe effect} describes gravitational redshift of photons that climb out of potential wells at their last scattering,
+and is the most important contribution to the source function.
+The visibility function $\tilde{g}$ in \cref{fig_visibility_function} shows that this happens mostly during recombination,
+and to a lesser extent during reionization.
+The contribution from the approximate spike $\tilde{g}(x) \approx \delta(x-x_\text{rec})$ at recombination is
 \begin{equation}
-	\Theta_l(0,k) \approx \int \delta\big(x-x_\text{rec}\big) \big( \Theta_0 + \Psi + \tfrac14 \Pi \big) \, j_l\big(ck(\eta_0-\eta\big) dx = \big(\Theta_0 + \Psi + \tfrac14 \Pi \big) \, j_l\big(ck(\eta_0-\eta\big) \Big|_{x=x_\text{rec}}.
+	\Theta^\text{T}_l(0,k) \approx \big(\Theta_0 + \Psi + \tfrac14 \Pi \big) \, j_l\big(ck(\eta_0-\eta\big) \Big|_{x=x_\text{rec}}.
 \end{equation}
-Moreover, $j_l(y)$ spikes and becomes nonzero at $y \gtrsim l$, so with $\eta_0 \gg \eta_\text{rec}$ we expect that $\Theta_l(0,k \gtrsim l \, c \eta_0)$.
+Since $\eta_0 \gg \eta_\text{rec}$ and $j_l(y)$ becomes nonzero for $y \gtrsim l$,
+we expect that $\Theta_l(0,k \gtrsim l / c \eta_0) \not\approx 0$.
+Very roughly speaking,
+this enables us to associate spatial and angular scales $k \leftrightarrow l/c\eta_0$.
 
 \item
-The \textbf{integrated Sachs-Wolfe (ISW) effect} also describes gravitational redshift of photons,
-but of photons traveling through wells that deepen \emph{as} the photons travel through them,
-as described by the $(\Psi-\Phi)^\prime$ term.
-This leads to additional energy loss.
-As we saw in \cref{fig_perturb_all}, the potentials $\Psi$ and $\Phi$ mostly decay during radiation and dark energy domination, and not during matter domination.
-Thus, the \textbf{early-time ISW} describes photons in wells that still sink after after recombination, but before matter domination, and shows up on small scales (large $l$ and $k$) that enter the horizon during radiation domination, in time for their potentials to drop.
-On the other hand, the \textbf{late-time ISW} describes the same effect for potentials that decay as dark energy takes over, and shows up on large scales (small $l$ and $k$).
+The \textbf{integrated Sachs-Wolfe (ISW) effect} is the only term not weighted by the visibility function (or its derivatives),
+so it affects photons \emph{while} traveling, and not only \emph{at} emission,
+explaining the name's prefix.
+Through the derivative $(\Psi-\Phi)^\prime$,
+it instead describes gravitational redshift of photons traveling through wells that \emph{deepen while the photons traverse them},
+leading to additional energy loss.
+The factor $e^{-\tau} = I/I_0$ applies the effect only to the photons that ultimately reach us.
+As we saw in \cref{fig_perturb_all}, the potentials $\Psi$ and $\Phi$ decay significantly during radiation and dark energy domination, but not during matter domination.
+Thus, the \textbf{early-time ISW} describes photons traversing changing wells after recombination, but before matter domination, and shows up on small scales that enter the horizon during radiation domination.
+On the other hand, the \textbf{late-time ISW} describes the same effect during dark energy-domination,
+and shows up on large scales.
 
 \item
 The \textbf{Doppler term} contains $(\dot{a} \tilde{g} v_b)^\prime$,
-and essentially describes change in the ``photon emitter'' with distance from (last) scattering.
-Thus, photons emitted at different times are redshifted by different amounts.
+and essentially describes changes in the physical velocity of the baryons that emit the photons at their last scattering.
+Thus, photons emitted from baryons at different scales and times are redshifted by different amounts,
+effectively causing Doppler redshift.
 
 \item
-The \textbf{polarization term} contains $\Pi$ and has to do with polarization.
-Unlike in Thompson scattering,
+The \textbf{polarization term} contains $\Pi$, so it has to do with polarization.
+Unlike in the low-energy limit of Thompson scattering,
 the outgoing photon's energy in general Compton scattering
 depends on the angle between the incident photons.
 Thus, the quadrupole structure (which we associated with polarization in \cref{sec_perturbations})
@@ -1260,11 +1269,12 @@ so the crude $x$-integration does not affect the end result significantly.
 
 \item
 To evaluate the source functions \eqref{eq_S} at all $x$ and $k$ required by the integrals,
-we can simply integrate every required perturbation $k$-mode and evaluate it at the necessary $x$.
+we can simply integrate every required perturbation $k$-mode and evaluate them at the necessary $x$.
 This is most accurate, but unnecessarily slow, as it requires integrating $6365$ perturbation modes.
-Compared to the products $S(x,k) \cdot j_l(ck(\eta_0-\eta))$,
+Instead, we exploit that
 the source functions $S(x,k)$ vary relatively smoothly,
-so a more efficient way is to instead \emph{spline} $S(x,k)$ on a smaller $k$-grid,
+compared to the products $S(x,k) \cdot j_l(ck(\eta_0-\eta))$.
+Therefore, a more efficient way is to instead \emph{spline} $S(x,k)$ on a smaller $k$-grid,
 and then evaluate that spline on the larger grid for the integration.
 We find the splining to be accurate if we use $400$ $k$-values with constant logarithmic spacing $\Delta \log k$,
 compared to, say, linear or quadratic spacing $\Delta k$ or $\Delta k^2$.
@@ -1283,7 +1293,8 @@ $\int f(x) dx = \int f_\text{osc}(x) dx + \int f_\text{smooth}(x) dx$,
 where the first term is some analytically known integral that captures most of the oscillations,
 and the second is the remainder that varies more smoothly and can be tackled numerically with less resources.
 This would also help to do the $x$-integral in a more ``honest'' way.
-One could also try to handle the oscillating integrals with specialized Levin-type quadrature\footnote{See \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.}.
+One could also attempt adaptive integration methods or use a $k$-dependent $x$-grid,
+or try to handle the oscillating integrals with specialized Levin-type quadrature\footnote{See \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.}, for example.
 \end{itemize}
 
 \begin{figure}[ph]
@@ -1317,10 +1328,10 @@ One could also try to handle the oscillating integrals with specialized Levin-ty
 \end{figure}
 
 \Cref{fig_power_spectrum_matter} shows the computed matter power spectrum.
-The agreement with data is rather good.
+The agreement with data is quite good.
 We see that the power spectrum turns over around
 $k_\text{eq} \approx 1/c\,\eta_\text{eq} \approx \mathcal{H}(a_\text{eq})/c$:
-which corresponds to modes that enters the horizon \emph{at} radiation-matter equality:
+which corresponds to modes that enter the horizon at radiation-matter equality:
 \begin{itemize}
 \item
 Modes with $k<k_\text{eq}$ enter the horizon after radiation-matter equality.
@@ -1360,12 +1371,12 @@ They are therefore unaffected by most of the causal physics that have acted thro
 so this plateau directly reflects the initial conditions and lets us probe inflation.
 Assuming a flat primordial power spectrum that gives equal power to all scales,
 the power spectrum therefore appears relatively flat in this regime.
-The increase for $l \lesssim 10^1$ is caused by the late-time ISW effect,
+The increase for the smallest $l \lesssim 10^1$ is caused by the late-time ISW effect,
 which we explained due to the decay of gravitational potentials during dark energy-domination.
 
 \item
 The first peak at $l \approx 10^{2.3}$ represents modes whose baryonic acoustic oscillations
-have reached the maximum of the first \emph{compression} at recombination.
+have reached the maximum of the first compression at recombination.
 At this point, the opaque gas clears for the photons to stream away,
 but they must first climb out of the wells they are compressed into,
 so the temperature fluctuations appear large at this scale due to the SW effect.
@@ -1380,15 +1391,15 @@ so there is still nonzero power at this scale -- as on all scales.
 
 \item
 The second peak at $l \approx 10^{2.7}$ represents modes that have reached
-the maximum of the first \emph{decompression} when the photons are released at recombination.
-These photons do not have to climb out of potential wells, so they appear hot at these angular/spatial scales.
+the maximum of the first decompression when the photons are released at recombination.
+These photons do not have to climb out of potential wells, so they appear hot at these scales.
 
 \item
 In general, the $n$-th odd/even peak represent modes that have
-undergone multiple oscillations and reached the maximum of the $n$-th compression/decompression.
+undergone multiple oscillations and reached the maximum of the $n$-th compression/decompression at recombination.
 Smaller-scale peaks have undergone more oscillations,
 leading to more mixing of hot and cold regions from diffusion damping,
-so the temperature anisotropies due to the SW effect decreases and the peaks become lower in amplitude.
+so the temperature anisotropies due to the SW effect decreases and the peaks become successively lower in amplitude.
 \end{itemize}
 
 \Cref{fig_power_spectrum_cmb} also shows the E-mode polarization self-correlation spectrum $D_l^\text{EE}$:
@@ -1399,20 +1410,19 @@ We saw in \cref{sec_perturbations} that polarization was associated with quadrup
 which is in phase with the dipole $\Theta_1$ during tight coupling \eqref{eq_perturb_tight}.
 Moreover, equation \eqref{eq_radiation_velocity_overdensity} roughly relates dipoles to velocities and monopoles to overdensities,
 so due to the nature of oscillations, $\Theta_0$ and $\Theta_1$ are almost perfectly out of phase.
-During tight coupling \eqref{eq_perturb_tight}, it is in phase with the dipole $\Theta_1$.
 Whereas the temperature power spectrum is largely sourced by overdensities (or $\Theta_0$),
-this polarization power spectrum is largely sourced by fluid velocities (or $\Theta_1 \propto \Theta_2$),
-so they are out of phase to a good approximation.
+the polarization power spectrum is therefore largely sourced by fluid velocities (or $\Theta_1 \propto \Theta_2$),
+explaining why they are out of phase.
 
 \item
 There is no (nonzero) Sachs-Wolfe-like plateau in the EE-spectrum.
 As the source function \eqref{eq_S} is weighted by the visibility function $\tilde{g}$,
 most of the contribution comes from quadrupoles at recombination (see \cref{fig_perturb_all}) from modes entering the horizon before radiation-matter equality.
 In addition, there is a smaller contribution from larger-scale modes due to photons last scattering during reionization,
-which becomes visible as a bump around $l \approx 100$.
+which becomes visible as the small ``reionization bump'' around $l \approx 100$.
 
 \item
-The amplitude of the EE signal is much lower,
+The amplitude of the EE signal is much lower than the TT signal,
 so anisotropies in polarization are much less pronounced than those in temperature.
 \end{itemize}
 
@@ -1422,7 +1432,7 @@ so anisotropies in polarization are much less pronounced than those in temperatu
 From our discussion of the EE-spectrum,
 we know that TE signals are dominated by correlations between density and velocity at last scattering.
 Thus, very roughly speaking, its phase lies halfway between the TT and EE spectra's phases,
-in other words from modes whose oscillations are closer to equilibrium instead of maximum (de)compression at last scattering.
+in other words from modes whose oscillations are closer to equilibrium instead of maximum compression or decompression at last scattering.
 
 \item
 The amplitude of the TE signal is somewhat higher than the EE signal,
@@ -1445,10 +1455,10 @@ but still much lower than the TT signal.
 \end{figure}
 
 Finally, in \cref{fig_power_spectrum_cmb_varying_parameters},
-we explore the change of the CMB's TT power spectrum with varying one cosmological parameter at the time away from the Planck parameters \eqref{eq_planck2018}:
-It is not trivial to think clearly about all parameter changes:
+we explore the change of the CMB's TT power spectrum as we change one cosmological parameter at the time away from the Planck parameters \eqref{eq_planck2018}:
+It is not trivial to think clearly about all parameter changes;
 for example, changing $h$ (which intuitively corresponds to the expansion rate) would also change $\Omega_{\gamma 0} \propto T_{\gamma 0}^4/h^{2}$, and thus $\Omega_{\Lambda 0}$.
-Nevertheless, let us try to understand the ``main effect'' of some parameters:
+Nevertheless, let us try to understand the ``main effect'' of the most important parameters:
 \begin{itemize}
 \item
 Increasing the baryon density $\Omega_{b0}$ amplifies the \emph{difference} between odd and even acoustic peaks.
@@ -1464,16 +1474,20 @@ so the odd peaks are amplified \emph{relative to} the even peaks (the third peak
 \item
 Increasing the cold dark matter density $\Omega_{c0}$ instead suppresses the entire power spectrum,
 as the baryonic acoustic oscillations become less pronounced when the baryons make up less of the total matter.
-The effect of radiation driving
--- the decay of potentials during compressions in radiation domination so they don't have to fight gravity on the way out and amplifying the peaks --
-becomes less pronounced because radiation-matter equality occurs earlier.
+\emph{Radiation driving} refers to the decay of potentials during compressions in radiation domination,
+so the gravitational force that pressure fights during the following decompression is weaker,
+effectively providing an external supporting force for the oscillations during radiation domination.
+This effect becomes less pronounced with increasing $\Omega_{c0}$ because radiation-matter equality occurs earlier,
+hence suppressing power.
 Moreover, without dark matter, there would be no wells for the baryons to load,
-so the fact that CMB measurements have a second (decompressional) and third (compressional) peak that are of the same height
-is clear evidence that dark matter exists.
+so the fact that CMB measurements have a second (decompression) and third (compression) peak of the same height
+provides good evidence that dark matter exists.
 
 \item
 Increasing today's photon temperature $T_{\gamma 0}$ increases the photon and radiation content of the universe.
-This enhances the early-time ISW effect and radiation driving, leading to higher peaks.
+This makes radiation dominate for longer,
+and enhances the early-time ISW effect and radiation driving,
+leading to higher peaks.
 It also creates a stronger photon pressure with more violent decompressions,
 leading to less damping at smaller scales.
 
@@ -1483,7 +1497,7 @@ also increases the radiation content and enhances the early-time ISW effect and 
 making the first peaks higher.
 However, as the neutrinos have decoupled from the baryon-photon fluid,
 it does not contribute to its radiation pressure,
-so power is not amplified at smaller scales, as it was for the photons.
+so power is instead suppressed at smaller scales, unlike what happened with more photons.
 
 %\emph{Massive} neutrinos, on the other hand, are generally known to wash out structure growth.
 
@@ -1494,21 +1508,21 @@ so power is not amplified at smaller scales, as it was for the photons.
 
 \item
 Increasing the primordial power spectrum amplitude $A_s$
-only produces an overall multiplication of the entire power spectrum through \eqref{eq_P_primordial}.
+only produces an overall multiplication of the entire power spectrum through equation \eqref{eq_P_primordial}.
 If there is more power on all scales to begin with,
 there is more power on all scales later, as well.
 
 \item
 Increasing the spectral index $n_s>1$ gives more primordial power to modes with larger $k$.
 This ``tilts'' the power spectrum so there is more power on smaller scales, and less on larger scales.
-This is particularly noticeable for the Sachs-Wolfe plateau and the largest-scale modes,
-which have been affected very little since early times.
+This is particularly noticeable for the Sachs-Wolfe plateau and the largest-scale modes that still resemble their primordial form.
 
 \item
-Increasing $Y_p$ increases the number of free electrons $X_e$ (see \cref{fig_free_electron_fraction}),
-but decreases the total number density of free electrons $n_e$ (see \eqref{eq_free_electron_fraction_definition}).
-Hence, the photon's mean free path and the effect of diffusion damping increases,
-yielding a more suppressed tail.
+Increasing $Y_p$ increases the free electron fraction $X_e$ (see \cref{fig_free_electron_fraction}),
+but \emph{decreases} the free electron number density $n_e$ (see equation \eqref{eq_free_electron_fraction_definition}).
+Hence, the photon's mean free path increases,
+and so does the effect of diffusion damping,
+yielding a more suppressed small-scale tail.
 
 \item
 Increasing $h$ changes a lot of things and is not straightforward to reason about.
@@ -1520,18 +1534,19 @@ so structure has less time to build up.
 
 \item
 Increasing $\Omega_{k0}$ would mainly affect the location of the first peak
-(we have only implemented curvature at the background level, but not in the perturbation equations, so we can not see this from our own program).
+(we have only implemented curvature at the background level, but not in the perturbation equations, so we could not have seen this from our own program).
 For example, in a closed universe with $\Omega_{k0} < 0 < k$, (initially parallel) light rays converge,
 so a temperature fluctuation on some spatial scale would be observed on a larger angular scale than in a flat universe.
 Thus, with increasing $\Omega_{k0}$,
 the power spectrum would shift to smaller angular scales with larger $l$.
-From the measured CMB spectrum, we know that our Universe is approximately flat.
+From the location of the peak in the measured CMB spectrum,
+we know that our Universe is approximately flat.
 \end{itemize}
-
-\TODO{understand radiation driving, baryon loading, diffusion damping. mention in perturbation section, so I can refer back here?}
 
 \clearpage
 \section{Conclusions}
+
+\TODO{}
 
 \clearpage
 \appendix
@@ -1678,7 +1693,12 @@ Our Hubble parameter is significantly larger than Planck's and exemplifies the H
 \clearpage
 
 \section{To-do list}
-\TODO{use article template?}
+
+\begin{itemize}
+\item \TODO{use article template?}
+
+\item \TODO{list with radiation driving, baryon loading, diffusion damping. mention in perturbation section, so I can refer back here?}
+\end{itemize}
 
 \clearpage
 %\bibliography{report.bib}
