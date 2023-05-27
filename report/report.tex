@@ -76,24 +76,43 @@ as it is an interesting programming language I wanted to learn more about.
 
 \clearpage
 
+\setcounter{section}{-1}
 \section{Introduction}
 \label{sec_intro}
 
-\TODO{WIP for now, eventually weave this together with the remaining milestones}
-
-Einstein field equations:
+The goal of this project is to theoretically predict
+power spectra for matter and the cosmic microwave background (CMB).
+This essentially involves solving the \textbf{Einstein field equations}
 \begin{equation}
 	G\indices{_\mu_\nu} + \Lambda g\indices{_\mu_\nu} = \frac{8 \pi G}{c^4} T\indices{_\mu_\nu},
 \label{eq_einstein}
 \end{equation}
-where $\Lambda$ is the cosmological constant.
-Energy-momentum tensor:
+where the distribution function $f_s(\mathbf{x},\mathbf{p},t)$ for different species $s$
+gives rise to the total energy-momentum
 \begin{equation}
-	T\indices{^\mu_\nu} = ...
+	T\indices{^\mu_\nu}(\mathbf{x},t) = \sum_s \frac{g_s}{\sqrt{-|g|}} \int \frac{dP_1 dP_2 dP_3}{(2\pi\hbar)^3} \frac{P^\mu P_\nu}{P^0} f_s(\mathbf{x},\mathbf{p},t),
 \label{eq_energy_momentum}
 \end{equation}
+and the distribution function evolves according to the \textbf{Boltzmann equation}
+\begin{equation}
+	\frac{df_s}{dt} = \frac{\partial f_s}{\partial t} + \frac{\partial f_s}{\partial x^i} \frac{dx^i}{dt} + \frac{\partial f_s}{\partial p^i} \frac{d p^i}{dt} = C[f_s],
+\label{eq_boltzmann}
+\end{equation}
+and the collision term $C[f_s]$ describes how
+elements of the distribution function move in phase space
+due to interactions (or ``collisions'') between particles.
+A computer program that solves these equations
+is commonly referred to as an \emph{Einstein-Boltzmann solver}.
 
-Except in \cref{sec_supernova}, where we look for constraints on cosmological parameters, we use the Planck's cosmological parameters from 2018 \cite{planckcollaborationPlanck2018Results2020},
+We begin by
+solving the background FLRW cosmology in \cref{sec_background_cosmology}
+and recombination and reionization history in \cref{sec_recombination}.
+In \cref{sec_perturbations} we find their first-order linear perturbations in Fourier-space.
+Finally, in \cref{sec_power_spectra}, we combine everything
+to compute the power spectra of matter in Fourier-space
+and of the CMB projected on a sphere with spherical harmonics.
+
+As a base, our program uses Planck's cosmological parameters from 2018 \cite{planckcollaborationPlanck2018Results2020},
 given and related by:
 \begin{equation}
 \begin{aligned}
@@ -120,7 +139,12 @@ given and related by:
 \end{aligned}
 \label{eq_planck2018}
 \end{equation}
+In addition,
+we also study how the CMB power spectrum changes with cosmological parameters in \cref{sec_power_spectra}, 
+and depart from the ``main story'' and constrain cosmological parameters with supernova measurements in \cref{sec_supernova}.
 
+The project is based on the outlining article \cite{callinHowCalculateCMB2006}
+and the complementary notes \cite{wintherCosmologyIINumerical}.
 
 \clearpage
 
@@ -136,7 +160,7 @@ Formally, this is the zeroth-order ``background'' solution of the perturbed, inh
 \subsection{Theory}
 \label{sec_background_cosmology_theory}
 
-\subsubsection{Friedmann equation}
+\subsubsection*{Friedmann equation}
 
 The geometry of a \emph{spatially} homogeneous and isotropic universe
 is described by the \textbf{Friedmann-Lemaître-Robertson-Walker (FLRW) metric}
@@ -219,7 +243,7 @@ we have,
 \label{eq_conformal_hubble_dominated}
 \end{subequations}
 
-\subsubsection{Cosmic and conformal time}
+\subsubsection*{Cosmic and conformal time}
 
 In the form \eqref{eq_friedmann},
 the Friedmann equation is a differential equation for the scale factor $a(t)$
@@ -488,8 +512,7 @@ the equations reduces to the hydrogen-only \textbf{Saha equation}
 
 During and after recombination, when the reactions \eqref{eq_recombinations} are far from equilibrium,
 the Saha equation is no longer valid,
-and the evolution of $X_e$ is more accurately described by the \textbf{Peebles equation}
-\TODO{is it only ``difficult to integrate'' (Callin) Peebles at early times, or is it \emph{wrong} there?}
+but the evolution of $X_e$ is accurately described by the \textbf{Peebles equation}
 \begin{equation}
 	\odv{X_e}{x} = \frac{C_r}{H} \Big[ \beta (1-X_e) - n_H \alpha_2 X_e^2 \Big],
 \label{eq_Peebles}
@@ -1112,6 +1135,7 @@ Neutrino decoupling? Dodelson page 88?
 
 \clearpage
 \section{Power spectra}
+\label{sec_power_spectra}
 
 Having calculated the linear perturbations to the homogeneous and isotropic background universe,
 we are finally in position to predict power spectra for matter and the cosmic microwave background (CMB).
@@ -1145,7 +1169,7 @@ From our previous work,
 an obvious brute-force way of finding these is to simply extend the cutoff of the perturbation system we integrate in \cref{sec_perturbations} from $l \lesssim 10$ to $l \lesssim 2500$.
 However, this results in an enormous system of differential equations that is very inefficient to integrate.
 A much more elegant method is to compute them from the \emph{line of sight integrals}
-\TODO{is $\Theta^T = \Theta$ and $\Theta^E = \Theta^P$?}
+\TODO{is $\Theta^T = \Theta$ and $\Theta^E = \Theta^P$ from perturbations?}
 \begin{subequations}
 \begin{align}
 	\Theta^\text{T}_l(x=0,k) &= \phantom{\sqrt{\frac{(l+2)!}{(l-2)!}}} \int_{-\infty}^0 \tilde{S}^\text{T}(x,k) j_l\big(ck(\eta_0-\eta)\big) dx, \\
@@ -1393,7 +1417,6 @@ so anisotropies in polarization are much less pronounced than those in temperatu
 \end{itemize}
 
 \Cref{fig_power_spectrum_cmb} also shows the cross-correlation $D_l^\text{TE}$ between temperature and polarization:
-\TODO{???}
 \begin{itemize}
 \item
 From our discussion of the EE-spectrum,
@@ -1507,8 +1530,6 @@ From the measured CMB spectrum, we know that our Universe is approximately flat.
 
 \TODO{understand radiation driving, baryon loading, diffusion damping. mention in perturbation section, so I can refer back here?}
 
-\TODO{Parameter degeneracies: $\Omega_{s0} h^2$, $N_\text{eff}$ and $Y_p$?}
-
 \clearpage
 \section{Conclusions}
 
@@ -1528,7 +1549,7 @@ and comparing their predicted luminosity distances to the data.
 
 \subsection{Theory}
 
-\subsubsection{Cosmological distances}
+\subsubsection*{Cosmological distances}
 
 From the FLRW metric \eqref{eq_flrw} and conformal time \eqref{eq_cosmic_conformal_time},
 we can show how to compute distances in the universe.
@@ -1562,7 +1583,7 @@ and thus the corresponding \textbf{angular diameter distance} and \textbf{lumino
 \label{eq_distances}
 \end{equation}
 
-\subsubsection{Statistics}
+\subsubsection*{Statistics}
 
 From \cite{betouleImprovedCosmologicalConstraints2014},
 we have measured luminosity distances $d_{L}^\text{obs}(z_i)$ and their
