@@ -79,6 +79,7 @@ if true
     xrec = time_recombination(rec)
 
     # analytical solutions
+    # Dodelson eq. (8.22), (8.31), (8.46), (8.52), (8.64)
     yf(x) = par.Ωm0/par.Ωr0 * a(x)
     Φy_small_anal(Φ0,y) = Φ0 / (10*y^3) * (16*√(1+y) + 9*y^3 + 2*y^2 - 8*y - 16)
     dΦy_small_anal(Φ0,y; ϵ=1e-4) = (Φy_small_anal(Φ0,y+ϵ/2)-Φy_small_anal(Φ0,y-ϵ/2)) / ϵ
