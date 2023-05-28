@@ -6,8 +6,10 @@ struct Recombination
     τ::ODESolution # optical depth
     s::ODESolution # sound horizon
 
-    function Recombination(bg::Background; x0=-20.0)
-        xswitch = time_switch_Peebles(bg.par) # TODO: why does this allocate?
+    function Recombination(bg::Background; x0=-20.0, xswitch=NaN)
+        if isnan(xswitch)
+            xswitch = time_switch_Peebles(bg.par) # TODO: why does this allocate?
+        end
         Xe_Peebles = spline_Xe_Peebles(bg.par, xswitch)
 
         τ = spline_τ(bg.par, Xe_Peebles, xswitch)
@@ -72,6 +74,9 @@ function Xe_Saha_H_He(par::Parameters, x::Real; tol::Float64=1e-15, maxiters::In
     end
 
     return Xe0 < 0.5 ? Xe0 : fixed_point_iterate(Xe_Saha_H_He_fixed_point, Xe0; tol=tol)
+end
+
+function Xe_saha_H_He(rec::Recombination, x::Real)
 end
 
 # @code_warntype on Xe(co,x) says that this can return Any, unless its return type is explicitly stated (due to Union{...., Nothing}?)

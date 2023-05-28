@@ -14,6 +14,7 @@ rec_H_He_reion  = Recombination(Background(Parameters()))
 rec_H_He_reioff = Recombination(Background(Parameters(z_reion_H=NaN)))
 rec_H_reion     = Recombination(Background(Parameters(Yp=0)))
 rec_H_reioff    = Recombination(Background(Parameters(Yp=0, z_reion_H=NaN)))
+rec_Saha        = Recombination(Background(Parameters()), xswitch=0.0) # never switch to Peebles
 rec             = rec_H_He_reion # default
 
 # TODO: gather into one common function?
@@ -22,14 +23,18 @@ xdec = time_decoupling(rec) # TODO: compute from g′ = 0
 xrec = time_recombination(rec)
 xre1 = time_reionization_H(rec.bg.par)
 xre2 = time_reionization_He(rec.bg.par)
+xdec_Saha = time_decoupling(rec_Saha)
+xrec_Saha = time_recombination(rec_Saha)
 shor = s(rec, xdec) / Gpc
-println("Saha -> Peebles (Xe = 0.999):  ", format_time_variations(rec.bg, xswi))
-println("Decoupling (max(g)):           ", format_time_variations(rec.bg, xdec))
-println("Recombination (Xe = 0.1):      ", format_time_variations(rec.bg, xrec))
-println("H  reionization (z_reion_H):   ", format_time_variations(rec.bg, xre1))
-println("He reionization (z_reion_He):  ", format_time_variations(rec.bg, xre2))
-println("Sound horizon at decoupling:   s = $shor Gpc, k = 2*π/s = $(2*π/shor) / Gpc")
-println("Free electron fraction: today: ", Xe(rec, 0))
+println("Saha -> Peebles (Xe = 0.999):         ", format_time_variations(rec.bg, xswi))
+println("Decoupling (max(g)):                  ", format_time_variations(rec.bg, xdec))
+println("Decoupling (max(g)) (Saha only):      ", format_time_variations(rec_Saha.bg, xdec_Saha))
+println("Recombination (Xe = 0.1):             ", format_time_variations(rec.bg, xrec))
+println("Recombination (Xe = 0.1) (Saha only): ", format_time_variations(rec_Saha.bg, xrec_Saha))
+println("H  reionization (z_reion_H):          ", format_time_variations(rec.bg, xre1))
+println("He reionization (z_reion_He):         ", format_time_variations(rec.bg, xre2))
+println("Sound horizon at decoupling:          s = $shor Gpc, k = 2*π/s = $(2*π/shor) / Gpc")
+println("Free electron fraction: today:        ", Xe(rec, 0))
 
 if true || !isfile("plots/free_electron_fraction_log.pdf")
     println("Plotting free electron fraction (logarithmic)")

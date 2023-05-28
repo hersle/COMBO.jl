@@ -648,6 +648,9 @@ These parameters give the event times reported in \cref{table_times2}.
 		with and without helium and reionization.
 		The linear plot is annotated with the majority atom/ion at each recombination stage.
 		The five vertical lines mark the times in \cref{table_times2}.
+		Note how today's free electron fraction is
+		$X_e \approx 10^{0.1} \approx 1.25$ with reionization,
+		but only $X_e \approx 10^{-3.6} \approx 0$ without it.
 	}
 	\label{fig_free_electron_fraction}
 \end{figure}
@@ -730,8 +733,7 @@ Finally, we calculate the sound horizon \eqref{eq_sound_horizon} at decoupling,
 \end{equation}
 For example, this agrees with the famous acoustic peak around $s \approx 105\,\mathrm{Mpc}/h$ in \cite[\textsc{Fig. 2}]{eisensteinDetectionBaryonAcoustic2005}.
 
-\TODO{compare decoupling/recombination times with those reported from always using the Saha equation}
-
+\newcommand\gray[1]{\textcolor{gray}{#1}}
 \begin{table}[b]
 \centering
 \caption{%
@@ -745,8 +747,10 @@ For example, this agrees with the famous acoustic peak around $s \approx 105\,\m
 	\midrule
 	Switch from Saha to Peebles ($X_e^\text{Saha} = 0.999$) & $-7.43$ & $0.0006$  & $1685$ & $\phantom{0}0.7\,\mathrm{Gyr}$ & $0.18\,\mathrm{Myr}$ \\
 	Decoupling ($\argmax(\tilde{g}(x)$)                     & $-6.99$ & $0.0009$  & $1084$ & $\phantom{0}0.9\,\mathrm{Gyr}$ & $0.38\,\mathrm{Myr}$ \\
+	\gray{Decoupling ($\argmax(\tilde{g}(x)$) (Saha only)}         & \gray{$-7.16$} & \gray{$0.0008$}  & \gray{$1286$} & \gray{$\phantom{0}0.8\,\mathrm{Gyr}$} & \gray{$0.28\,\mathrm{Myr}$} \\
 	Recombination ($X_e = 0.1$)                             & $-6.97$ & $0.0009$  & $1063$ & $\phantom{0}0.9\,\mathrm{Gyr}$ & $0.39\,\mathrm{Myr}$ \\
-	Hydrogen reionization ($z = z^\text{reion}_\text{H}$)   & $-2.20$ & $0.1111$  & $8$    & $16.4\,\mathrm{Gyr}$ & $0.64\,\mathrm{Gyr}$ \\
+	\gray{Recombination ($X_e = 0.1$) (Saha only)}                 & \gray{$-7.13$} & \gray{$0.0008$}  & \gray{$1252$} & \gray{$\phantom{0}0.8\,\mathrm{Gyr}$} & \gray{$0.29\,\mathrm{Myr}$} \\
+	Hydrogen reionization ($z = z^\text{reion}_\text{H}$)   & $-2.20$ & $0.1111$  & $8.0$  & $16.4\,\mathrm{Gyr}$ & $0.64\,\mathrm{Gyr}$ \\
 	Helium reionization ($z = z^\text{reion}_\text{H}$)     & $-1.50$ & $0.2222$  & $3.5$  & $23.5\,\mathrm{Gyr}$ & $1.80\,\mathrm{Gyr}$ \\
 	\bottomrule
 \end{tabular}
