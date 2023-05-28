@@ -68,26 +68,26 @@
 	largely following an outline by Callin complemented by Winther.
 	It incorporates
 	(\ref{sec_background_cosmology}) a homogeneous and isotropic background cosmology;
-	(\ref{sec_recombination}) recombination and reionization of H and He from Saha's and Peebles equations and an effective step-like $\tanh$-model;
+	(\ref{sec_recombination}) recombination of H and He from Saha's and Peebles equations, and their reionization from an effective step-like $\tanh$-model;
 	(\ref{sec_perturbations}) perturbations of the metric, photons, baryons, cold dark matter, neutrinos and polarization; and
 	(\ref{sec_power_spectra}) computation of power spectra for matter and the cosmic microwave background from line of sight integration and projection onto spherical harmonics.
-	Curvature is only implemented in the background cosmology.
+	Curvature is implemented only in the background cosmology.
+	We discuss both physical aspects of the processes governing the relevant equations,
+	and details regarding their numerical solution.
 
 	Instead of explicitly integrating tightly coupled and full perturbation equations separately at early and later times,
 	we use the semi-explicit stiffly-accurate \texttt{KenCarp4} Runge-Kutta method to integrate only the full system.
 	This is efficient, and we think it makes the problem simpler and more elegant.
-	Instead, our program's main performance bottleneck lies in our simple trapezoid method-integration
+	Our program's main performance bottleneck lies in our simple trapezoid method-integration
 	of the line of sight method and projection from Fourier space onto spherical harmonics,
-	which we would like to optimize further with adaptive, semi-analytical or specialized Levin-type integration.
-
-	Throughout, we also discuss the physical aspects of the processes governing the equations.
+	which we would like to optimize further with adaptive, semi-analytical or specialized Levin-type quadrature.
 
 	Resulting power spectra with Planck's best-fitting cosmological parameters from 2018
 	agrees very well with data from SDSS, WMAP, ACT, eBOSS and Planck's TT, EE and TE measurements.
 	Our program also seems robust to varying cosmological parameters.
 
 	In addition, (\ref{sec_supernova})
-	we predicted supernovae distances and compare them to measurements
+	we predict supernovae distances and compare them to measurements
 	to perform MCMC constraints on the (independent) reduced Hubble parameter $h$ and curvature and total matter density parameters $\Omega_{k0}$ and $\Omega_{m0}$,
 	while keeping the others fixed to Planck's values.
 	We find the best fits $h = 0.70$, $\Omega_{m0} = 0.26$, $\Omega_{k0} = 0.08$,
@@ -113,14 +113,14 @@ as it is an interesting programming language I wanted to learn more about.
 Note that Julia is a just-in-time compiled language
 \emph{where functions run slowly the first time they are called.}
 
-In particular, Julia's \texttt{DifferentialEquations} is perhaps the fastest and most flexible ODE integration library out there
-(including many implicit methods with automatic numerical or analytical Jacobians);
+In particular, Julia has the fantastic and very flexible \texttt{DifferentialEquations} ODE integration library
+(including many implicit methods with automatic numerical or analytical computation of Jacobians);
 accurate and easy derivative evaluation through automatic differentiation
 (essentially generating ``exact'' expressions using differentiation rules of elementary operations at compile time);
-encourages analytical equation-like syntax;
+encourages syntax with one-to-one correspondence with mathematical equations;
 and enables both interactive and non-interactive coding in one environment by trying to solve the two-language problem.
 These ``hipster features'' made it a very good choice for a project like this,
-with many ODEs and a tight relationship between equations ``on paper'' and ``in code''.
+with a heavy focus on ODEs and a tight relationship between equations ``on paper'' and ``in code''.
 
 \clearpage
 
@@ -130,8 +130,7 @@ with many ODEs and a tight relationship between equations ``on paper'' and ``in 
 \includegraphics[width=1.0\textwidth]{../masterpiece4-by-stable-diffusion.png}
 \caption{
 \textit{Numerical solution of the Einstein and Boltzmann equations in cosmology},
-Stable Diffusion version 2.1,
-28th of May 2023.
+by Stable Diffusion on 28th of May 2023.
 }
 \end{figure}
 
@@ -143,27 +142,27 @@ Stable Diffusion version 2.1,
 
 The goal of this project is to theoretically predict
 power spectra for matter and the cosmic microwave background (CMB).
-This essentially involves solving the \textbf{Einstein field equations}
+This involves solving the \textbf{Einstein field equations}
 \begin{equation}
 	G\indices{_\mu_\nu} + \Lambda g\indices{_\mu_\nu} = \frac{8 \pi G}{c^4} T\indices{_\mu_\nu},
 \label{eq_einstein}
 \end{equation}
-where the distribution function $f_s(\mathbf{x},\mathbf{p},t)$ for different species $s$
-gives rise to the total energy-momentum
+where the total energy-momentum \cite{dodelsonModernCosmology2021}
 \begin{equation}
 	T\indices{^\mu_\nu}(\mathbf{x},t) = \sum_s \frac{g_s}{\sqrt{-|g|}} \int \frac{dP_1 dP_2 dP_3}{(2\pi\hbar)^3} \frac{P^\mu P_\nu}{P^0} f_s(\mathbf{x},\mathbf{p},t),
 \label{eq_energy_momentum}
 \end{equation}
-and the distribution function evolves according to the \textbf{Boltzmann equation}
+is made up of distributions $f_s(\mathbf{x},\mathbf{p},t)$ for several species $s$
+evolving under the \textbf{Boltzmann equation}
 \begin{equation}
 	\frac{df_s}{dt} = \frac{\partial f_s}{\partial t} + \frac{\partial f_s}{\partial x^i} \frac{dx^i}{dt} + \frac{\partial f_s}{\partial p^i} \frac{d p^i}{dt} = C[f_s],
 \label{eq_boltzmann}
 \end{equation}
-and the collision term $C[f_s]$ describes how
+where the collision term $C[f_s]$ describes how
 elements of the distribution function move in phase space
 due to interactions (or ``collisions'') between particles.
 A computer program that solves these equations
-is commonly referred to as an \emph{Einstein-Boltzmann solver}.
+is commonly referred to as an \emph{Einstein-Boltzmann equation solver}.
 
 We begin by
 solving the background FLRW cosmology in \cref{sec_background_cosmology}
@@ -175,8 +174,8 @@ and of the CMB projected on a sphere with spherical harmonics.
 
 As a base, our program uses Planck's cosmological parameters from 2018 \cite{planckcollaborationPlanck2018Results2020},
 given and related by:
-\begin{equation}
-\begin{aligned}
+\begin{subequations}
+\begin{align}
 	& \text{reduced Hubble parameter} & h &= 0.67, \\
 	& \text{Hubble parameter} & H_0 &= h \cdot \frac{100\,\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}} = 67 \frac{\mathrm{km}}{\mathrm{s}\,\mathrm{Mpc}}, \\
 	& \text{photon temperature} & T_{\gamma0} &= 2.7255\,K, \\
@@ -188,20 +187,20 @@ given and related by:
 	& \text{photon density parameter} & \Omega_{\gamma0} &= \frac{\pi^2}{15} \cdot \frac{(k_B T_{\gamma0})^4}{\hbar^3 c^5} \cdot \frac{8 \pi G}{3 H_0^2} = 5.5 \cdot 10^{-5} , \\
 	& \text{neutrino density parameter} & \Omega_{\nu0} &= N_{\rm eff}\cdot \frac{7}{8}\left(\frac{4}{11}\right)^{\frac43}\Omega_{\gamma 0} = 3.8 \cdot 10^{-5} , \\
 	& \text{radiation density parameter} & \Omega_{r0} &= \Omega_{\gamma0} + \Omega_{\nu0} = 9.3 \cdot 10^{-5}, \\
-	& \text{cosmological constant density parameter} & \Omega_{\Lambda 0} &= 1 - (\Omega_{k 0}+\Omega_{b 0}+\Omega_{c0}+\Omega_{\gamma 0}+\Omega_{\nu 0}) = 0.683,\\
-	& \text{power spectrum spectral index} & n_s &= 0.965, \\
-	& \text{power spectrum amplitude} & A_s &= 2.1\cdot 10^{-9}, \\
-	& \text{power spectrum pivot wavenumber} & k_\text{pivot} &= 0.05/\textrm{Mpc}, \\
+	& \text{cosmological constant density parameter} & \Omega_{\Lambda 0} &= 1 - (\Omega_{k 0}+\Omega_{m 0}+\Omega_{r0}) = 0.683,\\
+	& \text{primordial power spectrum spectral index} & n_s &= 0.965, \\
+	& \text{primordial power spectrum amplitude} & A_s &= 2.1\cdot 10^{-9}, \\
+	& \text{primordial power spectrum pivot wavenumber} & k_\text{pivot} &= 0.05/\textrm{Mpc}, \\
 	& \text{primordial helium mass fraction} & Y_p &= 0.245, \\
 	& \text{first reionization redshift} & z^{\rm reion}_1 &= 8.0, \\
 	& \text{first reionization redshift duration} & \Delta z^{\rm reion}_1 &= 0.5, \\
 	& \text{second reionization redshift} & z^{\rm reion}_2 &= 3.5, \\
 	& \text{second reionization redshift duration} & \Delta z^{\rm reion}_2 &= 0.5.
-\end{aligned}
+\end{align}
 \label{eq_planck2018}
-\end{equation}
+\end{subequations}
 In addition,
-we also study how the CMB power spectrum changes with cosmological parameters in \cref{sec_power_spectra}, 
+we study how the CMB power spectrum changes with cosmological parameters in \cref{sec_power_spectra}, 
 and depart from the ``main story'' and constrain cosmological parameters with supernova measurements in \cref{sec_supernova}.
 
 The project is based on the outlining article \cite{callinHowCalculateCMB2006}
@@ -228,16 +227,16 @@ is described by the \textbf{Friedmann-Lemaître-Robertson-Walker (FLRW) metric}
 \begin{equation}
 \begin{split}
 	ds^2 &= -c^2 dt^2 + a^2(t) \left[\frac{dr^2}{1 - kr^2} + r^2\left(d\theta^2 + \sin^2\theta \, d\phi^2\right) \right] \\
-	     &= a^2(t) \left[-c^2 d\eta^2 + \frac{dr^2}{1 - kr^2} + r^2\left(d\theta^2 + \sin^2\theta \, d\phi^2\right) \right].
+	     &= a^2(t) \left[-c^2 d\eta^2 + \frac{dr^2}{1 - kr^2} + r^2\left(d\theta^2 + \sin^2\theta \, d\phi^2\right) \right],
 \end{split}
 \label{eq_flrw}
 \end{equation}
-Here it is in spherical coordinates $(r,\theta,\phi)$, curvature $k$, scale factor $a(t)$,
-and either cosmic time $t$ or conformal time $\eta$ defined by $d\eta = dt/a$\footnote{I prefer the convention in which conformal time is a time, while others like it to be the distance $d\eta \rightarrow c \, d\eta$.},
-so it is conformal to the Minkowski metric in the flat case $k=0$.
+here in spherical coordinates $(r,\theta,\phi)$, with curvature $k$, scale factor $a(t)$,
+and either cosmic time $t$ or conformal time $\eta$ defined by $d\eta = dt/a$\footnote{I prefer the convention in which the conformal time $\eta$ is a time, while others like it to be the distance $\eta \rightarrow c \, \eta$.},
+where it is conformal to the flat ($k=0$) Minkowski metric.
 
-The homogeneous background universe is filled with an ideal fluid that has a
-time-dependent density $\rho(t)$, pressure $P(t)$ and thus energy-momentum tensor
+The homogeneous background universe is filled with an ideal fluid that has a uniform
+density $\rho(t)$ and pressure $P(t)$ that depend only on time, and thus energy-momentum tensor
 \begin{equation}
 	T\indices{^\mu_\nu} = \diag\Big[\rho(t),\, -P(t),\, -P(t),\, -P(t)\Big].
 \label{eq_energy_momentum_homogeneous}
@@ -320,7 +319,7 @@ Parametrizing with $a$ or $x$, we can solve $H = \frac1a \odv{a}{t}$ and $d\eta 
 \begin{equation}
 	t(a) = \int_0^a \frac{da}{aH} = \int_0^x \frac{dx}{H}
 	\qquad \text{and} \qquad
-	\eta(a) = \int_0^a \frac{da}{a^2 H} = \int_0^x \frac{dx}{aH}.
+	\eta(a) = \int_0^a \frac{da}{a \mathcal{H}} = \int_0^x \frac{dx}{\mathcal{H}}.
 \label{eq_cosmic_conformal_time}
 \end{equation}
 In general, these integrals must be computed numerically.
@@ -352,7 +351,7 @@ so a clock with zero peculiar velocity ticks at a rate corresponding to the cosm
 Second, we see that photons travel infinitesimal distances $c\,d\eta$ on the comoving grid (in $[\ldots]$),
 so we can interpret the \textbf{(comoving) horizon}
 \begin{equation}
-D_\text{hor} = c \, \eta = c \int_0^\eta d\eta = c \int_0^t \frac{dt}{a(t)} = c \int_0^a \frac{da}{a^2 H} = c \int_0^x \frac{dx}{aH}
+D_\text{hor} = c \, \eta
 \label{eq_horizon}
 \end{equation}
 as the maximum (comoving) distance within which there can be causal communication.
@@ -367,21 +366,21 @@ This will be an essential quantity in later milestones.
 	      and then computes the remaining dependent parameters from the relations \eqref{eq_planck2018}.
 	\item We check whether a universe has a turnaround $\dot{a} = 0$ and our parametrization with $x$ breaks down.
 	      This comes to use in \cref{sec_supernova}, where we allow for arbitrary curvature.
-	\item We compute $\mathcal{H}(x)$ and its derivatives $\odv{\mathcal{H}}/{x}$ and $\odv[2]{\mathcal{H}}/{x}$ analytically based on the Friedmann equation \eqref{eq_friedmann}.
-	      The derivatives can be derived without a lot of work by noting that
-		  $E(x) = \Omega_{r0} e^{-4x} + \Omega_{m0} e^{-3x} + \Omega_{k0} e^{-2x} + \Omega_{\Lambda0}$
-		  in the square root of the Hubble parameter has the derivatives
-		  \begin{equation*}
-			  \odv[d]{E}{x} = (-4)^d \Omega_{r0} a^{-4}(x) + (-3)^d \Omega_{m0} a^{-3}(x) + (-2)^d \Omega_{k0} a^{-2}(x) \qquad \big(d \geq 1\big).
-		  \end{equation*}
+	\item We compute $\mathcal{H}(x)$ analytically from the Friedmann equation \eqref{eq_friedmann},
+	      and its derivatives $\odv{\mathcal{H}}/{x}$ and $\odv[2]{\mathcal{H}}/{x}$ using automatic differentiation with \href{https://github.com/JuliaDiff/ForwardDiff.jl}{ForwardDiff.jl},
+	      which essentially generates exact expressions for derivatives by applying differentiation rules to elementary operations at compile time.
+	      The same goes for all derivatives we encounter later.
 	\item We compute the density parameters \eqref{eq_density_parameters} from today's density parameters using, for example for radiation, $\Omega_r = \rho_r / \rho_\text{crit} = (\rho_{r0} a^{-4} / \rho_{\text{crit},0}) (\rho_{\text{crit},0} / \rho_\text{crit}) = \Omega_{r0} a^{-4} (H_0 / H)^2$.
 	\item We compute the radiation-matter and matter-cosmological constant equalities \eqref{eq_equality_times} analytically,
 	      but the onset of the acceleration \eqref{eq_acceleration} numerically from when $\odv{\mathcal{H}}/{x} = \ddot{a} / H = 0$.
-	\item We compute the cosmic time $t(x)$ and conformal time $\eta(x)$ by inserting their derivatives $\odv{t}/{x}$ and $\odv{\eta}/{x}$ into an adaptive 4th(5th)-order Runge-Kutta integrator.
+	\item We compute the cosmic time $t(x)$ and conformal time $\eta(x)$ by inserting their derivatives $\odv{t}/{x}$ and $\odv{\eta}/{x}$ into an adaptive 4th(5th)-order Runge-Kutta integrator in \href{https://github.com/SciML/DifferentialEquations.jl}{DifferentialEquations.jl}.
 	      As it is computationally infeasible to integrate from $x=-\infty$,
 	      we start from a small initial value, like $x = -20$,
 	      and the corresponding analytical cosmic or conformal time \eqref{eq_cosmic_conformal_time_anal} in a universe dominated by radiation and matter.
-	\item We store the integrated $t(x)$ and $\eta(x)$ on a cubic spline, so subsequent evaluations are fast.
+	\item Instead of manually splining the solutions $t(x)$ and $\eta(x)$,
+	      we use the library's dense output feature that allows evaluating the solution at any point
+	      using built-in interpolation methods that are tailored to the chosen Runge-Kutta method.
+          The same goes for ODEs we encounter later.
 \end{itemize}
 
 \subsection{Tests and results}
@@ -408,7 +407,7 @@ and all density parameters sum to $\Omega_{r} + \Omega_m + \Omega_k + \Omega_\La
 	\includegraphics[scale=0.7]{../plots/conformal_hubble_derivative2.pdf}
 	\caption{%
 		Evolution of the conformal Hubble parameter \eqref{eq_conformal_hubble} and its two derivatives in the Planck 2018 cosmology \eqref{eq_planck2018},
-		compared to their values from the analytical expression \eqref{eq_conformal_hubble_dominated} in dominated universes.
+		compared to their values from the analytical expression \eqref{eq_conformal_hubble_dominated} in universes dominated by various components.
 		Dashed lines show the equality times from \cref{fig_density_parameters},
 		while the dotted line indicates the onset of the acceleration \eqref{eq_acceleration}.
 	}
@@ -478,10 +477,10 @@ and the conformal Hubble parameter \eqref{eq_conformal_hubble_dominated_radiatio
 \section{Recombination and reionization history}
 \label{sec_recombination}
 
-Photons (of the CMB) observed today were emitted at various times in the past.
+Photons (of the CMB) observed today have been free streaming since they were last scattered at various times in the past.
 In this section, our main goal is to accurately compute the optical depth and visibility function of the universe,
 which play key roles in predicting today's observed CMB spectrum.
-The most important process that affects this is Thomson scattering
+The most important process that affects this is Compton scattering (or its low-energy limit, Thomson scattering)
 \begin{equation}
 	e^- + \gamma \leftrightarrow e^- + \gamma
 \label{eq_thomson_scattering}
@@ -507,8 +506,7 @@ In this case, the optical depth of photons emitted at conformal time $\eta$ and 
 \label{eq_optical_depth}
 \end{equation}
 
-A natural quantity derived from the optical depth is the \textbf{visibility function}%
-\footnote{The normalization and interpretation of the visibility function also holds if it is defined with respect to the derivative of any other time, like $g(\eta) = -\tau'(\eta) e^{-\tau(\eta)}$.}
+A natural quantity derived from the optical depth is the \textbf{visibility function}
 \begin{equation}
 	\tilde{g}(x) = \Big( e^{-\tau(x)} \Big)' = -\tau'(x) \, e^{-\tau(x)}.
 \label{eq_visibility_function}
@@ -516,8 +514,9 @@ A natural quantity derived from the optical depth is the \textbf{visibility func
 As $\tau=0$ today and $\tau \rightarrow \infty$ at early times,
 it is normalized to $\int_{-\infty}^0 \tilde{g}(x) dx = e^0 - e^{-\infty}= 1$.
 Moreover, if $e^{-\tau(x)} = I/I_0(x)$ measures how many ``input'' photons at $x$ that are ``output'' at $x=0$,
-then its \emph{change} measures how many photons were lost between two times.
-Accordingly, we interpret $\tilde{g}(x) dx$ as \emph{the probability that a photon observed today was last scattered between $x \pm dx/2$}.
+then its \emph{change} measures how many photons are lost around $x$.
+Accordingly, we interpret $\tilde{g}(x) dx$ as \emph{the probability that a photon observed today was last scattered between $x \pm dx/2$}.%
+\footnote{The normalization and interpretation of the visibility function also holds if it is defined with respect to the derivative of any other time, like $g(\eta) = -\tau'(\eta) e^{-\tau(\eta)}$.}
 
 We already know how all the quantities in the optical depth \eqref{eq_optical_depth} evolves, except the free electron density $n_e$.
 Therefore, we set out to compute the free electron fraction
@@ -567,7 +566,7 @@ and $\text{He}^{++}$, $\text{He}^+$ and $\text{H}^+$ recombine with $e^-$ one-by
 Without helium ($Y_p=0$) or when it has fully recombined ($\XHp \gg \XHep \gg \XHepp$),
 the equations reduces to the hydrogen-only \textbf{Saha equation}
 \begin{equation}
-	\frac{X_e^2}{1-X_e} = \frac{\lambda_e^{-3}}{n_b} \exp \left( -\frac{E^\text{ion}_\text{H}}{k_B T_b} \right).
+	\frac{X_e^2}{1-X_e} = \frac{\lambda_e^{-3}}{n_b} \exp \left( -\frac{E^\text{ion}_\text{H}}{k_B T_b} \right) = R.
 \label{eq_saha_H}
 \end{equation}
 
@@ -595,7 +594,7 @@ with the many, but easy-to-compute quantities
 As a differential equation, the Peebles equation needs an initial value.
 This can be taken as the point $(x, X_e)$ of the Saha equation just after it departs from equilibrium, at $X_e = 0.999$, for example.
 
-We also include a phenomenological model for \textbf{reionization}, due to radiation from stars formed at later times again kicking electrons out of neutral atoms.
+We also include an effective model for \textbf{reionization}, due to radiation from stars formed at later times again kicking electrons out of neutral atoms.
 In this model, we manually ramp up the free electron fraction according to the smoothed step functions
 \begin{equation}
 	X_e^\text{reion} = \frac{1+f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_1} \right) \right]
@@ -604,7 +603,7 @@ In this model, we manually ramp up the free electron fraction according to the s
 \end{equation}
 where $y = (1+z)^{3/2}$, $\Delta y = |y'(z)| \Delta z$ and we have the four reionization parameters \eqref{eq_planck2018}.
 The first term with $1+f_\text{He}$ reionizes $\text{H} \rightarrow \text{H}^+$ and $\text{He} \rightarrow \text{He}^+$ simultaneously,
-as suggested by their ``similar'' ionization energies and numerical simulations \cite[appendix B]{lewisCosmologicalParametersWMAP2008},
+as suggested by their ``similar'' ionization energies and ``numerical simulations'' \cite[appendix B]{lewisCosmologicalParametersWMAP2008},
 while the second term with $f_\text{He}$ doubly reionizes $\text{He}^{+} \rightarrow \text{He}^{++}$ separately.
 
 Finally, then, the full free electron fraction is found by stitching together the results of the Saha and Peebles equation and adding reionization:
@@ -634,14 +633,14 @@ it turns out that the error in assuming the common temperature \eqref{eq_baryon_
 so we approximate $T_b \approx T_\gamma = T_{\gamma 0} / a$ \emph{all the time}.
 
 Throughout the recombination history, we will refer to
-\textbf{decoupling} as the time when the visibility function $g$ peaks,
+\textbf{decoupling} as the time when the visibility function $\tilde{g}$ peaks,
 and we say that the electrons and ions have \textbf{recombined} when the free electron fraction drops below $X_e = 0.1$.
 
 The last quantity we introduce is the sound horizon
 of the coupled photon-baryon plasma.
 Before recombination, its sound speed is
 $c_s(\eta) = c \sqrt{R(a) / 3(1+R(a))}$,
-where $R(a) = 4 \Omega_{\gamma 0} / 3 \Omega_{b 0} a$,
+where $R(a) = 4 \rho_\gamma / 3 \rho_b = 4 \Omega_{\gamma 0} / 3 \Omega_{b 0} a$,
 so the \textbf{sound horizon} is
 \begin{equation}
 	s(\eta) = \int_0^\eta c_s(\eta) d\eta = \int_{-\infty}^x \frac{c_s \, dx}{\mathcal{H}}.
@@ -673,24 +672,24 @@ Note that while few iterations are needed around $X_e \approx 1$,
 the convergence becomes extremely slow as $X_e \rightarrow 0$.
 The Saha equation isn't valid in this regime anyway,
 but we can still solve it accurately because most helium has already combined,
-so $\XHepp \ll \XHep \ll \XHp$, and we simply the H-only solution when it is $X_e < 0.5$.
+so $\XHepp \ll \XHep \ll \XHp$, and we simply take the H-only solution when it is $X_e < 0.5$.
 
 \item
-We solve the Peebles equation with an ODE integrator and spline the result, like in \cref{sec_background_cosmology}.
+We solve the Peebles equation with an ODE integrator that allows evaluating the solution at arbitrary times,
+like in \cref{sec_background_cosmology}.
 As its initial condition, we give the time $x$ when $X_e^\text{Saha}(x) = 0.999$, found with a numerical root finder.
 Note that the exponential in $\beta_2$ can overflow,
 but substituting $\beta$ in $\beta_2$ yields a new exponential that can only underflow and is safe to compute.
 
 \item
 To compute the optical depth \eqref{eq_optical_depth} and the sound horizon \eqref{eq_sound_horizon},
-we again use an ODE integrator and spline the result.
-The former is integrated backwards from $\tau(\eta_0)=0$,
-but the latter cannot start at $x_0 = -\infty$,
-so we start it at the finite early time $x_0 = -20$ with $s(x_0) \approx c_s(x_0) / \mathcal{H}(x_0)$.
+we again use an ODE integrator.
+The former is integrated backwards from $\tau(x=0)=0$ back to the finite early time $x=-20$,
+and the latter from $x_0 = -20$ with the initial value $s(x_0) \approx c_s(x_0) / \mathcal{H}(x_0)$.
 
 \item
-We compute derivatives of splined quantities with spline-based methods,
-but use analytical expressions for other quantities.
+As in \cref{sec_background_cosmology},
+we evaluate derivatives that are required using automatic differentiation.
 \end{itemize}
 
 \subsection{Results}
@@ -757,7 +756,7 @@ after which it continues to rise in the opaque early universe.
 
 In particular, the reionization optical depth $\tau_\text{reion} = \tau(-6 \lesssim x \lesssim -2)$
 is a standard parameter that is used to describe the effects of reionization \cite[section 9.7]{dodelsonModernCosmology2021}.
-The height of our plateau agrees very well with Planck's best-fit value.
+The plot shows that the height of our plateau agrees very well with Planck's best-fit value.
 
 The three additional bumps in $\tau''(x)$ at $x \approx \{-9, -8, -1.5\}$ are caused by the smaller helium recombinations and reionizations.
 Also note that $\tau'$ has an inflection point during the first reionization,
@@ -783,7 +782,7 @@ It also agrees well with \cite[\textsc{fig. 2}]{callinHowCalculateCMB2006}.
 which we interpreted as the probability density for the time that a photon observed today was last scattered.
 There is very low visibility before recombination, as photons back then were continuously scattered in the coupled photon-baryon plasma.
 During recombination and decoupling, the visibility spikes, as the decrease in free electrons clears the way for the first and largest ``wave'' of photons escaping to today.
-This motivates naming the distance they have traveled the ``last scattering surface''.
+This motivates naming a sphere with radius equal to the distance they have traveled the ``last scattering surface''.
 
 Reionization gives rise to new free electrons, more scattering, and thus a more recent, but much smaller ``last scattering surface''.
 The electrons are much more dilute at this point, so the visibility reaches only around $1/50$ of its peak value during decoupling.
@@ -797,7 +796,7 @@ Finally, we calculate the sound horizon \eqref{eq_sound_horizon} at decoupling,
 \begin{equation}
 	s(x=-6.99) = 0.14\,\mathrm{Gpc}.
 \end{equation}
-For example, this agrees with the famous acoustic peak around $s \approx 105\,\mathrm{Mpc}/h$ in \cite[\textsc{Fig. 2}]{eisensteinDetectionBaryonAcoustic2005}.
+This agrees with the famous acoustic peak around $s \approx 105\,\mathrm{Mpc}/0.7 = 150\,\mathrm{Mpc}$ in \cite[\textsc{Fig. 2}]{eisensteinDetectionBaryonAcoustic2005}.
 
 \newcommand\gray[1]{\textcolor{gray}{#1}}
 \begin{table}[b]
