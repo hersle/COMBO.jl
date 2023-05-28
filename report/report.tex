@@ -60,7 +60,41 @@
 %\keywords{cosmology -- Einstein-Boltzmann equations}
 
 \maketitle
-\tableofcontents
+
+%\abstract{%
+%\noindent\textbf{Abstract:}
+\subsubsection*{\centering Abstract}
+	We implement a cosmological Einstein-Boltzmann equation solver to first (linear) order in perturbation theory,
+	largely following an outline by Callin complemented by Winther.
+	It incorporates
+	(\ref{sec_background_cosmology}) a homogeneous and isotropic background cosmology;
+	(\ref{sec_recombination}) recombination and reionization of H and He from Saha's and Peebles equations and an effective step-like $\tanh$-model;
+	(\ref{sec_perturbations}) perturbations of the metric, photons, baryons, cold dark matter, neutrinos and polarization; and
+	(\ref{sec_power_spectra}) computation of power spectra for matter and the cosmic microwave background from line of sight integration and projection onto spherical harmonics.
+	Curvature is only implemented in the background cosmology.
+
+	Instead of explicitly integrating tightly coupled and full perturbation equations separately at early and later times,
+	we use the semi-explicit stiffly-accurate \texttt{KenCarp4} Runge-Kutta method to integrate only the full system.
+	This is efficient, and we think it makes the problem simpler and more elegant.
+	Instead, our program's main performance bottleneck lies in our simple trapezoid method-integration
+	of the line of sight method and projection from Fourier space onto spherical harmonics,
+	which we would like to optimize further with adaptive, semi-analytical or specialized Levin-type integration.
+
+	Throughout, we also discuss the physical aspects of the processes governing the equations.
+
+	Resulting power spectra with Planck's best-fitting cosmological parameters from 2018
+	agrees very well with data from SDSS, WMAP, ACT, eBOSS and Planck's TT, EE and TE measurements.
+	Our program also seems robust to varying cosmological parameters.
+
+	In addition, (\ref{sec_supernova})
+	we predicted supernovae distances and compare them to measurements
+	to perform MCMC constraints on the (independent) reduced Hubble parameter $h$ and curvature and total matter density parameters $\Omega_{k0}$ and $\Omega_{m0}$,
+	while keeping the others fixed to Planck's values.
+	We find the best fits $h = 0.70$, $\Omega_{m0} = 0.26$, $\Omega_{k0} = 0.08$,
+	corresponding to the (dependent) cosmological constant density parameter $\Omega_{\Lambda 0} \approx 1 - \Omega_{m0} - \Omega_{k0} = 0.66$.
+%}
+
+%\tableofcontents
 %
 %________________________________________________________________
 
@@ -68,11 +102,25 @@
 
 \bigskip \bigskip \bigskip
 
-\noindent
-\textbf{Code:}
+\subsubsection*{\centering Code}
+
+%\noindent
+%\textbf{Code:}
 All code is available at \href{https://github.com/hersle/AST5220-project}{https://github.com/hersle/AST5220-project}.
+
 I chose to implement this project from scratch in Julia,
 as it is an interesting programming language I wanted to learn more about.
+Note that Julia is a just-in-time compiled language
+\emph{where functions run slowly the first time they are called.}
+
+In particular, Julia's \texttt{DifferentialEquations} is perhaps the fastest and most flexible ODE integration library out there
+(including many implicit methods with automatic numerical or analytical Jacobians);
+accurate and easy derivative evaluation through automatic differentiation
+(essentially generating ``exact'' expressions using differentiation rules of elementary operations at compile time);
+encourages analytical equation-like syntax;
+and enables both interactive and non-interactive coding in one environment by trying to solve the two-language problem.
+These ``hipster features'' made it a very good choice for a project like this,
+with many ODEs and a tight relationship between equations ``on paper'' and ``in code''.
 
 \clearpage
 
@@ -1560,7 +1608,28 @@ that our Universe is close to flat.
 \clearpage
 \section{Conclusions}
 
-\TODO{}
+In this project,
+we have successfully built an Einstein-Boltzmann solver by successively solving the universe's
+background FLRW cosmology, its recombination and reionization history and linear perturbations to these.
+Finally, we computed theoretical predictions for the power spectra of matter and the cosmic microwave background,
+finding very good agreement with data.
+
+To a large extent, we have followed the implementation outlined by \cite{callinHowCalculateCMB2006,wintherCosmologyIINumerical}.
+However, one significant departure we made
+is the use of the semi-explicit stiffly accurate \texttt{KenCarp4} method to integrate only the full perturbation system,
+instead of integrating the tightly coupled and full systems separately with purely explicit methods and stitching their results together.
+This gave similar results, posed no performance bottleneck and made the implementation much more elegant, in our opinion.
+The fantastic DifferentialEquations library for the Julia programming language made this a breeze.
+
+Instead, the main performance bottleneck is the
+line of sight integration for computing today's multipoles,
+and the integration needed to project these onto spherical harmonics.
+Here we employed the simplistic trapezoid method with uniform grids,
+which made it challenging to ``honestly'' capture the rapid oscillations in the integrands.
+With more time, I would be interested to optimize this step further using
+adaptive integration methods,
+semi-analytical approaches that remove the rapid oscillations from the numerical integration,
+or specialized Levin integration methods from \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.
 
 \clearpage
 \appendix
