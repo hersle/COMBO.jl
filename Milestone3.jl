@@ -167,11 +167,10 @@ if true
             if ploti == 1
                 # put k-labels and k-independent time marks on first plot only
                 vline!([-21], color=i, label=L"k=10^{%$(Int(round(log10(k*Mpc))))}/\textrm{Mpc}") # label each k-value once
-                vline!([xrm, xmΛ], color=:gray, linestyle=:solid; alpha=0.3, linewidth=3.0, label=nothing)
-                vline!([xrec], color=:gray, linestyle=:solid; alpha=0.3, linewidth=3.0, label=nothing)
             end
             #vline!([time_tight_coupling(co, k)], color=:gray, linestyle=:dash; linewidth=0.5, label=nothing)
             vline!([xhor], color=i, linestyle=:solid; alpha=0.3, linewidth=3.0, label=nothing)
+            vline!([xrm, xmΛ, xrec], color=:gray, linestyle=:solid; alpha=0.3, linewidth=3.0, label=nothing)
         end
 
         # add quantity (if more than one so ambiguous) to legend with a black dummy plot
