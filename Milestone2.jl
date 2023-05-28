@@ -120,6 +120,10 @@ if true || !isfile("plots/optical_depth.pdf")
     plot!(x, log10.(-τ′.(rec, x)),     color=2, linestyle=:solid, label=L"\log_{10} [-\tau'\phantom{'}(x)]")
     plot!(x, log10.(+τ′′pos.(rec, x)), color=3, linestyle=:solid, label=L"\log_{10} [+\tau''(x) > 0]")
 
+    τreion, Δτreion = 0.054, 0.007
+    #hline!([log10(τreion)], ribbon=([log10(τreion)-log10(τreion-Δτreion)], [log10(τreion+Δτreion)-log10(τreion)]), color=:gray, label=L"\tau_\textrm{reion} (Planck 2018)")
+    hline!([log10(τreion)], color=:gray, alpha=0.5, label=L"\log_{10} [\tau_\textrm{reion}] \textrm{ (Planck 2018)}")
+
     # Dummy plots to manually create legend
     hline!([-10], color=:black, linestyle=:solid, alpha=1.0, label=L"\textrm{H+He ($Y_p=0.24$), reionization}")
     hline!([-10], color=:black, linestyle=:dash,  alpha=0.5, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
