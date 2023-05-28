@@ -536,15 +536,15 @@ This can be taken as the point $(x, X_e)$ of the Saha equation just after it dep
 
 We also include a phenomenological model for \textbf{reionization}, due to radiation from stars formed at later times again kicking electrons out of neutral atoms.
 In this model, we manually ramp up the free electron fraction according to the smoothed step functions
-\TODO{$y$ or $z$ in last term?}
 \begin{equation}
 	X_e^\text{reion} = \frac{1+f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_1-y}{\Delta y^\text{reion}_1} \right) \right]
                      + \frac{f_\text{He}}{2} \left[ 1 + \tanh \left( \frac{y^\text{reion}_2-y}{\Delta y^\text{reion}_2} \right) \right]
 \label{eq_reionization}
 \end{equation}
 where $y = (1+z)^{3/2}$, $\Delta y = |y'(z)| \Delta z$ and we have the four reionization parameters \eqref{eq_planck2018}.
-Comparing with equation \eqref{eq_Saha_H_He_Xe}, we see this corresponds to reionizing $\text{H} \rightarrow \text{H}^+$ and $\text{He} \rightarrow \text{He}^+$ simultaneously \TODO{what motivates doing only these together?} first,
-and later $\text{He}^{+} \rightarrow \text{He}^{++}$ separately.
+The first term with $1+f_\text{He}$ reionizes $\text{H} \rightarrow \text{H}^+$ and $\text{He} \rightarrow \text{He}^+$ simultaneously,
+as suggested by their ``similar'' ionization energies and numerical simulations \cite[appendix B]{lewisCosmologicalParametersWMAP2008},
+while the second term with $f_\text{He}$ doubly reionizes $\text{He}^{+} \rightarrow \text{He}^{++}$ separately.
 
 Finally, then, the full free electron fraction is found by stitching together the results of the Saha and Peebles equation and adding reionization:
 \begin{equation}
