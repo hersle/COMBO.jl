@@ -10,16 +10,15 @@ using LaTeXStrings
 using Printf
 using QuadGK
 
-rec_H_He_reion  = Recombination(Background(Parameters()))
-rec_H_He_reioff = Recombination(Background(Parameters(z_reion_H=NaN)))
-rec_H_reion     = Recombination(Background(Parameters(Yp=0)))
-rec_H_reioff    = Recombination(Background(Parameters(Yp=0, z_reion_H=NaN)))
+rec_H_He_reion  = Recombination(Background(Parameters())) # hydrogen, helium and reionization (default)
+rec_H_He_reioff = Recombination(Background(Parameters(z_reion_H=NaN))) # no reionization
+rec_H_reion     = Recombination(Background(Parameters(Yp=0))) # no helium
+rec_H_reioff    = Recombination(Background(Parameters(Yp=0, z_reion_H=NaN))) # no reionization and helium
 rec_Saha        = Recombination(Background(Parameters()), xswitch=0.0) # never switch to Peebles
 rec             = rec_H_He_reion # default
 
-# TODO: gather into one common function?
 xswi = x_switch_Peebles(rec.bg.par)
-xdec = x_decoupling(rec) # TODO: compute from g′ = 0
+xdec = x_decoupling(rec)
 xrec = x_recombination(rec)
 xre1 = x_reionization_H(rec.bg.par)
 xre2 = x_reionization_He(rec.bg.par)
@@ -53,11 +52,6 @@ if true || !isfile("plots/free_electron_fraction_log.pdf")
     hline!([-10], color=1,      linestyle=:solid, label=L"\textrm{H+He ($Y_p=0.24$)}")
     hline!([-10], color=:black, linestyle=:dash,  label=L"\textrm{Saha}")
     hline!([-10], color=2,      linestyle=:solid, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$)}")
-
-    # Mark and annotate Saha -> Peebles transition point
-    #scatter!( [time_switch_Peebles(co)],      [log10(0.999)], markersize=2, markerstrokewidth=0, color=:black, label=nothing)
-    #annotate!([time_switch_Peebles(co)+0.15], [log10(0.999)+0.50], [(L"\textrm{Saha $\rightarrow$ Peebles}")])
-    #annotate!([time_switch_Peebles(co)+0.10], [log10(0.999)+0.25], [(L"\textrm{($X_e = 0.999$)}")])
 
     # Annotate reionization on/off and recombination
     annotate!([-1, -1], [-0.2, -3.3], [("reionization"), ("reionizatioff")])
@@ -154,7 +148,7 @@ if true || !isfile("plots/visibility_function_linear.pdf")
     hline!([-20], color=:black, linestyle=:solid, alpha=0.3, label=L"\textrm{H\phantom{+He} ($Y_p=0.00$), reionizatioff}")
 
     annotate!([-7.5], [9.0], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(rec_H_He_reion, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:black)])
-    annotate!([-7.5], [7.7], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(rec_H_reioff, x), -20, 0, rtol=1e-6)[1], digits=11))", color=:gray)])
+    annotate!([-7.5], [7.7], [text(L"\int_{-20}^0 \tilde{g}(x) dx = %$(round(quadgk(x -> g(rec_H_reioff, x),   -20, 0, rtol=1e-6)[1], digits=11))", color=:gray)])
 
     # Mark event times
     vline!([xswi, xdec, xrec, xre1, xre2], linewidth=0.25, alpha=0.5, color=:black, linestyle=:dash, z_order=:back, label=nothing)

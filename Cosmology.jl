@@ -27,6 +27,7 @@ struct Parameters
 
     # recombination parameters
     Yp::Float64 # helium mass fraction
+    fHe::Float64 # helium-to-hydrogen ratio
     reionization::Bool   # reionization on?
      z_reion_H::Float64  # Hydrogen reionization redshift time
     Δz_reion_H::Float64  # Hydrogen reionization redshift duration
@@ -45,8 +46,9 @@ struct Parameters
         Ων0 = Neff * 7/8 * (4/11)^(4/3) * Ωγ0
         Ωr0 = Ωγ0 + Ων0
         ΩΛ0 = 1.0 - (Ωr0 + Ωm0 + Ωk0)
+        fHe = Yp / (4*(1-Yp))
         reionization = all(!isnan(num) for num in (z_reion_H, z_reion_He, Δz_reion_H, Δz_reion_He)) # turn off by setting either to NaN
-        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, reionization, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, As, ns, k_pivot)
+        new(h, H0, Ωb0, Ωc0, Ωm0, Ωk0, Ωγ0, Ων0, Ωr0, ΩΛ0, Tγ0, Neff, Yp, fHe, reionization, z_reion_H, Δz_reion_H, z_reion_He, Δz_reion_He, As, ns, k_pivot)
     end
 end
 
@@ -62,6 +64,6 @@ include("Observables.jl")
 include("Utils.jl")
 
 # keep structs fixed in vectorized calls like aH.(par, xs)
-Base.broadcastable(s::Union{Parameters,Background,PerturbationMode}) = Ref(s)
+Base.broadcastable(s::Union{Parameters,Background,Recombination,PerturbationMode}) = Ref(s)
 
 end
