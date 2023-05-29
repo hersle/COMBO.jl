@@ -1,7 +1,7 @@
 COMBO.jl: an Einstein-Boltzmann solver
 ==========================================
 
-**COMBO** is short for **CO**smic **M**icrowave **B**ackground (and matter) power spectrum **O**btainer.
+**COMBO** is a **CO**smic **M**icrowave **B**ackground (and matter) power spectrum **O**btainer.
 
 Instructions
 ------------
@@ -16,6 +16,7 @@ julia --project=. Milestone2.jl # produce output for recombination and reionizat
 julia --project=. Milestone3.jl # produce output for perturbations
 julia --project=. Milestone4.jl # produce output for matter and CMB power spectra
 julia --project=. MilestoneA.jl # produce output for supernova parameter fits
+julia --project=. MilestoneB.jl # benchmark each component of the program
 ```
 
 Julia is a precompiled language,
