@@ -1,17 +1,21 @@
-AST5220 project: Einstein-Boltzmann solver
+COMBO.jl: an Einstein-Boltzmann solver
 ==========================================
 
-Try to be a hipster and use Julia...
+**COMBO** is short for **CO**smic **M**icrowave **B**ackground (and matter) power spectrum **O**btainer.
 
 Instructions
 ------------
 
 [Download and install Julia](https://julialang.org/downloads/), add `julia` to your `$PATH`, then
 ```
-git clone https://github.com/hersle/AST5220-project
-cd AST5220-project/
+git clone https://github.com/hersle/COMBO.jl
+cd COMBO.jl/
 julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.resolve(); Pkg.precompile()' # install, resolve and precompile dependencies
-julia --project=. Milestone1.jl # produce output for first milestone
+julia --project=. Milestone1.jl # produce output for background cosmology
+julia --project=. Milestone2.jl # produce output for recombination and reionization history
+julia --project=. Milestone3.jl # produce output for perturbations
+julia --project=. Milestone4.jl # produce output for matter and CMB power spectra
+julia --project=. MilestoneA.jl # produce output for supernova parameter fits
 ```
 
 Julia is a precompiled language,
