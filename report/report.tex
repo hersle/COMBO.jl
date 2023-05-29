@@ -22,6 +22,7 @@
 \usepackage{booktabs}
 \usepackage{mathtools}
 \usepackage[export]{adjustbox}
+\usepackage{makecell}
 
 \usepackage{biblatex}
 %\bibliographystyle{plainnat}
@@ -1347,9 +1348,9 @@ We find the splining to be accurate if we use $300$ $k$-values with constant log
 compared to, say, linear or quadratic spacing $\Delta k$ or $\Delta k^2$.
 
 \item
-With $176$ $l$-values and no parallelization,
-calculating the self-correlations $C_l^\text{TT}$ and $C_l^\text{EE}$ takes around two minutes each,
-while the cross-correlation $C_l^\text{TE}$ takes around four minutes.
+With $150$ $l$-values and no parallelization,
+calculating the self-correlations $C_l^\text{TT}$ and $C_l^\text{EE}$ takes around one and a half minute each,
+while the cross-correlation $C_l^\text{TE}$ takes around three minutes.
 It is the integration over $x$ and $k$ that dominates the runtime,
 so it would be very interesting to look for ways to speed this up.
 One can, for example, drastically reduce the runtime by increasing $\Delta x$ to get an almost identical power spectrum,
@@ -1363,11 +1364,6 @@ This would also help to do the $x$-integral in a more ``honest'' way.
 One could also attempt adaptive integration methods or use a $k$-dependent $x$-grid,
 or try to handle the oscillating integrals with specialized Levin-type quadrature using libraries like
 \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{OscillatoryIntegralsODE.jl}, for example.
-
-\item
-Although we default to $\Delta x = 0.01$ for a ``honest'' calculation for the CMB power spectrum,
-note that it is virtually unchanged if we compute it ``dishonestly'' with $\Delta x = 0.05$.
-This also cuts the runtime from around $2$ minutes to $0.5$ minutes (see \cref{table_benchmark}).
 
 \item
 We compute the spherical first-kind Bessel functions $j_l(y)$ with the \href{https://github.com/JuliaMath/Bessels.jl}{Bessels.jl} library.
@@ -1400,7 +1396,7 @@ It performs better than \href{https://github.com/JuliaMath/SpecialFunctions.jl}{
 
 \begin{figure}
 \centering
-\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_matter.pdf}
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_matter_fine.pdf}
 \caption{
 	Today's matter power spectrum \eqref{eq_Pk} at $x=0$ with the Planck parameters \eqref{eq_planck2018},
 	compared to data from SDSS, WMAP, ACT and eBOSS obtained from \href{https://cmb.wintherscoming.no/data/}{https://cmb.wintherscoming.no/data/}.
@@ -1431,12 +1427,13 @@ in good agreement with the analytical $\Phi_0 \propto k^{-2}$-dependence in \cit
 
 \begin{figure}
 \centering
-\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TT.pdf} \\
-\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_EE.pdf} \\
-\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TE.pdf}
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TT_fine.pdf} \\
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_EE_fine.pdf} \\
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TE_fine.pdf}
 \caption{
 	Today's CMB power spectra \eqref{eq_Dl} for self- and cross-correlation between temperature and polarization with the Planck parameters \eqref{eq_planck2018},
 	compared to data from Planck obtained from \href{https://cmb.wintherscoming.no/data/}{https://cmb.wintherscoming.no/data/}.
+	\\ \ \\
 }
 \label{fig_power_spectrum_cmb}
 \end{figure}
@@ -1518,9 +1515,31 @@ Thus, very roughly speaking, its phase lies halfway between the TT and EE spectr
 in other words from modes whose oscillations are closer to equilibrium instead of maximum compression or decompression at last scattering.
 
 \item
-The amplitude of the TE signal is somewhat higher than the EE signal,
-but still much lower than the TT signal.
+The TE signal a little stronger than the EE signal,
+but still much weaker than the TT signal.
 \end{itemize}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TT_crude.pdf} \\
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_EE_crude.pdf} \\
+\includegraphics[width=0.7\textwidth]{../plots/power_spectrum_CMB_TE_crude.pdf}
+\caption{
+	The same CMB power spectra as in \cref{fig_power_spectrum_cmb},
+	but with the perturbation ODE tolerances lowered to $10^{-5}$ (from $10^{-9}$),
+	using $100$ (instead of $300$) $k$-values to spline the source functions,
+	$\Delta x = 0.06$ (instead of $0.01$) in line of sight integration,
+	and $\Delta k = 2 \pi / 5 c \eta_0$ (instead of $2 \pi / 10 c \eta_0$) in spherical harmonics projection.
+	The power spectra are almost identical, but around $10$ times faster to compute (see \cref{table_benchmark}).
+	To compare this with \cref{fig_power_spectrum_cmb}, you can use the poor man's method (sorry!):
+	fit the page to your PDF viewer, then rapidly flash between page \pageref{fig_power_spectrum_cmb} and \pageref{fig_power_spectrum_cmb_crude}.
+}
+\label{fig_power_spectrum_cmb_crude}
+\end{figure}
+
+\Cref{fig_power_spectrum_cmb_crude} shows the same power spectra as in \cref{fig_power_spectrum_cmb},
+but with resolution parameters lowered as much as possible to produce the same power spectrum as quickly as possible.
+We are able to compute accurate power spectra in a matter of seconds; see \cref{table_benchmark} for a more detailed performance benchmark.
 
 \begin{figure}
 \centering
@@ -1656,30 +1675,31 @@ adaptive integration methods,
 semi-analytical approaches that remove the rapid oscillations from the numerical integration,
 or specialized Levin integration methods from \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{OscillatoryIntegralsODE.jl}, for example.
 
-Finally, we summarize the runtime of each module of our program in \cref{table_benchmark}.
-Note that we can get a CMB TT power spectrum that fits well with data in only \TODO{find crudest tolerances/resolution of entire program that produces acceptable CMB power spectrum}.
+Finally, \cref{table_benchmark} summarizes the runtime of each module in our program.
+We are very happy that we are able to get an accurate CMB power spectrum in only eight seconds!
 
-\begin{table}[b]
+\bigskip
+
+\begin{table}[h!]
 \centering
 \caption{%
-	Performance benchmark for each module of our Einstein-Boltzmann solver, as described in the sections of this report.
-	The program is run on an expensive laptop from 2022 with no parallelization.
-	Resolution and tolerance parameters are found in the implementation details of each section.
+	Performance benchmark for each module of our Einstein-Boltzmann solver,
+	run on an expensive laptop from 2022 with no parallelization.
+	Just-in-time compilation is not counted.
 }
 \label{table_benchmark}
-\begin{tabular}{l l l r}
+\begin{tabular}{l l r r}
 	\toprule
-	Section & Module & Variables & Runtime \\
+	Section & Module & \makecell[r]{``Accurate'' runtime \\ (\cref{fig_power_spectrum_cmb})} & \makecell[r]{``Fast'' runtime (\cref{fig_power_spectrum_cmb_crude})} \\
 	\midrule
 	%Parameter construction & & $2 \, \mathrm{ns}$ \\
-	\Cref{sec_background_cosmology} & Background cosmology & & $100 \, \mathrm{\mu s}$ \\
-	\Cref{sec_recombination}        & Recombination and reionization & & $2 \, \mathrm{ms}$\\
-	\Cref{sec_perturbations}        & Perturbation mode & ($k=0.01/\mathrm{Mpc}$) & $13 \, \mathrm{ms}$ \\
-	\Cref{sec_perturbations}        & Perturbation mode & ($k=1   /\mathrm{Mpc}$) & $68 \, \mathrm{ms}$ \\
-	\Cref{sec_perturbations}        & Perturbation mode & ($k=100 /\mathrm{Mpc}$) & $67 \, \mathrm{ms}$\\
-	\Cref{sec_power_spectra}        & Matter power spectrum & ($200$ $k$s) & $7 \, \mathrm{s}$\\
-	\Cref{sec_power_spectra}        & CMB TT power spectrum & ($176$ $l$s, ``honest'' $\Delta x=0.01$) & $110 \, \mathrm{s}$\\
-	\Cref{sec_power_spectra}        & CMB TT power spectrum & ($176$ $l$s, ``dishonest'' $\Delta x=0.05$) & $ 30 \, \mathrm{s}$\\
+	\Cref{sec_background_cosmology} & Background cosmology & $80\,\mathrm{\mu s}$ & $80\,\mathrm{\mu s}$ \\
+	\Cref{sec_recombination}        & Recombination and reionization & $2\,\mathrm{ms}$ & $2\,\mathrm{ms}$\\
+	\Cref{sec_perturbations}        & Perturbation mode $k=0.01/\mathrm{Mpc}$ & $13\,\mathrm{ms}$ & $2\,\mathrm{ms}$\\
+	\Cref{sec_perturbations}        & Perturbation mode $k=1   /\mathrm{Mpc}$ & $67\,\mathrm{ms}$ & $7\,\mathrm{ms}$\\
+	\Cref{sec_perturbations}        & Perturbation mode $k=100 /\mathrm{Mpc}$ & $75\,\mathrm{ms}$ & $9\,\mathrm{ms}$\\
+	\Cref{sec_power_spectra}        & Matter power spectrum & $7\,\mathrm{s}$ & $1\,\mathrm{s}$\\
+	\Cref{sec_power_spectra}        & CMB TT power spectrum & $91\,\mathrm{s}$ & $8\,\mathrm{s}$\\
 	\bottomrule
 \end{tabular}
 \end{table}

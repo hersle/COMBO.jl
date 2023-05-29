@@ -23,7 +23,6 @@ end
 
 print("Matter power spectrum:")
 pspec = @btime MatterPowerSpectrum(rec)
-println("($(length(pspec.k)) k-values)")
 
 print("CMB power spectrum:")
 pspec = @btime CMBPowerSpectrum(rec, :TT)
