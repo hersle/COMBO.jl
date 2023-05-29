@@ -832,14 +832,14 @@ This agrees with the famous acoustic peak around $s \approx 105\,\mathrm{Mpc}/0.
 
 In the last sections, we have determined the background evolution of the universe,
 or formally the zeroth-order solution to its governing equations in perturbation theory.
-We are now ready to tackle linear first-order perturbations to the background.
+We are now ready to tackle perturbations to the background to first (linear order).
 
 Qualitatively, our objective is to understand the evolution of fluctuations set up from inflation.
 Quantitatively, we want to compute the
 metric perturbations $\Phi$ and $\Psi$,
 cold dark matter and baryon overdensities $\delta_c$ and $\delta_b$,
 their velocities $v_c$ and $v_b$
-and photon temperature fluctuation multipoles $\Theta_l$
+and photon temperature fluctuation and polarization multipoles $\Theta_l$ and $\Theta_l^P$
 as functions of our time-parametrization $x$ and wavenumber magnitude $k$ in Fourier space.
 This lays the groundwork for computing power spectra in the next milestone.
 
@@ -860,21 +860,26 @@ The fluctuations $\Theta$ and $\N$ to the photon and neutrino temperatures are d
 	T_\nu(\mathbf{x},t) = \bar{T}_\nu(t) \big[1+\N(\mathbf{x},t)\big].
 \end{equation}
 
-Similarly, the mass-energy overdensities $\delta_s$ of cold dark matter, baryons, photons and neutrinos are defined by
+Similarly, the overdensities $\delta_s$ of cold dark matter, baryons, photons and neutrinos are defined by
 \begin{equation}
 	\rho_s(\mathbf{x},t) = \bar{\rho}_s(t) \big[1+\delta_s(\mathbf{x},t)\big], \qquad s=\{c,b,\gamma,\nu\}.
 \end{equation}
 
 The bulk velocity perturbation to the Hubble-recession is denoted by $a v_s c$,
-so $v_s$ is the speed-of-light-normalized velocity of the different species on the comoving grid.
+so $v_s$ is defined as the speed-of-light-normalized velocity of the different species on the comoving grid.
 
 The photon's polarization strength is denoted by $\Theta_P$,
 and denotes the amplitude of $E$-mode (curl-free gradient-like polarization sourced by scalar perturbations) polarization.
 
-Instead of their real-space versions,
-we will work with the Fourier space $k$-modes of the perturbations.
+We will work with perturbations in Fourier space instead of position space,
+where each $k$-mode evolves independently of the others.
+From a computational perspective,
+this is simply very convenient.
+From a physical perspective,
+it lets us dissect our understanding of the perturbations based on their characteristic distance scales,
+which we will see is very relevant.
 Moreover, as we want to study the directional dependence of photons and neutrinos,
-we decompose the temperature fluctuations and polarization strength into multipole moments like
+we also decompose the temperature fluctuations and polarization strength into multipole moments like
 \begin{equation}
 	\Theta_l(k,\eta) = \frac{1}{(-i)^l} \int_{-1}^{+1} \frac{d\mu}{2} P_l(\mu) \, \Theta(\mu,k,\eta),
 \end{equation}
@@ -906,7 +911,7 @@ The perturbation $k$-modes evolve independently and according to the system of d
 	{\delta_b}^\prime   &= \frac{ck}{\aH} v_b - 3 \Phi^\prime , \\
 	{v_c}^\prime        &= -v_c - \frac{ck}{\aH} \Psi , \\
 	{v_b}^\prime        &= -v_b - \frac{ck}{\aH} \Psi + \tau^\prime R (3\Theta_1 + v_b), \\
-	{\Phi}^\prime       &= \Psi - \frac{c^2 k^2}{3 \aH^2} \Phi + \frac{H_0^2}{2 \aH^2} \bigg[ \Omega_{c0} \delta_c a^{-1} + \Omega_{b0} \delta_b a^{-1} + 4 \Omega_{\gamma 0} \Theta_0 a^{-2} + 4 \Omega_{\nu 0} \N_0 a^{-2} \bigg] .
+	{\Phi}^\prime       &= \Psi - \frac{c^2 k^2}{3 \aH^2} \Phi + \frac{H_0^2}{2 \aH^2} \bigg[ \delta_c \Omega_{c0} a^{-1} + \delta_b \Omega_{b0} a^{-1} + \delta_\gamma \Omega_{\gamma 0} a^{-2} + \delta_\nu \Omega_{\nu 0} a^{-2} \bigg] .
 \end{align}
 \label{eq_perturb_full}
 \end{subequations}
@@ -929,13 +934,13 @@ Together with these relations, the differential equations determines the evoluti
 
 As described in \cite[section V.A.]{callinHowCalculateCMB2006},
 the system \eqref{eq_perturb_full} is truncated at $l=l_\text{max}$
-in a nontrivial and clever way that gives good results with low $l_\text{max}$.
+in a nontrivial and clever way that is supposed to give good results with low $l_\text{max}$.
 
 To find the initial conditions for the perturbations,
 we go to early times when all modes were outside the horizon with $ck/\mathcal{H} \simeq ck\eta \ll 1$,
 meaning the derivative of all perturbations were tiny.
 In addition, we must assume either adiabaticity or isocurvature; observations point towards the former.
-The initial conditions are then
+The initial conditions can then be found to be
 \begin{subequations}
 \allowdisplaybreaks
 \begin{align}
@@ -968,13 +973,14 @@ consisting of the original system with the replacements
 \begin{equation}
 	v_b^\prime = \frac{1}{1+R} \bigg[ -v_b - \frac{ck}{\aH} \Psi + R \Big( q - \frac{ck}{\aH} \big(\Psi + \Theta_0 - 2 \Theta_2 \big) \Big) \bigg]
 	\quad \text{and} \quad
-	\Theta_1^\prime = \frac{q - v_b^\prime}{3}.
+	\Theta_1^\prime = \frac{q - v_b^\prime}{3},
 \end{equation}
 where
 \begin{equation}
 	q = - \frac{\Big[\big(1-R\big)\tau^\prime+\big(1+R\big)\tau^{\prime\prime}\Big] \Big[ 3\Theta_1+v_b \Big] + \frac{ck}{\aH} \Big[ \Psi + \big(1-\frac{\aH^\prime}{\aH}\big)\big(\Theta_0-2\Theta_2\big) + \big(\Theta_0^\prime - 2 \Theta_2^\prime\big) \Big]}{\big(1+R\big)\tau^\prime + \frac{\aH^\prime}{\aH}-1}.
 \end{equation}
-Moreover, instead of evolving all $\Theta_l$ and $\Theta^P_l$, they are taken from the relations
+Moreover, the multipoles that are evolved are $\Theta_0$ and $\Theta_1$, \emph{all} neutrino multipoles $\N_l$ and \emph{no} polarization multipoles $\Theta_l^P$.
+The other multipoles are expressed directly in terms of these through
 \begin{align}
 	&&&& \Theta_2   &= \begin{cases} -\frac{8}{15} \frac{ck}{\mathcal{H} \tau\prime} \Theta_1 & (\Theta^{\mathrlap{P}}_l \neq 0), \\ -\frac{20}{45} \frac{ck}{\mathcal{H} \tau\prime} \Theta_1 & (\Theta^{\mathrlap{P}}_l=0), \end{cases} &
 	\Theta_l   &= -\frac{l}{2l+1} \frac{ck}{\aH \tau^\prime} \Theta_{l-1}, \\
@@ -1000,13 +1006,14 @@ that can be integrated from the initial conditions \eqref{eq_perturb_ic} with Ru
 We do this both with and without the tight coupling approximation.
 
 \item
-There is only one component in the tight system that is ambiguous to calculate:
+One component in the tight system is ambiguous to calculate:
 $\Theta_1^\prime$ depends on $\Theta_2^\prime$ (through $q$),
 but $\Theta_2$ depends on $\Theta_1$,
 so $\Theta_2^\prime$ also depends on $\Theta_1^\prime$.
-We assume this ``circular'' dependence describes a converging fixed-point iteration, starting from $\Theta_1^\prime=\Theta_2^\prime=0$.
+We assume this ``circular'' dependence describes a converging fixed-point iteration, starting from $\Theta_1^\prime=\Theta_2^\prime=0$,
+and calculate it repeatedly until $\Theta_1^\prime$ and $\Theta_2^\prime$ both agree with their previous values up to a $10^{-10}$-tolerance.
 In hindsight, we see that this converges with a very small $\Theta_2^\prime$ in very few steps,
-so it is also a good approximation to simply neglect $\Theta_2^\prime$ in $q$.
+so it is also a good approximation to simply neglect $\Theta_2^\prime \rightarrow 0$ in $q$.
 
 \item
 Using the tight coupling approximation,
@@ -1027,18 +1034,20 @@ Without using the tight coupling approximation,
 we \textit{always} integrate the full system from the initial conditions using the \texttt{KenCarp4} method with error tolerance $10^{-9}$.
 This seems to be the same approach taken by the \texttt{\href{https://github.com/xzackli/Bolt.jl}{Bolt.jl}} code, for example.
 The \texttt{radau} method is another stiff integrator that seems to works well, but it is not quite as fast.
-In our opinion, this is the most natural and elegant method for integrating the perturbation equations,
-and we will see in our comparison below that it gives similar results to using the tight coupling approximation.
-Therefore, \textbf{this is our preferred method for integrating the perturbations}.
 
 \item
-We implement one function that integrates and splines the perturbations over $x$ for fixed $k$,
-and another that does so for a range of $k$ and splines over both $x$ and $k$.
-The latter enables efficient computation for any $x$ and $k$,
-which will be useful for computing power spectra in the next milestone.
-For the $(x,k)$-spline,
-we use a grid with 200 $k$-values $0.0005 / \textrm{Mpc} \leq k \leq 1 / \textrm{Mpc}$ with constant logarithmic spacing $\Delta \log_{10} k$,
-and the $x$-values from the perturbation mode whose integration requires the most points (our spline function does not support a varying number of $x$ for each $k$).
+\Cref{fig_perturb_methods} shows that integrating only the full system with \texttt{KenCarp4}
+indeed gives similar results to those found from integrating the stitched tight and full systems with \texttt{Tsit5} or \texttt{KenCarp4},
+with small discrepancies arising only during rapid late-time oscillations.
+In our opinion, it is also more natural and elegant to integrate only one system of equations,
+as long as it does not pose a performance bottleneck.
+Therefore, \textbf{\texttt{KenCarp4} on the full system is our preferred method}.%
+\footnote{%
+	While working on \cref{sec_power_spectra}, maintaining the option of integrating either the full or tight and full systems became a burden to maintain,
+	so we have removed the latter from final versions of the program.
+	If you really want to see it in action,
+	you should check out commit \texttt{\href{https://github.com/hersle/AST5220-project/tree/4995843ac872425bc6b1d173dd171600164b74b9}{4995843}} in the program's Git repository.
+}
 
 \item
 On an expensive modern laptop and with our preferred \texttt{KenCarp4} method exclusively on the full system,
@@ -1046,15 +1055,13 @@ integrating and splining the most demanding smallest-scale $k=1/\textrm{Mpc}$-mo
 takes around $100 \textrm{ ms}$ and around $2000$ $x$-steps.
 Using the \texttt{KenCarp4} method on the hybrid tight and full system takes about the same number of steps,
 but around twice as long due to the switching overhead.
-In contrast, integrating the tight and full systems with the \texttt{Tsit5} method takes millions of steps and many seconds.
-With our preferred method, the $(x,k)$-splining only takes around $13 \textrm{ s}$ for the $200$ $k$-values, without any parallel processing.
+In contrast, integrating the tight and full systems with the explicit \texttt{Tsit5} method takes millions of steps and many seconds with the adaptive method's default behavior.
 
 \item
-We add compile-time flags for polarization and neutrinos,
-forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they are disabled.
+We add compile-time flags for enabling or disabling polarization and neutrinos,
+forcing $\Theta^P_l = {\Theta^P_l}^\prime = \N_l = \N_l^\prime = 0$ when they are disabled,
+and solving the full set of equations otherwise.
 \end{itemize}
-
-\subsection{Results}
 
 \begin{figure}
 \includegraphics[height=5cm]{../plots/perturbation_methods.pdf}
@@ -1068,11 +1075,7 @@ The greatest differences come from rapid oscillations of small-scale modes, when
 \label{fig_perturb_methods}
 \end{figure}
 
-\Cref{fig_perturb_methods} compares the different methods for integrating the perturbation equations.
-Using the \texttt{KenCarp4} solver, we see that integrating only the full system
-gives the same results that switching from the tight to the full system does up to around $10^{-2.5}$.
-Comparing \texttt{KenCarp4} to \texttt{Tsit5} gives a greater discrepancy, as the two methods are different.
-We conclude that it seems safe to discard the tight coupling approximation and instead use the \texttt{KenCarp4} exclusively on the full system.
+\subsection{Results}
 
 \begin{figure}[ht!]
 \iffalse
@@ -1102,14 +1105,13 @@ We conclude that it seems safe to discard the tight coupling approximation and i
 	Four different integrated perturbation $k$-modes (with the \texttt{KenCarp4} method and error tolerance $10^{-9}$ on the full system) for the Planck cosmology \eqref{eq_planck2018} and $l_\text{max}=10$.
 	See the last plot for the $k$olor coding.
 	Colored bands mark each mode's horizon entry, when $k c \eta = 1$.
-	Grey bands mark radiation-matter equality, recombination and matter-dark energy equality (from left to right).
-	Grey lines show approximate analytical solutions in various regimes from \cite[equations (8.22), (8.31), (8.46), (8.52) and (8.64)]{dodelsonModernCosmology2021}.
+	Grey vertical bands mark radiation-matter equality, recombination and matter-dark energy equality (from left to right).
+	Grey curves show approximate analytical solutions in various regimes from \cite[equations (8.22), (8.31), (8.46), (8.52) and (8.64)]{dodelsonModernCosmology2021}.
 }
 \label{fig_perturb_all}
 \end{figure}%
 
-Next, let us understand the physics.
-\Cref{fig_perturb_all} shows four integrated perturbation modes:
+\Cref{fig_perturb_all} shows four integrated perturbation modes of different scales $0.001/\mathrm{Mpc} \leq k \leq 1/\mathrm{Mpc}$:
 \begin{itemize}
 \item
 Before a mode enters the horizon,
@@ -1122,14 +1124,14 @@ The high pressure of the dominating radiation prevents it from clustering and fo
 so the potentials $\Phi$ and $\Psi$ plummet and are suppressed before matter domination.
 Meanwhile, the tightly coupled baryon-photon fluid oscillates, as seen from $|v|$ and $|\delta|$ (the absolute values indicate alternating compression and rarefaction).
 This is caused by the push of the strong radiation pressure fighting the pull of gravity, giving rise to \emph{baryon acoustic oscillations} (BAO), which are essentially sound waves.
-The oscillations are damped in time as the universe cools down (due to expansion) and the photons diffuse (spread out) as they scatter off electrons and random walk through the fluid (``Silk damping''), causing the pressure to decay with time.
+The oscillations are damped in time as the universe cools down (due to expansion) and the photons diffuse (spread out) as they scatter off electrons and random walk through the fluid (``diffusion damping''), causing the pressure to decay with time.
 After recombination, the baryons and photons decouple and end the oscillations.
 The photons then stream away freely, while the baryons fall into the dark matter's potential wells.
 
 \item
 Large-scale modes, in contrast, enter the horizon during matter domination, and evolve in a qualitatively different way.
 Baryonic and dark matter has low and zero pressure,
-so gravity pulls it together and creates potential wells, maintain high values of the potentials.
+so gravity pulls it together and creates potential wells, maintaining high values of the potentials.
 As the baryon-photon fluid is in the process of decoupling or has already done so, these modes do not oscillate.
 Intuitively, there is nothing stopping matter from accreting more matter during (until dark energy takes over).
 
@@ -1137,7 +1139,7 @@ Intuitively, there is nothing stopping matter from accreting more matter during 
 Medium-scale modes with wavenumber $k \approx 0.1 / \textrm{Mpc}$ enter the horizon precisely \emph{at} radiation-matter equality.
 We have seen that modes of smaller or larger scales behave differently,
 and it is precisely this wavenumber that locates the peak of the matter power spectrum, for example,
-as we will see in \cref{sec_power_spectra}.
+as we will see in \cref{fig_power_spectrum_matter} in \cref{sec_power_spectra}.
 
 \item
 The increasing diffusion of photons with smaller-scale modes
@@ -1169,7 +1171,7 @@ the photons are free-streaming and almost never collide with electrons,
 so no polarization is produced at these scales.
 
 \item
-Neutrinos interact weakly, in contrast to the ``strong'' Thomson scattering in the coupled baryon-photon fluid.
+Neutrinos interact weakly and have decoupled from the photons and baryons, in contrast to the ``strong'' Thomson scattering in the coupled baryon-photon fluid.
 Therefore, $\delta_\nu$ does not follow the oscillations of $\delta_b$ and $\delta_\gamma$.
 Instead, the massless and relativistic neutrinos quickly free-stream away, moving too fast for becoming trapped with the baryons in the potential wells.
 
@@ -1185,16 +1187,17 @@ Roughly speaking, we have $\Theta_0 \gg \Theta_1 \gg \Theta_2$ before recombinat
 As the universe is opaque and photons and baryons are tightly coupled,
 Compton scattering is very efficient, so the photons' mean free paths are very short.
 Accordingly, photons arriving at one point in space last scattered off electrons that are very close to it and each other.
-The neighboring electrons' temperatures are very similar,
+The temperatures of these neighboring electrons are very similar,
 driving the temperature fluctuation $\Theta \rightarrow \Theta_0$
-to the angle-averaging (monopole) $\Theta_0$ and ``washing out'' anisotropies $\Theta_l \rightarrow 0$ with $l \geq 1$.
+to the angle-averaging (monopole),
+and ``washing out'' anisotropies $\Theta_l \rightarrow 0$ with $l \geq 1$.
 However, when the electrons gain a bulk velocity $v_b$,
 the picture changes because the velocity introduces a ``preferred direction'',
 so a dipole $\Theta_1$ develops.
 
 \item
 Compared to the photons, the neutrinos develop a significant quadrupole anisotropy $\N_2 \gg \Theta_2$,
-as they have decoupled from the baryon-photon fluid and hence not ``washed out''.
+as they have decoupled from the baryon-photon fluid, so they are not ``washed out''.
 This causes anisotropic shear stress, as explained below the metric perturbation relation \eqref{eq_potential_relation}.
 \end{itemize}
 
