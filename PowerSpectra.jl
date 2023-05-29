@@ -62,7 +62,7 @@ struct CMBPowerSpectrum
         new(rec, ls, Cls, Dls)
     end
 
-    function CMBPowerSpectrum(rec::Recombination, type::Symbol; n1=10, n2=10, n3=84, kwargs...)
+    function CMBPowerSpectrum(rec::Recombination, type::Symbol; n1=10, n2=20, n3=124, kwargs...)
         ls = unique(Int.(round.(10 .^ vcat(range(0.0, 1.0, length=n1),
                                            range(1.0, 2.0, length=n2),
                                            range(2.0, 3.4, length=n3)))))
