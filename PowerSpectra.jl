@@ -54,7 +54,7 @@ struct CMBPowerSpectrum
             end
             end
             if verbose
-                println("Cl(l=$l) = $(Cls[i]) ($time seconds)")
+                println("($i/$(length(ls))) Cl(l=$l) = $(Cls[i]) ($time seconds)")
             end
         end
 
