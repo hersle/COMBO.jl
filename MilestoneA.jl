@@ -13,13 +13,13 @@ using Distributions
 
 # Supernova MCMC fits and distances
 # Inspiration: "A theoretician's analysis of the supernova data ..." (https://arxiv.org/abs/astro-ph/0212573)
-if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hubble.pdf") || !isfile("plots/supernova_distance.pdf")
+if true
     println("Plotting plots/supernova_omegas.pdf")
 
     data = readdlm("data/supernovadata.txt", comments=true)
     N_obs, _ = size(data)
     z_obs, dL_obs, σdL_obs = data[:,1], data[:,2], data[:,3]
-    x_obs = @. -log(z_obs + 1)
+    x_obs = -log.(z_obs .+ 1)
 
     function logLfunc(params::Vector{Float64})
         h, Ωm0, Ωk0 = params[1], params[2], params[3]
@@ -37,8 +37,8 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     Ωm0bounds = (0.0, 1.0)
     Ωk0bounds = (-1.0, +1.0)
     nparams = 3 # h, Ωm0, Ωk0
-    nchains = 10 # TODO: 10
-    nsamples = 10000 # per chain # TODO: 10000
+    nchains = 10
+    nsamples = 10000 # per chain
     params, logL = MetropolisHastings(logLfunc, [hbounds, Ωm0bounds, Ωk0bounds], nsamples, nchains; burnin=1000)
     h, Ωm0, Ωk0, χ2 = params[:,1], params[:,2], params[:,3], -2 * logL
 
@@ -64,8 +64,6 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     h1, Ωm01, Ωk01, ΩΛ01 = h[filter1], Ωm0[filter1], Ωk0[filter1], ΩΛ0[filter1]
 
     plot(xlabel = L"\Omega_{m0}", ylabel = L"\Omega_{\Lambda}", size = (600, 600), xlims = ΩΛ0bounds, ylims = ΩΛ0bounds, xticks = range(ΩΛ0bounds..., step=0.1), yticks = range(ΩΛ0bounds..., step=0.1), legend_position = :topright)
-    #scatter!(Ωm02, ΩΛ02; color = 1, markershape = :rect, markerstrokecolor = 1, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence2*100; digits=1)) % \textrm{ confidence region}") # clip mode workaround to get line above scatter points: https://discourse.julialang.org/t/plots-jl-with-pgfplotsx-adds-series-in-the-wrong-order/85896
-    #scatter!(Ωm01, ΩΛ01; color = 3, markershape = :rect, markerstrokecolor = 3, markerstrokewidth = 0, markersize = 2.0, clip_mode = "individual", label = L"%$(round(confidence1*100; digits=1)) % \textrm{ confidence region}")
     scatterheatmaps!([Ωm02, Ωm01], [ΩΛ02, ΩΛ01], [palette(:default)[1], :darkblue], [L"%$(round(confidence2*100; digits=1)) \% \textrm{ confidence region}", L"%$(round(confidence1*100; digits=1)) \% \textrm{ confidence region}"], ΩΛ0bounds, ΩΛ0bounds; nbins=120)
 
     # plot ΩΛ(Ωm0) for a few flat universes (should give ΩΛ ≈ 1 - Ωm0)
@@ -75,12 +73,8 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
 
     scatter!([best_Ωm0], [best_ΩΛ0]; color = :red, markerstrokecolor = :red, markershape = :cross, markersize = 10, label = "our best fit")
     scatter!([0.317], [0.683]; color = :green, markerstrokecolor = :green, markershape = :cross, markersize = 10, label = "Planck 2018's best fit")
-    #vline([best_Ωm0]; linestyle = :dash, color = :red, label = L"\textrm{our best fit}")
-    #hline([best_ΩΛ0]; linestyle = :dash, color = :red)
     savefig("plots/supernova_omegas.pdf")
 
-    # TODO: draw error ellipses?
-    # see e.g. https://www.visiondummy.com/2014/04/draw-error-ellipse-representing-covariance-matrix/
 
     println("Plotting plots/supernova_hubble.pdf")
 
@@ -97,9 +91,10 @@ if true || !isfile("plots/supernova_omegas.pdf") || !isfile("plots/supernova_hub
     plot(xlabel = L"\log_{10} \Big[ 1+z \Big]", ylabel = L"d_L \,/\, z \, \mathrm{Gpc}", legend_position = :topleft)
 
     x2 = range(-1, 0, length=400)
-    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(bg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :green, label = "prediction (Planck 2018)")
+    plbg = Background(Parameters()) # with Planck's best fit values
+    plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(plbg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :green, label = "prediction (Planck 2018)")
 
-    snbg = Background(Parameters(h=best_h, Ωb0=0, Ωc0=best_Ωm0, Ωk0=best_Ωk0, Neff=0))
+    snbg = Background(Parameters(h=best_h, Ωb0=0, Ωc0=best_Ωm0, Ωk0=best_Ωk0, Neff=0)) # with our supernova best fit values
     plot!(log10.(Cosmology.z.(x2).+1), Cosmology.dL.(snbg, x2) ./ Cosmology.z.(x2) ./ Gpc; color = :red, label = "prediction (our best fit)")
 
     data = readdlm("data/supernovadata.txt", comments=true)
