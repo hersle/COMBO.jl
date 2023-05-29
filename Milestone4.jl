@@ -24,7 +24,7 @@ function plot_Dl(series, polarization, filename)
 end
 
 function plot_Dl_against_Planck(type)
-    pspec = CMBPowerSpectrum(rec, type; n1=10, n2=20, n3=150)
+    pspec = @time CMBPowerSpectrum(rec, type)
     plot_Dl([
         (pspec.l, pspec.Dl/1e-6^2, nothing, Dict(:label => "Our ΛCDM prediction")),
         (read_Planck_data("data/Planck_Dl_$type.txt")..., Dict(:label => "Planck's measurements", :color => :black, :marker => :square, :markerstrokecolor => :black, :markersize => 0.75, :markerstrokewidth => 0.50, :seriestype => :scatter)),
@@ -45,7 +45,7 @@ function plot_Dl_varying_parameter(paramkey, values; labelfunc=val -> nothing, t
         #   the feature disabled with values[1] in "cold" blue
         color = [:blue, :black, :red][i]
 
-        pspec = CMBPowerSpectrum(rec, type; n1=10, n2=20, n3=150)
+        pspec = CMBPowerSpectrum(rec, type)
         push!(series, (pspec.l, pspec.Dl/1e-6^2, nothing, Dict(:color => color, :marker => :none, :label => labelfunc(value))))
     end
     plot_Dl(series, "$type", "plots/power_spectrum_CMB_varying_$paramkey.pdf")
@@ -85,9 +85,9 @@ if true
 end
 
 if true
-    @time plot_Dl_against_Planck(:TT)
-    @time plot_Dl_against_Planck(:TE)
-    @time plot_Dl_against_Planck(:EE)
+    plot_Dl_against_Planck(:TT)
+    plot_Dl_against_Planck(:TE)
+    plot_Dl_against_Planck(:EE)
 end
 
 if true
