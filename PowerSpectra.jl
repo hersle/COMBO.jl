@@ -101,16 +101,10 @@ function spline_S(rec::Recombination, Sfunc::Function, xs::AbstractRange, logks:
     return spline_S(rec, [Sfunc], xs, logks)[1]
 end
 
-function spline_S(rec::Recombination, Sfunc)
-    η = rec.bg.η
-    xs = range(-20, 0, step=0.01)
-    logks = range(log10(1/(c*η(0))), log10(4000/(c*η(0))), length=300)
-    return spline_S(rec, Sfunc, xs, logks)
-end
-
 function grid_S(rec::Recombination, Sfuncs::Vector{<:Function}, xs, ks; spline_first=false) :: Vector{Matrix{Float64}}
     if spline_first
-        Sspls = spline_S(rec, Sfuncs)
+        logks = range(log10(minimum(ks)), log10(maximum(ks)), length=300)
+        Sspls = spline_S(rec, Sfuncs, xs, logks)
         return [Sspl.(xs, ks') for Sspl in Sspls]
     else
         perturbs = PerturbationModes(rec, ks)
