@@ -1,6 +1,10 @@
 using Printf
 using Dates
 
+# TODO: own module?
+
+export format_time_variations
+
 # Kronecker δ
 δ(i::Integer, j::Integer) = i == j ? 1 : 0
 
@@ -25,12 +29,6 @@ end
 integration_points(sol::ODESolution; nextra=0) = extend(sol.t, nextra)
 
 spline(x, y) = scale(interpolate(y, BSpline(Cubic(Line(OnGrid())))), x) # TODO: OOB BC
-
-#=
-function multirange(posts, lengths)
-    return vcat((range(posts[i], posts[i+1], length=lengths[i])[1:end-1] for i in range(1, length(lengths)))..., posts[end])
-end
-=#
 
 function format_time_variations(bg::Background, x::Real)
     return @sprintf("x = %+4.2f, a = %6.4f, z = %7.2f, η = %4.1f Gyr, t = %8.5f Gyr",

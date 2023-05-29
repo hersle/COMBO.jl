@@ -11,6 +11,12 @@ catch
     ENV["GKSwstype"] = "100" # headless mode (https://discourse.julialang.org/t/plotting-from-a-server/74345/4)
     gr()
 end
+
+# make directory for plots
+if !isdir("plots")
+    mkdir("plots")
+end
+
 default(
     minorticks = 10,
     labelfontsize = 12, # default: 11

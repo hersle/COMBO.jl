@@ -1,3 +1,7 @@
+export Recombination
+export Xe_Saha_H, Xe_Saha_H_He, Xe_Peebles, Xe, τ, τ′, τ′′, g, g′, g′′, s
+export x_decoupling, x_recombination, x_reionization_H, x_reionization_He
+
 struct Recombination
     bg::Background
 
@@ -8,7 +12,7 @@ struct Recombination
 
     function Recombination(bg::Background; x0=-20.0, xswitch=NaN)
         if isnan(xswitch)
-            xswitch = time_switch_Peebles(bg.par) # TODO: why does this allocate?
+            xswitch = x_switch_Peebles(bg.par) # TODO: why does this allocate?
         end
         Xe_Peebles = spline_Xe_Peebles(bg.par, xswitch)
 
@@ -23,8 +27,6 @@ struct Recombination
         new(bg, xswitch, Xe_Peebles, τ, s)
     end
 end
-
-Base.broadcastable(rec::Recombination) = Ref(rec)
 
 ρcrit(par::Parameters, x) = 3 * H(par, x)^2 / (8 * π * G)
 ρb(par::Parameters, x)    = Ωb(par, x) * ρcrit(par, x)
@@ -99,12 +101,12 @@ function Xe_Peebles_spline(par::Parameters, x1, Xe1)
     return solve(ODEProblem((Xe,_,x) -> dXe_dx(x, Xe), Xe1, (x1, 0.0)), Tsit5(); abstol=1e-8, reltol=1e-8)
 end
 
-function time_switch_Peebles(par::Parameters)::Float64
+function x_switch_Peebles(par::Parameters)::Float64
     return find_zero(x -> Xe_Saha_H_He(par, x) - 0.999, (-20.0, +20.0), rtol=1e-20, atol=1e-20)
 end
 
-time_reionization_H(par::Parameters)  = par.reionization ? -log(1 + par.z_reion_H)  : NaN
-time_reionization_He(par::Parameters) = par.reionization ? -log(1 + par.z_reion_He) : NaN
+x_reionization_H(par::Parameters)  = par.reionization ? -log(1 + par.z_reion_H)  : NaN
+x_reionization_He(par::Parameters) = par.reionization ? -log(1 + par.z_reion_He) : NaN
 
 function Xe_reionization(par::Parameters, x::Real)
     if !par.reionization
@@ -145,5 +147,5 @@ g′′(rec::Recombination, x) = ForwardDiff.derivative(x -> g′(rec, x), x)
 
 s(rec::Recombination, x) = rec.s(x)
 
-time_decoupling(rec::Recombination) = find_zero(x -> τ′(rec,x)^2 - τ′′(rec,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
-time_recombination(rec::Recombination) = find_zero(x -> Xe(rec,x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3
+x_decoupling(rec::Recombination) = find_zero(x -> τ′(rec,x)^2 - τ′′(rec,x) - 0.0, (-20.0, -3.0)) # equivalent to dg=0 without the exponential; exclude reionization for x > -3
+x_recombination(rec::Recombination) = find_zero(x -> Xe(rec,x) - 0.1, (-20.0, -3.0)) # exclude reionization for x > -3

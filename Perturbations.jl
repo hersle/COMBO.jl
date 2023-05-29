@@ -1,9 +1,11 @@
-using Profile
-using BenchmarkTools
+using OffsetArrays # arbitrary-indexed vectors
+
+export PerturbationMode
+export δc, δb, vc, vb, Φ, Ψ, Θl, Nl, ΘPl, S
+export time_tight_coupling, time_horizon_entry
 
 const polarization = true
 const neutrinos = true
-
 const lmax = 10 # use >= 6 without neutrinos/polarization; >= 10 with neutrinos/polarization
 @assert lmax >= 4 # equations are ambiguous with lmax <= 3 (how to handle l<2, l=2 and l=lmax?)
 
@@ -30,8 +32,6 @@ struct PerturbationMode
         new(rec, k, perturbations_mode(rec, k; tight=tight, kwargs...))
     end
 end
-
-Base.broadcastable(pert::PerturbationMode) = Ref(pert)
 
 function time_tight_coupling(rec::Recombination, k; tol::Float64=10.0)
     x1 = find_zero(x -> abs(dτ(rec,x)) - tol,                        (-20.0, +20.0)) # tight coupling assumes     1/τ′ << 1

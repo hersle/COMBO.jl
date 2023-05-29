@@ -1,3 +1,11 @@
+# TODO: power spectrum struct?
+export P_primordial, P, Cl, Dl
+
+using Interpolations # splines
+using Bessels: sphericalbesselj as jl # spherical Bessel function # TODO: correct function?
+using Base.Threads # parallelization
+using Trapz # quadrature
+
 P_primordial(par::Parameters, k::Real) = 2*π^2/k^3 * par.As * (k/par.k_pivot)^(par.ns-1)
 Δ(perturb::PerturbationMode, x::Real, k::Real) = c^2*k^2*Φ(perturb,x) / (3/2*perturb.rec.bg.par.Ωm0/a(x)*perturb.rec.bg.par.H0^2)
 P(perturb::PerturbationMode, x::Real, k::Real) = abs(Δ(perturb,x,k))^2 * P_primordial(perturb.rec.bg.par, k)

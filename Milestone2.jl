@@ -18,13 +18,13 @@ rec_Saha        = Recombination(Background(Parameters()), xswitch=0.0) # never s
 rec             = rec_H_He_reion # default
 
 # TODO: gather into one common function?
-xswi = time_switch_Peebles(rec.bg.par)
-xdec = time_decoupling(rec) # TODO: compute from g′ = 0
-xrec = time_recombination(rec)
-xre1 = time_reionization_H(rec.bg.par)
-xre2 = time_reionization_He(rec.bg.par)
-xdec_Saha = time_decoupling(rec_Saha)
-xrec_Saha = time_recombination(rec_Saha)
+xswi = x_switch_Peebles(rec.bg.par)
+xdec = x_decoupling(rec) # TODO: compute from g′ = 0
+xrec = x_recombination(rec)
+xre1 = x_reionization_H(rec.bg.par)
+xre2 = x_reionization_He(rec.bg.par)
+xdec_Saha = x_decoupling(rec_Saha)
+xrec_Saha = x_recombination(rec_Saha)
 shor = s(rec, xdec) / Gpc
 println("Saha -> Peebles (Xe = 0.999):         ", format_time_variations(rec.bg, xswi))
 println("Decoupling (max(g)):                  ", format_time_variations(rec.bg, xdec))
