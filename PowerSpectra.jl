@@ -15,7 +15,7 @@ struct MatterPowerSpectrum
     k::Vector{Float64}
     Pk::Vector{Float64}
 
-    function MatterPowerSpectrum(rec::Recombination, ks::Vector{Float64})
+    function MatterPowerSpectrum(rec::Recombination, ks::Vector{Float64}=10 .^ range(-4,+2,length=200) / Mpc)
         perturbs = PerturbationModes(rec, ks)
         Pks = [P(perturb, 0) for perturb in perturbs]
         new(rec, ks, Pks)

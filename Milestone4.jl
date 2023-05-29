@@ -65,8 +65,7 @@ function read_Pk_data(filename; last_column_is_upper_bound=false)
 end
 
 if true
-    k = 10 .^ range(-4, +2.0, length=200) / Mpc
-    pspec = MatterPowerSpectrum(rec, k)
+    pspec = MatterPowerSpectrum(rec)
 
     plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]", xlims=(-3, 1), ylims=(0, 5), legend_position=:topright)
     plot!(log10.(pspec.k/(par.h0/Mpc)), log10.(pspec.Pk/(Mpc/par.h0)^3), label="Our ΛCDM prediction")

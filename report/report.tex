@@ -1344,11 +1344,11 @@ the source functions $S(x,k)$ vary relatively smoothly,
 compared to the products $S(x,k) \cdot j_l(ck(\eta_0-\eta))$.
 Therefore, a more efficient way is to instead \emph{spline} $S(x,k)$ on a smaller $k$-grid,
 and then evaluate that spline on the larger grid for the integration.
-We find the splining to be accurate if we use $400$ $k$-values with constant logarithmic spacing $\Delta \log k$,
+We find the splining to be accurate if we use $300$ $k$-values with constant logarithmic spacing $\Delta \log k$,
 compared to, say, linear or quadratic spacing $\Delta k$ or $\Delta k^2$.
 
 \item
-With around $175$ $l$-values and no parallelization,
+With $176$ $l$-values and no parallelization,
 calculating the self-correlations $C_l^\text{TT}$ and $C_l^\text{EE}$ takes around two minutes each,
 while the cross-correlation $C_l^\text{TE}$ takes around four minutes.
 It is the integration over $x$ and $k$ that dominates the runtime,
@@ -1364,6 +1364,11 @@ This would also help to do the $x$-integral in a more ``honest'' way.
 One could also attempt adaptive integration methods or use a $k$-dependent $x$-grid,
 or try to handle the oscillating integrals with specialized Levin-type quadrature using libraries like
 \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{OscillatoryIntegralsODE.jl}, for example.
+
+\item
+Although we default to $\Delta x = 0.01$ for a ``honest'' calculation for the CMB power spectrum,
+note that it is virtually unchanged if we compute it ``dishonestly'' with $\Delta x = 0.05$.
+This also cuts the runtime from around $2$ minutes to $0.5$ minutes (see \cref{table_benchmark}).
 
 \item
 We compute the spherical first-kind Bessel functions $j_l(y)$ with the \href{https://github.com/JuliaMath/Bessels.jl}{Bessels.jl} library.
@@ -1651,6 +1656,34 @@ With more time, I would be interested to optimize this step further using
 adaptive integration methods,
 semi-analytical approaches that remove the rapid oscillations from the numerical integration,
 or specialized Levin integration methods from \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{OscillatoryIntegralsODE.jl}, for example.
+
+Finally, we summarize the runtime of each module of our program in \cref{table_benchmark}.
+Note that we can get a CMB TT power spectrum that fits well with data in only \TODO{find crudest tolerances/resolution of entire program that produces acceptable CMB power spectrum}.
+
+\begin{table}[b]
+\centering
+\caption{%
+	Performance benchmark for each module of our Einstein-Boltzmann solver, as described in the sections of this report.
+	The program is run on an expensive laptop from 2022 with no parallelization.
+	Resolution and tolerance parameters are found in the implementation details of each section.
+}
+\label{table_benchmark}
+\begin{tabular}{l l l r}
+	\toprule
+	Section & Module & Variables & Runtime \\
+	\midrule
+	%Parameter construction & & $2 \, \mathrm{ns}$ \\
+	\Cref{sec_background_cosmology} & Background cosmology & & $100 \, \mathrm{\mu s}$ \\
+	\Cref{sec_recombination}        & Recombination and reionization & & $2 \, \mathrm{ms}$\\
+	\Cref{sec_perturbations}        & Perturbation mode & ($k=0.01/\mathrm{Mpc}$) & $13 \, \mathrm{ms}$ \\
+	\Cref{sec_perturbations}        & Perturbation mode & ($k=1   /\mathrm{Mpc}$) & $68 \, \mathrm{ms}$ \\
+	\Cref{sec_perturbations}        & Perturbation mode & ($k=100 /\mathrm{Mpc}$) & $67 \, \mathrm{ms}$\\
+	\Cref{sec_power_spectra}        & Matter power spectrum & ($200$ $k$s) & $7 \, \mathrm{s}$\\
+	\Cref{sec_power_spectra}        & CMB TT power spectrum & ($176$ $l$s, ``honest'' $\Delta x=0.01$) & $110 \, \mathrm{s}$\\
+	\Cref{sec_power_spectra}        & CMB TT power spectrum & ($176$ $l$s, ``dishonest'' $\Delta x=0.05$) & $ 30 \, \mathrm{s}$\\
+	\bottomrule
+\end{tabular}
+\end{table}
 
 \clearpage
 \appendix

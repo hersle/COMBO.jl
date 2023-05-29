@@ -30,10 +30,10 @@ struct PerturbationMode
     end
 end
 
-function PerturbationModes(rec::Recombination, ks::AbstractVector)
+function PerturbationModes(rec::Recombination, ks::AbstractVector; kwargs...)
     perturbs = Vector{PerturbationMode}(undef, length(ks))
     Threads.@threads for i in 1:length(ks)
-        perturbs[i] = PerturbationMode(rec, ks[i])
+        perturbs[i] = PerturbationMode(rec, ks[i]; kwargs...)
     end
     return perturbs
 end
@@ -80,7 +80,7 @@ function perturbations_initial_conditions(par::Parameters, η::ODESolution, τ::
 end
 
 function integrate_perturbation_mode(rec::Recombination, k; kwargs...)
-    return integrate_perturbation_mode(rec.bg.par, rec.bg.η, rec.τ, k)
+    return integrate_perturbation_mode(rec.bg.par, rec.bg.η, rec.τ, k; kwargs...)
 end
 
 # putting callables for η and τ behind a function barrier removes allocations!
