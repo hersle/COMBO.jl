@@ -25,10 +25,7 @@ print("Matter power spectrum:")
 pspec = @btime MatterPowerSpectrum(rec)
 println("($(length(pspec.k)) k-values)")
 
-for Δx in [0.01, 0.05]
-    print("CMB power spectrum (Δx = $(Δx)):")
-    pspec = @btime CMBPowerSpectrum(rec, :TT; xs=range(-10,0,step=$Δx))
-    println("($(length(pspec.l))) l-values")
-end
+print("CMB power spectrum:")
+pspec = @btime CMBPowerSpectrum(rec, :TT)
 
 end
