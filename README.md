@@ -1,7 +1,7 @@
 COMBO.jl: an Einstein-Boltzmann solver
 ==========================================
 
-I wanted to be a hipster and learn Julia.
+**COMBO** is short for **CO**smic **M**icrowave **B**ackground (and matter) power spectrum **O**btainer.
 
 Instructions
 ------------
