@@ -32,7 +32,7 @@ struct CMBPowerSpectrum
     Cl::Vector{Float64}
     Dl::Vector{Float64}
 
-    function CMBPowerSpectrum(rec::Recombination, ls::Vector{Int}, type::Symbol; xs=range(-10, 0, step=0.01), kcη0s=range(1, 4000, step=2*π/10), spline_S_before_gridding=true, verbose=true)
+    function CMBPowerSpectrum(rec::Recombination, ls::Vector{Int}, type::Symbol; xs=range(-10, 0, step=0.06), kcη0s=range(1, 3000, step=2*π/5), spline_S_before_gridding=true, verbose=true)
         @assert type in (:TT, :EE, :TE) "unknown Cl type: $type"
         bg = rec.bg
         par = bg.par
@@ -62,7 +62,7 @@ struct CMBPowerSpectrum
         new(rec, ls, Cls, Dls)
     end
 
-    function CMBPowerSpectrum(rec::Recombination, type::Symbol; n1=10, n2=20, n3=150, kwargs...)
+    function CMBPowerSpectrum(rec::Recombination, type::Symbol; n1=10, n2=10, n3=84, kwargs...)
         ls = unique(Int.(round.(10 .^ vcat(range(0.0, 1.0, length=n1),
                                            range(1.0, 2.0, length=n2),
                                            range(2.0, 3.4, length=n3)))))

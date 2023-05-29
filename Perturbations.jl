@@ -146,7 +146,7 @@ function integrate_perturbation_mode(par::Parameters, η::ODESolution, τ::ODESo
     time = @elapsed begin
     y1 = perturbations_initial_conditions(par, η, τ, x1, k)
     prob = ODEProblem{true}(dy_dx!, y1, (x1, x2))
-    sol = solve(prob, KenCarp4(autodiff=false); abstol=1e-9, reltol=1e-9)
+    sol = solve(prob, KenCarp4(autodiff=false); abstol=1e-5, reltol=1e-5)
     end
     if verbose
         println("Integrated perturbation mode k=$(k*Mpc)/Mpc with $(length(sol.t)) points in $(time) seconds")
