@@ -1206,7 +1206,7 @@ This causes anisotropic shear stress, as explained below the metric perturbation
 \label{sec_power_spectra}
 
 Having calculated the linear perturbations to the homogeneous and isotropic background universe,
-we are finally in position to predict power spectra for matter and the cosmic microwave background (CMB).
+we are finally in position to pull everything together and predict power spectra for matter and the cosmic microwave background (CMB).
 
 \subsection{Theory}
 
@@ -1234,7 +1234,7 @@ The \textbf{CMB power spectrum} is given by the sphere-expansion coefficients
 where $\{\text{AB}\} \in \{\text{TT},\text{EE},\text{TE}\}$ denotes \textbf{t}emperature self-correlation, \textbf{E}-mode polarization self-correlation and their cross-correlation.
 We want this power spectrum, and hence today's multipoles $\Theta^A_l$, for $1 \leq l \lesssim 2500$.
 From our previous work,
-an obvious brute-force way of finding these is to simply extend the cutoff of the perturbation system we integrate in \cref{sec_perturbations} from $l \lesssim 10$ to $l \lesssim 2500$.
+an obvious brute-force way of finding these is to simply extend the cutoff of the perturbation system we integrate in \cref{sec_perturbations} from $l_\text{max} = 10$ to $l_\text{max} = 2500$.
 However, this results in an enormous system of differential equations that is very inefficient to integrate.
 A much more elegant method is to compute them from the \emph{line of sight integrals}
 \TODO{is $\Theta^T = \Theta$ and $\Theta^E = \Theta^P$ from perturbations?}
@@ -1261,25 +1261,27 @@ The \textbf{Sachs-Wolfe effect} describes gravitational redshift of photons that
 and is the most important contribution to the source function.
 The visibility function $\tilde{g}$ in \cref{fig_visibility_function} shows that this happens mostly during recombination,
 and to a lesser extent during reionization.
-The contribution from the approximate spike $\tilde{g}(x) \approx \delta(x-x_\text{rec})$ at recombination is
+The contribution to $\Theta_l^T$ from the approximate spike $\tilde{g}(x) \approx \delta(x-x_\text{rec})$ at recombination is
 \begin{equation}
 	\Theta^\text{T}_l(0,k) \approx \big(\Theta_0 + \Psi + \tfrac14 \Pi \big) \, j_l\big(ck(\eta_0-\eta\big) \Big|_{x=x_\text{rec}}.
 \end{equation}
-Since $\eta_0 \gg \eta_\text{rec}$ and $j_l(y)$ becomes nonzero for $y \gtrsim l$,
-we expect that $\Theta_l(0,k \gtrsim l / c \eta_0) \not\approx 0$.
-Very roughly speaking,
-this enables us to associate spatial and angular scales $k \leftrightarrow l/c\eta_0$.
+As $\eta_0 \gg \eta_\text{rec}$ and $j_l(y)$ becomes nonzero for $y \gtrsim l$,
+we expect that
+$\Theta_l(0,k \lesssim l / c \eta_0) \approx 0$ and
+$\Theta_l(0,k \gtrsim l / c \eta_0) \not\approx 0$.
+Roughly speaking,
+we can associate spatial and angular scales $k \leftrightarrow l/c\eta_0$.
 
 \item
 The \textbf{integrated Sachs-Wolfe (ISW) effect} is the only term not weighted by the visibility function (or its derivatives),
-so it affects photons \emph{while} traveling, and not only \emph{at} emission,
-explaining the name's prefix.
+so it affects photons \emph{while} traveling, and not only \emph{at} their last scattering.
+This explains the ``integrated'' prefix.
 Through the derivative $(\Psi-\Phi)^\prime$,
-it instead describes gravitational redshift of photons traveling through wells that \emph{deepen while the photons traverse them},
-leading to additional energy loss.
+it instead describes gravitational redshift of photons traveling through wells whose \emph{depths change while the photons traverse them}.
+This leads to a change in their energy, unlike for a photon entering and exiting a static well with the same energy.
 The factor $e^{-\tau} = I/I_0$ applies the effect only to the photons that ultimately reach us.
 As we saw in \cref{fig_perturb_all}, the potentials $\Psi$ and $\Phi$ decay significantly during radiation and dark energy domination, but not during matter domination.
-Thus, the \textbf{early-time ISW} describes photons traversing changing wells after recombination, but before matter domination, and shows up on small scales that enter the horizon during radiation domination.
+Accordingly, the \textbf{early-time ISW} describes photons traversing changing wells during what is left of radiation domination after recombination, and shows up on small scales that enter the horizon before radiation-matter equality.
 On the other hand, the \textbf{late-time ISW} describes the same effect during dark energy-domination,
 and shows up on large scales.
 
@@ -1295,7 +1297,7 @@ Unlike in the low-energy limit of Thomson scattering,
 the outgoing photon's energy in general Compton scattering
 depends on the angle between the incident photons.
 Thus, the quadrupole structure (which we associated with polarization in \cref{sec_perturbations})
-affects today's observed temperature anisotropies \cite{kableDeconstructingPlanckTT2020}.
+affects today's observed temperature anisotropies \cite[section 2.1]{kableDeconstructingPlanckTT2020}.
 \end{itemize}
 
 Finally, note that it is conventional and easier to see variations in the power spectrum in terms of
@@ -1362,7 +1364,12 @@ where the first term is some analytically known integral that captures most of t
 and the second is the remainder that varies more smoothly and can be tackled numerically with less resources.
 This would also help to do the $x$-integral in a more ``honest'' way.
 One could also attempt adaptive integration methods or use a $k$-dependent $x$-grid,
-or try to handle the oscillating integrals with specialized Levin-type quadrature\footnote{See \href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{https://github.com/xzackli/OscillatoryIntegralsODE.jl}, for example.}, for example.
+or try to handle the oscillating integrals with specialized Levin-type quadrature using libraries like
+\href{https://github.com/xzackli/OscillatoryIntegralsODE.jl}{OscillatoryIntegralsODE.jl}, for example.
+
+\item
+We compute the spherical first-kind Bessel functions $j_l(y)$ with the \href{https://github.com/JuliaMath/Bessels.jl}{Bessels.jl} library.
+It performs better than \href{https://github.com/JuliaMath/SpecialFunctions.jl}{SpecialFunctions.jl}, for example.
 \end{itemize}
 
 \begin{figure}[ph]
@@ -1481,10 +1488,11 @@ so the temperature anisotropies due to the SW effect decreases and the peaks bec
 The polarization power spectrum has peaks where the temperature power spectrum has troughs, and vice versa.
 We saw in \cref{sec_perturbations} that polarization was associated with quadrupole-like temperature fluctuations $\Theta_2$,
 which is in phase with the dipole $\Theta_1$ during tight coupling \eqref{eq_perturb_tight}.
-Moreover, equation \eqref{eq_radiation_velocity_overdensity} roughly relates dipoles to velocities and monopoles to overdensities,
-so due to the nature of oscillations, $\Theta_0$ and $\Theta_1$ are almost perfectly out of phase.
-Whereas the temperature power spectrum is largely sourced by overdensities (or $\Theta_0$),
-the polarization power spectrum is therefore largely sourced by fluid velocities (or $\Theta_1 \propto \Theta_2$),
+Moreover, equation \eqref{eq_radiation_velocity_overdensity} roughly relates dipoles to velocities and monopoles to overdensities.
+Since an oscillating fluid moves slower the more compressed it is,
+they are almost perfectly out of phase: ``$\Theta_0 \not\sim \Theta_1 \sim \Theta_2$''.
+Whereas the temperature power spectrum is largely sourced by overdensities $\delta \sim \Theta_0$,
+the polarization power spectrum is therefore largely sourced by fluid velocities $v \sim \Theta_1 \sim \Theta_2$,
 explaining why they are out of phase.
 
 \item
@@ -1586,7 +1594,7 @@ If there is more power on all scales to begin with,
 there is more power on all scales later, as well.
 
 \item
-Increasing the spectral index $n_s>1$ gives more primordial power to modes with larger $k$.
+Increasing the spectral index $n_s$ gives more primordial power to modes with larger $k$.
 This ``tilts'' the power spectrum so there is more power on smaller scales, and less on larger scales.
 This is particularly noticeable for the Sachs-Wolfe plateau and the largest-scale modes that still resemble their primordial form.
 
@@ -1608,7 +1616,7 @@ so structure has less time to build up.
 \item
 Increasing $\Omega_{k0}$ would mainly affect the location of the first peak.
 Unfortunately, we have only implemented curvature at the background level and not in the perturbations,
-so we are not able to see its effects first-hand from our own program.
+so we are not able to see this first-hand from our own program.
 For example, in an open universe with $k < 0 < \Omega_{k0}$,
 (initially parallel) light rays diverge,
 so a temperature fluctuation would be observed on a smaller angular scale
