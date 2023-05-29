@@ -364,8 +364,6 @@ This will be an essential quantity in later milestones.
 \begin{itemize}
 	\item We represent a $\Lambda$CDM cosmology with an object that takes $h$, $\Omega_{b0}$, $\Omega_{c0}$, $\Omega_{k0}$, $T_{\gamma0}$ and $N_\text{eff}$ as free parameters,
 	      and then computes the remaining dependent parameters from the relations \eqref{eq_planck2018}.
-	\item We check whether a universe has a turnaround $\dot{a} = 0$ and our parametrization with $x$ breaks down.
-	      This comes to use in \cref{sec_supernova}, where we allow for arbitrary curvature.
 	\item We compute $\mathcal{H}(x)$ analytically from the Friedmann equation \eqref{eq_friedmann},
 	      and its derivatives $\odv{\mathcal{H}}/{x}$ and $\odv[2]{\mathcal{H}}/{x}$ using automatic differentiation with \href{https://github.com/JuliaDiff/ForwardDiff.jl}{ForwardDiff.jl},
 	      which essentially generates exact expressions for derivatives by applying differentiation rules to elementary operations at compile time.
@@ -1751,10 +1749,11 @@ with $q_{\chi^2_3}(68.3\%) \approx 3.53$ and $q_{\chi^2_3}(95.4\%) \approx 8.00$
 	\item We exclude parameters outside their specified bounds by assigning $L=0$ to them.
 	\item As mentioned in \cref{sec_background_cosmology_theory},
 	      our implementation of the background cosmology parametrized by the scale factor
-	      \textbf{cannot handle cosmologies with turnaround} $\dot{a} = 0$.
+	      \textbf{cannot handle cosmologies with a turnaround} $\dot{a} = 0$.
 	      These cosmologies can arise now that we allow $\Omega_{k0} \neq 0$,
 	      for example with $\Omega_{r0}=0$, $\Omega_{m0} = 0.2$ and $\Omega_{k0} = -0.9$ and $\Omega_{\Lambda0} = 1.7$.
-	      We identify such cosmologies as described in \cref{sec_background_cosmology_implementation}, and exclude them by setting $L=0$.
+	      We identify such cosmologies by analytically checking whether the Hubble parameter \eqref{eq_friedmann} becomes zero (or complex) for $-20 \leq x \leq 0$,
+	      and exclude them by setting $L=0$.
 \end{itemize}
 
 \subsection{Results}
@@ -1769,7 +1768,7 @@ with $q_{\chi^2_3}(68.3\%) \approx 3.53$ and $q_{\chi^2_3}(95.4\%) \approx 8.00$
 \Cref{fig_luminosity_distances} shows observed and predicted luminosity distances from the Planck 2018 cosmology \eqref{eq_planck2018}.
 The prediction steers wide of most error bars, so the agreement is not very good!
 This shows that supernovae are promising sources for generating orthogonal constraints on cosmological parameters complementary to the widely ``accepted'' Planck values, for example.
-The plot also shows the much better agreement from the best fit parameters that we find next.
+The plot also shows the much better agreement from the best fit parameters that we find below.
 
 \begin{figure}[bh!]
 	\centering
@@ -1780,7 +1779,9 @@ The plot also shows the much better agreement from the best fit parameters that 
 		and confidence regions \eqref{eq_confidence_region} for $\Omega_{m0}$ and $\Omega_{\Lambda0}$,
 		from $10 \times 10000$ Metropolis-Hastings samples with $L \propto e^{-\chi^2/2}$ and the $\chi^2$ sum \eqref{eq_chi2},
 		comparing predicted luminosity distances \eqref{eq_distances} to observations from \cite{betouleImprovedCosmologicalConstraints2014}.
-		The algorithm restricts the parameters to the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$, and accordingly (with negligible radiation today) $\Omega_{\Lambda0} \in [-1, 2]$.
+		The algorithm restricts the parameters to the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$,
+		and accordingly (with negligible radiation today) $\Omega_{\Lambda0} \in [-1, 2]$,
+		also excluding combinations that give a universe with a turnaround $\dot{a}=0$.
 	}
 	\label{fig_supernova_mcmc}
 \end{figure}
@@ -1788,8 +1789,11 @@ The plot also shows the much better agreement from the best fit parameters that 
 \Cref{fig_supernova_mcmc} shows our MCMC constraints on $h$, $\Omega_{m0}$ and $\Omega_\Lambda$,
 from the prior bounds $h \in [0.5, 1.5]$, $\Omega_{m0} \in [0, 1]$ and $\Omega_{k0} \in [-1, +1]$
 that accommodate a wide region around the Planck values \eqref{eq_planck2018}, for example.
-In addition, curved universes with a turnaround $\dot{a} = 0$ are forbidden
-(\cite[Figure 11]{amanullahSpectraLightCurves2010} shows that such cosmologies are disconnected from the best fit regions, anyway).
+In addition, curved universes with a turnaround $\dot{a} = 0$ are forbidden;
+\cite[Figure 11]{amanullahSpectraLightCurves2010} shows that such cosmologies are disconnected from the best fit regions, anyway.
+
+Our best fit is $h = 0.70$, $\Omega_{m0} = 0.26$, $\Omega_{k0} = 0.08$,
+corresponding to $\Omega_{\Lambda 0} \approx 1 - \Omega_{m0} - \Omega_{k0} = 0.66$.
 
 Note that the constraint in the $\Omega_{m0}$-$\Omega_{\Lambda0}$-plane is highly orthogonal to the line of flat universes,
 so supernova data can give good constraints when combined with some other argument in favor of flatness, for example.
@@ -1802,8 +1806,6 @@ Our Hubble parameter is significantly larger than Planck's and exemplifies the H
 
 \begin{itemize}
 \item \TODO{use article template?}
-
-\item \TODO{list with radiation driving, baryon loading, diffusion damping. mention in perturbation section, so I can refer back here?}
 \end{itemize}
 
 \clearpage
