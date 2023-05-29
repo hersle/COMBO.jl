@@ -60,7 +60,7 @@ z(x) = 1/a(x) - 1 # redshift
 include("Background.jl")
 include("Recombination.jl")
 include("Perturbations.jl")
-include("Observables.jl")
+include("PowerSpectra.jl")
 include("Utils.jl")
 
 # keep structs fixed in vectorized calls like aH.(par, xs)

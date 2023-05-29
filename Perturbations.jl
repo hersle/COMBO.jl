@@ -1,6 +1,6 @@
 using OffsetArrays # arbitrary-indexed vectors
 
-export PerturbationMode
+export PerturbationMode, PerturbationModes
 export δc, δb, vc, vb, Φ, Ψ, Θl, Nl, ΘPl, ST, SE
 export x_horizon_entry
 
@@ -22,12 +22,20 @@ const i_max = i_ΘPl(lmax) # last variable of system
 
 struct PerturbationMode
     rec::Recombination
-    k::Float64
+    k::Float64 # wavenumber
     y::ODESolution # vector solution of entire system
 
     function PerturbationMode(rec::Recombination, k::Float64; kwargs...)
         new(rec, k, integrate_perturbation_mode(rec, k; kwargs...))
     end
+end
+
+function PerturbationModes(rec::Recombination, ks::AbstractVector)
+    perturbs = Vector{PerturbationMode}(undef, length(ks))
+    Threads.@threads for i in 1:length(ks)
+        perturbs[i] = PerturbationMode(rec, ks[i])
+    end
+    return perturbs
 end
 
 function perturbations_initial_conditions(par::Parameters, η::ODESolution, τ::ODESolution, x0, k)
@@ -134,13 +142,14 @@ function integrate_perturbation_mode(par::Parameters, η::ODESolution, τ::ODESo
         return nothing # integration uses y′ in-place
     end
 
-    t1 = now()
+
+    time = @elapsed begin
     y1 = perturbations_initial_conditions(par, η, τ, x1, k)
     prob = ODEProblem{true}(dy_dx!, y1, (x1, x2))
     sol = solve(prob, KenCarp4(autodiff=false); abstol=1e-9, reltol=1e-9)
-    t2 = now()
+    end
     if verbose
-        println("Integrated perturbation mode k=$(k*Mpc)/Mpc with $(length(sol.t)) points in $(t2-t1)")
+        println("Integrated perturbation mode k=$(k*Mpc)/Mpc with $(length(sol.t)) points in $(time) seconds")
     end
     return sol
 end

@@ -6,13 +6,12 @@ include("Plotting.jl")
 
 using .Cosmology
 using .Constants
-using LaTeXStrings
 using DelimitedFiles
 
 par = Parameters()
 bg = Background(par)
 rec = Recombination(bg)
-xrm = equality_rm(par)
+xrm = x_equality_rm(par)
 
 function plot_Dl(series, polarization, filename)
     plot(xlabel=L"\log_{10} l", ylabel=L"D_l^\mathrm{%$(polarization)} / (\mathrm{\mu K})^2", xlims=(0, 3.4), legend_position=:topleft)
@@ -24,31 +23,18 @@ function plot_Dl(series, polarization, filename)
     savefig(filename)
 end
 
-function lgrid(; n1=10, n2=20, n3=150)
-    return unique(Int.(round.(10 .^ vcat(
-        range(0.0, 1.0, length=n1),
-        range(1.0, 2.0, length=n2),
-        range(2.0, 3.4, length=n3)
-    ))))
-end
-
 function plot_Dl_against_Planck(type)
-    l = lgrid()
-    Dl_predicted = Dl(rec,l,type)
-
+    pspec = CMBPowerSpectrum(rec, type; n1=10, n2=20, n3=150)
     plot_Dl([
-        (l, Dl_predicted/1e-6^2, nothing, Dict(:label => "Our ΛCDM prediction")),
+        (pspec.l, pspec.Dl/1e-6^2, nothing, Dict(:label => "Our ΛCDM prediction")),
         (read_Planck_data("data/Planck_Dl_$type.txt")..., Dict(:label => "Planck's measurements", :color => :black, :marker => :square, :markerstrokecolor => :black, :markersize => 0.75, :markerstrokewidth => 0.50, :seriestype => :scatter)),
     ], "$type", "plots/power_spectrum_CMB_$type.pdf")
 end
 
 function plot_Dl_varying_parameter(paramkey, values; labelfunc=val -> nothing, type=:TT)
-    l = lgrid()
     series = []
     for (i, value) in enumerate(values)
-        par = Parameters(; Dict(paramkey => value)...)
-        bg = Background(par)
-        rec = Recombination(bg)
+        rec = Recombination(Background(Parameters(; Dict(paramkey => value)...)))
 
         # * With 3 values, the idea is always to plot
         #   the Planck values[2] in "neutral" black,
@@ -59,7 +45,8 @@ function plot_Dl_varying_parameter(paramkey, values; labelfunc=val -> nothing, t
         #   the feature disabled with values[1] in "cold" blue
         color = [:blue, :black, :red][i]
 
-        push!(series, (l, Dl(rec,l,type)/1e-6^2, nothing, Dict(:color => color, :marker => :none, :label => labelfunc(value))))
+        pspec = CMBPowerSpectrum(rec, type; n1=10, n2=20, n3=150)
+        push!(series, (pspec.l, pspec.Dl/1e-6^2, nothing, Dict(:color => color, :marker => :none, :label => labelfunc(value))))
     end
     plot_Dl(series, "$type", "plots/power_spectrum_CMB_varying_$paramkey.pdf")
 end
@@ -77,18 +64,19 @@ function read_Pk_data(filename; last_column_is_upper_bound=false)
     return k, Pk, ΔPk
 end
 
-if false
-    k = 10 .^ range(-4, +2.0, length=200) / Mpc # TODO: h in units
+if true
+    k = 10 .^ range(-4, +2.0, length=200) / Mpc
+    pspec = MatterPowerSpectrum(rec, k)
+
     plot(xlabel=L"\log_{10} \Big[ k / (h/\textrm{Mpc}) \Big]", ylabel=L"\log_{10} \Big[ P(k) / (\textrm{Mpc}/h)^3 \Big]", xlims=(-3, 1), ylims=(0, 5), legend_position=:topright)
+    plot!(log10.(pspec.k/(par.h0/Mpc)), log10.(pspec.Pk/(Mpc/par.h0)^3), label="Our ΛCDM prediction")
 
-    plot!(log10.(k / (par.h0/Mpc)), log10.(P.(PerturbationMode.(rec,k),0,k) / (Mpc/par.h0)^3), label="Our ΛCDM prediction")
-
-    series = [
+    dataseries = [
         ("data/Pk_SDSS_DR7_LRG.txt", false, "SDSS DR7 LRG data"),
         ("data/Pk_WMAP_ACT.txt", true, "WMAP & ACT data"),
         ("data/Pk_Lyman_alpha.txt", true, "eBOSS data")
     ]
-    for (i, (filename, last_column_is_upper_bound, label)) in enumerate(series)
+    for (i, (filename, last_column_is_upper_bound, label)) in enumerate(dataseries)
         k, Pk, ΔPk = read_Pk_data(filename; last_column_is_upper_bound=last_column_is_upper_bound)
         scatter!(log10.(k), log10.(Pk), yerror=(log10.(Pk) .- log10.(Pk-ΔPk), log10.(Pk+ΔPk) .- log10.(Pk)), marker=:square, markersize=1.50, markerstrokewidth=1.0, color=i+1, markerstrokecolor=i+1, label=label)
     end
@@ -97,47 +85,13 @@ if false
     savefig("plots/power_spectrum_matter.pdf")
 end
 
-# Test source function
-if false
-    #=
-    plot(xlabel=L"x = \log a", ylabel=L"S(x,k)", xlims=(-8,0))
-
-    for k in [340*par.H0/c]
-        perturb = Perturbations(rec, k)
-        x = range(-20, 0, step=2*π*aH(par,0) / (20*c*k))
-        plot!(x, S.(perturb, x) .* Cosmology.jl.(100, c*k*(η(bg,0.0) .- η.(bg,x))) / 1e-3, linewidth=0.5)
-    end
-
-    savefig("plots/source.pdf")
-    =#
-
-    gr() # use gr backend, as pgfplots produces a huge filesize on this one...
-
-    η0 = η(bg,0)
-    xs = range(-8, -0, step=0.01) # TODO: 0.02?
-    ks = range(1/(c*η0), 4000/(c*η0), length=200) # TODO: 400?
-    logks = log10.(ks*c*η0)
-    S1 = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=false) # TODO: true?
-    #S2 = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=true) # TODO: true?
-    #println("max(S2-
-    z = asinh.(S1)
-    maxz = maximum(abs.(z))
-
-    plot(xlabel=L"x = \log \, a", ylabel=L"k/c\eta_0", title=L"\mathrm{asinh}(\tilde{S}(x,k))", xlims=extrema(xs), ylims=extrema(ks*c*η0) , clims=(-maxz, +maxz), lw=0, size=(800, 500))
-    heatmap!(xs, ks*c*η0, transpose(z), label=nothing, color=cgrad(:RdBu, rev=true), fill=true, levels=50, lw=0)
-    savefig("plots/source.pdf")
-
-    pgfplotsx() # back to pgfplots backend
-end
-
-if false
+if true
     @time plot_Dl_against_Planck(:TT)
     @time plot_Dl_against_Planck(:TE)
     @time plot_Dl_against_Planck(:EE)
 end
 
-if false
-    # TODO: use correct parameters!
+if true
     plot_Dl_varying_parameter(:h,           [0.57, 0.67, 0.77];        labelfunc = h    -> L"h = %$(h)")
     plot_Dl_varying_parameter(:Ωb0,         [0.02, 0.05, 0.08];        labelfunc = Ωb0  -> L"\Omega_{b0} = %$(Ωb0)")
     plot_Dl_varying_parameter(:Ωc0,         [0.217, 0.267, 0.317];     labelfunc = Ωc0  -> L"\Omega_{c0} = %$(Ωc0)")
@@ -147,7 +101,7 @@ if false
     plot_Dl_varying_parameter(:As,          [1.05e-9, 2.1e-9, 4.2e-9]; labelfunc = As   -> L"A_s = %$(As/1e-9) \cdot 10^{-9}")
     plot_Dl_varying_parameter(:Yp,          [0, 0.245, 0.49];          labelfunc = Yp   -> L"Y_p = %$(Yp)")
     plot_Dl_varying_parameter(:z_reion_H,   [NaN, 8];                  labelfunc = z    -> isnan(z) ? "reionizatioff" : "reionization")
-    #plot_Dl_varying_parameter(:Ωk0,         [-0.5, 0, +0.5];           labelfunc = Ωk0  -> L"\Omega_{k0} = %$(Ωk0)")
+    #plot_Dl_varying_parameter(:Ωk0,         [-0.5, 0, +0.5];           labelfunc = Ωk0  -> L"\Omega_{k0} = %$(Ωk0)") # TODO: need to implement curvature in perturbations first
 end
 
 if true
@@ -159,21 +113,22 @@ if true
     kcη0s = [10, 100, 1000]
     xs = range(-10, 0, step=0.01) # TODO: 0.02?
     ks = kcη0s / (c*η0)
-    STs = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=false) # TODO: true?
-    dΘTl0_dxs = Cosmology.dΘTl0_dx(10, xs, ks, STs, bg.η)
+    STs = Cosmology.grid_S(rec, Cosmology.ST, xs, ks; spline_first=false)
+    χs = χ.(bg, xs) # = c * (η(0) - η(x))
+    dΘTl0_dxs = dΘTl0_dx(10, xs, ks, STs, χs)
     ys = [dΘTl0_dxs[:,i] for i in 1:length(ks)]
     plot!(xs, ys, linewidth=0.3, xlims=(-8, 0), ylims=(-1, +1), yticks=-1.0:0.20:+1.0, label=reshape([L"k=%$(kcη0)/(c\eta_0)^{-1}" for kcη0 in kcη0s], 1, :))
     plot!(xs, ys, linewidth=0.3, xlims=(-1, 0), ylims=(-0.03, +0.03), yticks=-0.03:0.01:+0.03, xticks=-1:0.1:0, subplot=2, inset=(1, bbox(0.10, 0.43, 0.7, 0.5, :right)), label=nothing)
     savefig("plots/dThetal0_dx.pdf")
 
 
-    # plot Θl0 # TODO: ΘEl0?
-    # TODO: integrate Θl0 from k=0, forcing it to start from 0?
+    # plot Θl0 # TODO: ΘEl0, too?
     plot(xlabel=L"k / (c \eta_0)^{-1}", ylabel=L"\Theta_l(x=0,k)", xticks=0:100:4000, ylims=(-0.1, +0.1), legend_position=:topright)
     ks = range(1/(c*η0), 1200/(c*η0), step=2*π/(c*η0*10))
-    STs = Cosmology.grid_S(rec, Cosmology.S, xs, ks; spline_first=true)
+    χs = χ.(bg, xs) # = c * (η(0) - η(x))
+    STs = Cosmology.grid_S(rec, Cosmology.ST, xs, ks; spline_first=true)
     for l in ls
-        plot!(ks*c*η0, Cosmology.ΘTl0(l, xs, ks, STs, bg.η), linewidth=0.3, label=L"l=%$l")
+        plot!(ks*c*η0, ΘTl0(l, xs, ks, STs, χs), linewidth=0.3, label=L"l=%$l")
     end
     savefig("plots/Theta0.pdf")
 
@@ -182,7 +137,7 @@ if true
     for (i, l) in enumerate(ls)
         kcη0min = max(0, l-100)
         kcη0max = kcη0min + 300
-        y = Cosmology.dCl_dk_TT(l,xs,ks,STs,nothing,bg.η,par) / (c*η0)
+        y = dCl_dk_TT(l,xs,ks,STs,nothing,χs,par) / (c*η0)
         e10 = Int(round(log10(maximum(y))))
         y ./= 10.0^e10
         plot(xlabel=L"k / (c \eta_0)^{-1}", ylabel=L"\mathrm{d} C_l(k) / \mathrm{d} k / 10^{%$(e10)} (c \eta_0)^{-1}", xlims=(kcη0min, kcη0max), xticks=0:100:2000, legend_position=:topright)

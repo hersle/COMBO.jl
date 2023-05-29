@@ -3,7 +3,7 @@ export H, aH, aH′, aH′′
 export Ωγ, Ων, Ωb, Ωc, Ωk, ΩΛ, Ωr, Ωm, Ω
 export t, t_radiation_matter_dominated, t_radiation_dominated
 export η, η_radiation_matter_dominated, η_radiation_dominated
-export dL, dA
+export χ, r, dL, dA
 export x_equality_rm, x_equality_mΛ, x_acceleration
 
 struct Background
