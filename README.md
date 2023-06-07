@@ -3,6 +3,10 @@ COMBO.jl: an Einstein-Boltzmann solver
 
 **COMBO** is a **CO**smic **M**icrowave **B**ackground (and matter) power spectrum **O**btainer.
 
+![CMB power spectrum](plots/power_spectrum_CMB.png)
+
+![Matter power spectrum](plots/power_spectrum_matter.png)
+
 Instructions
 ------------
 
